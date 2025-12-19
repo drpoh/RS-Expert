@@ -1,46 +1,9 @@
-backend:
-  name: github
-  repo: drpoh/RS-Expert
-  branch: main
-
-media_folder: "assets/uploads"
-public_folder: "/assets/uploads"
-
-collections:
-  - name: "site"
-    label: "Sivuston sisältö"
-    files:
-      - file: "data/site.json"
-        label: "Asetukset, menu, palvelut, galleria, dokumentit"
-        name: "site"
-        format: "json"
-        fields:
-          - { label: "Yrityksen nimi", name: "companyName", widget: "string" }
-          - { label: "Tagline", name: "tagline", widget: "string" }
-          - { label: "Puhelin", name: "phone", widget: "string" }
-          - { label: "Email", name: "email", widget: "string" }
-          - { label: "Alue", name: "area", widget: "string", default: "Uusimaa" }
-
-          - label: "Menu"
-            name: "menu"
-            widget: "list"
-            fields:
-              - { label: "Teksti", name: "label", widget: "string" }
-              - { label: "Linkki (ankkuri tai sivu)", name: "href", widget: "string" }
-
-          - label: "Palvelut"
-            name: "services"
-            widget: "list"
-            fields:
-              - { label: "Otsikko", name: "title", widget: "string" }
-              - { label: "Kuvaus", name: "text", widget: "text" }
-
           - label: "Dokumentit"
             name: "documents"
             widget: "list"
             fields:
               - { label: "Nimi", name: "title", widget: "string" }
-              - { label: "PDF/Linkki", name: "url", widget: "string" }
+              - { label: "PDF", name: "url", widget: "file", media_library: { allow_multiple: false } }
 
           - label: "Galleria"
             name: "gallery"
