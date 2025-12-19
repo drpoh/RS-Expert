@@ -53,22 +53,48 @@ async function loadSite() {
       : `<div class="card"><p>Добавь PDF в /admin → Dokumentit</p></div>`;
   }
 
-  // Gallery
-  const g = document.getElementById('gallery');
-  if (g) {
-    const items = Array.isArray(d.gallery) ? d.gallery : [];
-    g.innerHTML = items.length
-      ? items.map(i => `
-          <div class="card">
-            ${i.image ? `<img src="${i.image}" alt="">` : ''}
-            <h3>${escapeHtml(i.title || '')}</h3>
-            ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
-            ${i.text ? `<p>${escapeHtml(i.text)}</p>` : ''}
-          </div>
-        `).join('')
-      : `<div class="card"><p>Добавь фото в /admin → Galleria</p></div>`;
+// Gallery
+const g = document.getElementById('gallery');
+if (g) {
+  const items = Array.isArray(d.gallery) ? d.gallery : [];
+  g.innerHTML = items.length
+    ? items.map(i => `
+        <div class="card">
+          ${i.image ? `<img src="${i.image}" alt="" data-lightbox>` : ''}
+          <h3>${escapeHtml(i.title || '')}</h3>
+          ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
+          ${i.text ? `<p>${escapeHtml(i.text)}</p>` : ''}
+        </div>
+      `).join('')
+    : `<div class="card"><p>Добавь фото в /admin → Galleria</p></div>`;
+
+  // Lightbox logic
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+  const lbBg = document.getElementById('lightbox-bg');
+  const lbClose = document.getElementById('lightbox-close');
+
+  g.querySelectorAll('img[data-lightbox]').forEach(img => {
+    img.addEventListener('click', () => {
+      lbImg.src = img.src;
+      lb.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  function closeLB(){
+    lb.style.display = 'none';
+    lbImg.src = '';
+    document.body.style.overflow = '';
   }
+
+  lbBg.addEventListener('click', closeLB);
+  lbClose.addEventListener('click', closeLB);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLB();
+  });
 }
+
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, m => ({
