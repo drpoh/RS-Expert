@@ -77,3 +77,45 @@ footer{
 
 @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.grid{grid-template-columns:1fr} h1{font-size:28px}}
+/* === Lightbox === */
+#lightbox{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+}
+#lightbox-bg{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.85);
+}
+#lightbox-img{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  max-width:92vw;
+  max-height:92vh;
+  border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+#lightbox-close{
+  position:absolute;
+  top:14px;
+  right:18px;
+  font-size:34px;
+  background:none;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* Hover для галереи */
+.card img{
+  cursor:zoom-in;
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+.card img:hover{
+  transform:scale(1.02);
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+
