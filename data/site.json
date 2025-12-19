@@ -1,8 +1,10 @@
 {
-  "companyName": "RS-Expert Oy",
-  "tagline": "Sähköasennukset ja huolto • Uusimaa",
-  "phone": "+358449723588",
-  "email": "info@rs-expert.fi",
+  "basic": {
+    "companyName": "RS-Expert Oy",
+    "tagline": "Sähköasennukset, vianhaku ja sähkökeskukset • Uusimaa",
+    "phone": "+358 XX XXX XXXX",
+    "email": "info@rs-expert.fi"
+  },
   "menu": [
     { "label": "Etusivu", "href": "/index.html" },
     { "label": "Palvelut", "href": "/services.html" },
@@ -11,10 +13,121 @@
     { "label": "Yhteys", "href": "/index.html#contact" }
   ],
   "services": [
-    { "title": "Sähköasennukset", "text": "Johdotukset, pistorasiat, kytkimet, laitteiden kytkennät." },
-    { "title": "Sähkökeskukset", "text": "Keskusten päivitys, suojaukset, merkinnät, dokumentointi." },
-    { "title": "Vianhaku", "text": "Mittaukset, vikojen paikannus, ylikuumenemiset, huolto." }
+    {
+      "title": "Sähköasennukset (koti & yritys)",
+      "text": "Pistorasiat, kytkimet, valaisimet, keittiö- ja kodinkoneliitännät sekä pienet ja keskisuuret asennustyöt siistillä työnjäljellä.",
+      "enabled": true
+    },
+    {
+      "title": "Vianhaku ja korjaukset",
+      "text": "Sähkövikojen paikannus, ylikuumenemiset, sulakkeiden laukeamiset, epävakaat laitteet. Tarvittaessa mittaukset ja raportointi.",
+      "enabled": true
+    },
+    {
+      "title": "Sähkökeskukset ja suojaukset",
+      "text": "Keskusten päivitykset, vikavirtasuojat, ryhmämerkinnät ja dokumentointi. Turvallisuus ennen kaikkea.",
+      "enabled": true
+    },
+    {
+      "title": "Remontit ja uudisrakennus",
+      "text": "Sähköistys osana remonttia: reititykset, kaapeloinnit, kalusteasennukset sekä yhteistyö muiden urakoitsijoiden kanssa.",
+      "enabled": true
+    },
+    {
+      "title": "Sauna, pesutilat ja ulkovalaistus",
+      "text": "Saunan ja märkätilojen sähkötyöt, lämmityksen ohjaus, pihavalaistus ja ajastukset. Ratkaisut myös älyohjauksella.",
+      "enabled": true
+    },
+    {
+      "title": "Sähkölämmitys ja ohjaukset",
+      "text": "Termostaatit, kontaktorit, ohjauskeskukset ja kuormien hallinta. Autetaan myös optimoinnissa ja ajastuksissa.",
+      "enabled": true
+    },
+    {
+      "title": "Sähköauton lataus (perusvalmius)",
+      "text": "Latausratkaisujen perusvalmiuden tarkistus, kuorman arviointi ja asennusvalmistelut. Toteutus kohteen mukaan.",
+      "enabled": true
+    },
+    {
+      "title": "Älykoti ja automaatio (Home Assistant)",
+      "text": "Valojen, lämmityksen ja laitteiden ohjaukset sekä automaatiot. Suunnitellaan ratkaisut järkevästi ja turvallisesti.",
+      "enabled": true
+    }
   ],
-  "documents": [],
-  "gallery": []
+  "documents": [
+    {
+      "title": "Yritysesite (PDF)",
+      "url": "/assets/uploads/rs-expert-esite.pdf",
+      "category": "Muut",
+      "enabled": true
+    },
+    {
+      "title": "Hinnasto (suuntaa-antava)",
+      "url": "/assets/uploads/hinnasto.pdf",
+      "category": "Hinnasto",
+      "enabled": true
+    },
+    {
+      "title": "Turvallisuus & työskentelykäytännöt",
+      "url": "/assets/uploads/turvallisuus.pdf",
+      "category": "Ohjeet",
+      "enabled": true
+    },
+    {
+      "title": "Vastuuvakuutus (todistus)",
+      "url": "/assets/uploads/vastuuvakuutus.pdf",
+      "category": "Sertifikaatit",
+      "enabled": false
+    }
+  ],
+  "gallery": [
+    {
+      "title": "Sähkökeskuksen päivitys",
+      "city": "Järvenpää",
+      "image": "/assets/uploads/gallery-keskus.jpg",
+      "text": "Keskuksen siistintä, ryhmämerkinnät ja suojalaitteiden päivitys.",
+      "type": "Sähkökeskus",
+      "enabled": true
+    },
+    {
+      "title": "Keittiön valaistus ja pistorasiat",
+      "city": "Kerava",
+      "image": "/assets/uploads/gallery-keittio.jpg",
+      "text": "Uudet valaisimet, lisäpistorasiat ja toimiva käytettävyys.",
+      "type": "Asennus",
+      "enabled": true
+    },
+    {
+      "title": "Vianhaku: laukeava sulake",
+      "city": "Helsinki",
+      "image": "/assets/uploads/gallery-vianhaku.jpg",
+      "text": "Vian paikannus ja korjaus – turvallinen toiminta palautettiin nopeasti.",
+      "type": "Vianhaku",
+      "enabled": true
+    },
+    {
+      "title": "Saunan sähkötyöt",
+      "city": "Tuusula",
+      "image": "/assets/uploads/gallery-sauna.jpg",
+      "text": "Saunan ja pesutilojen sähköasennukset kohteen vaatimusten mukaan.",
+      "type": "Remontti",
+      "enabled": true
+    },
+    {
+      "title": "Ulkovalaistus",
+      "city": "Vantaa",
+      "image": "/assets/uploads/gallery-ulkovalot.jpg",
+      "text": "Pihavalaistus ja ohjausratkaisut (ajastus/automaatio).",
+      "type": "Asennus",
+      "enabled": true
+    },
+    {
+      "title": "Älyohjaus (valot & lämmitys)",
+      "city": "Espoo",
+      "image": "/assets/uploads/gallery-alykoti.jpg",
+      "text": "Käytännöllinen automaatio – helppo arki, selkeä hallinta.",
+      "type": "Muu",
+      "enabled": true
+    }
+  ]
 }
