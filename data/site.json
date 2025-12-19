@@ -1,9 +1,8 @@
 {
   "companyName": "RS-Expert Oy",
   "tagline": "Sähköasennukset ja huolto • Uusimaa",
-  "phone": "+358XXXXXXXXX",
+  "phone": "+358449723588",
   "email": "info@rs-expert.fi",
-
   "menu": [
     { "label": "Etusivu", "href": "/index.html" },
     { "label": "Palvelut", "href": "/services.html" },
@@ -11,21 +10,11 @@
     { "label": "Dokumentit", "href": "/documents.html" },
     { "label": "Yhteys", "href": "/index.html#contact" }
   ],
-
   "services": [
-    { "title": "Sähköasennukset", "text": "Asennukset ja remontit." }
+    { "title": "Sähköasennukset", "text": "Johdotukset, pistorasiat, kytkimet, laitteiden kytkennät." },
+    { "title": "Sähkökeskukset", "text": "Keskusten päivitys, suojaukset, merkinnät, dokumentointi." },
+    { "title": "Vianhaku", "text": "Mittaukset, vikojen paikannus, ylikuumenemiset, huolto." }
   ],
-
-  "documents": [
-    { "title": "Yritystiedot", "url": "/assets/uploads/yritystiedot.pdf" }
-  ],
-
-  "gallery": [
-    {
-      "title": "Sähkökeskus",
-      "city": "Järvenpää",
-      "image": "/assets/uploads/keskus.jpg",
-      "text": "Keskuksen uusinta"
-    }
-  ]
+  "documents": [],
+  "gallery": []
 }
