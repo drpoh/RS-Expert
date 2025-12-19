@@ -17,9 +17,7 @@ async function loadSite() {
   // Menu
   const nav = document.getElementById('menu');
   if (nav && Array.isArray(d.menu)) {
-    nav.innerHTML = d.menu
-      .map(m => `<a href="${m.href}">${escapeHtml(m.label)}</a>`)
-      .join('');
+    nav.innerHTML = d.menu.map(m => `<a href="${m.href}">${escapeHtml(m.label)}</a>`).join('');
   }
 
   // Contacts
@@ -34,55 +32,72 @@ async function loadSite() {
     emailA.textContent = email;
   }
 
-  // Services (only enabled)
-  const s = document.getElementById('services');
-  if (s) {
-    const items = (Array.isArray(d.services) ? d.services : []).filter(x => x?.enabled !== false);
-    s.innerHTML = items.length
-      ? items
-          .map(
-            i => `
+  // Services
+  const servicesAll = (Array.isArray(d.services) ? d.services : []).filter(x => x?.enabled !== false);
+  const servicesEl = document.getElementById('services');
+  if (servicesEl) {
+    servicesEl.innerHTML = servicesAll.length
+      ? servicesAll.map(i => `
           <div class="card">
             <h3>${escapeHtml(i.title || '')}</h3>
             <p>${escapeHtml(i.text || '')}</p>
           </div>
-        `
-          )
-          .join('')
+        `).join('')
       : `<div class="card"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
   }
 
-  // Documents (grouped by category, only enabled)
-  const docs = document.getElementById('documents');
-  if (docs) {
-    const items = (Array.isArray(d.documents) ? d.documents : []).filter(x => x?.enabled !== false);
+  // Services preview (home)
+  const servicesPreview = document.getElementById('servicesPreview');
+  if (servicesPreview) {
+    const slice = servicesAll.slice(0, 3);
+    servicesPreview.innerHTML = slice.length
+      ? slice.map(i => `
+          <div class="card">
+            <h3>${escapeHtml(i.title || '')}</h3>
+            <p>${escapeHtml(i.text || '')}</p>
+          </div>
+        `).join('')
+      : `<div class="card"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
+  }
 
-    if (!items.length) {
-      docs.innerHTML = `<div class="card"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
+  // Documents
+  const docsAll = (Array.isArray(d.documents) ? d.documents : []).filter(x => x?.enabled !== false);
+  const docsEl = document.getElementById('documents');
+  if (docsEl) {
+    if (!docsAll.length) {
+      docsEl.innerHTML = `<div class="card"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
     } else {
-      const groups = groupBy(items, it => it.category || 'Muut');
+      const groups = groupBy(docsAll, it => it.category || 'Muut');
       const order = ['Sertifikaatit', 'Hinnasto', 'Ohjeet', 'Muut'];
 
-      docs.innerHTML = order
-        .filter(cat => groups[cat])
-        .map(cat => renderDocGroup(cat, groups[cat]))
-        .join('') +
-        Object.keys(groups)
-          .filter(cat => !order.includes(cat))
-          .map(cat => renderDocGroup(cat, groups[cat]))
-          .join('');
+      docsEl.innerHTML =
+        order.filter(cat => groups[cat]).map(cat => renderDocGroup(cat, groups[cat])).join('') +
+        Object.keys(groups).filter(cat => !order.includes(cat)).map(cat => renderDocGroup(cat, groups[cat])).join('');
     }
   }
 
-  // Gallery (only enabled, add data-lightbox)
-  const g = document.getElementById('gallery');
-  if (g) {
-    const items = (Array.isArray(d.gallery) ? d.gallery : []).filter(x => x?.enabled !== false);
+  // Documents preview (home)
+  const docsPreview = document.getElementById('documentsPreview');
+  if (docsPreview) {
+    const slice = docsAll.slice(0, 3);
+    docsPreview.innerHTML = slice.length
+      ? slice.map(i => `
+          <div class="card">
+            <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
+            <p class="small">${escapeHtml(i.category || '')}</p>
+            <p><a class="btn" href="${i.url}" target="_blank" rel="noopener">Avaa PDF</a></p>
+          </div>
+        `).join('')
+      : `<div class="card"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
+  }
 
-    g.innerHTML = items.length
-      ? items
-          .map(
-            i => `
+  // Gallery
+  const galleryAll = (Array.isArray(d.gallery) ? d.gallery : []).filter(x => x?.enabled !== false);
+
+  const galleryEl = document.getElementById('gallery');
+  if (galleryEl) {
+    galleryEl.innerHTML = galleryAll.length
+      ? galleryAll.map(i => `
           <div class="card">
             ${i.image ? `<img src="${i.image}" alt="" data-lightbox>` : ''}
             <h3>${escapeHtml(i.title || '')}</h3>
@@ -90,53 +105,70 @@ async function loadSite() {
             ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
             ${i.text ? `<p>${escapeHtml(i.text)}</p>` : ''}
           </div>
-        `
-          )
-          .join('')
+        `).join('')
       : `<div class="card"><p>Lisää kuvia admin-paneelissa: /admin</p></div>`;
 
-    // Lightbox (if lightbox exists on page)
-    const lb = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lightbox-img');
-    const lbBg = document.getElementById('lightbox-bg');
-    const lbClose = document.getElementById('lightbox-close');
+    attachLightbox(galleryEl);
+  }
 
-    if (lb && lbImg && lbBg && lbClose) {
-      g.querySelectorAll('img[data-lightbox]').forEach(img => {
-        img.addEventListener('click', () => {
-          lbImg.src = img.src;
-          lb.style.display = 'block';
-          document.body.style.overflow = 'hidden';
-        });
-      });
+  // Gallery preview (home) — 6 latest
+  const galleryPreview = document.getElementById('galleryPreview');
+  if (galleryPreview) {
+    const slice = galleryAll.slice(0, 6);
+    galleryPreview.innerHTML = slice.length
+      ? slice.map(i => `
+          <div class="card">
+            ${i.image ? `<img src="${i.image}" alt="" data-lightbox>` : ''}
+            <h3>${escapeHtml(i.title || '')}</h3>
+            ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
+          </div>
+        `).join('')
+      : `<div class="card"><p>Lisää kuvia admin-paneelissa: /admin</p></div>`;
 
-      const closeLB = () => {
-        lb.style.display = 'none';
-        lbImg.src = '';
-        document.body.style.overflow = '';
-      };
+    attachLightbox(galleryPreview);
+  }
+}
 
-      lbBg.addEventListener('click', closeLB);
-      lbClose.addEventListener('click', closeLB);
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeLB();
-      });
-    }
+function attachLightbox(container) {
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+  const lbBg = document.getElementById('lightbox-bg');
+  const lbClose = document.getElementById('lightbox-close');
+  if (!lb || !lbImg || !lbBg || !lbClose) return;
+
+  container.querySelectorAll('img[data-lightbox]').forEach(img => {
+    img.addEventListener('click', () => {
+      lbImg.src = img.src;
+      lb.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  const closeLB = () => {
+    lb.style.display = 'none';
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  };
+
+  // bind once
+  if (!lb.dataset.bound) {
+    lbBg.addEventListener('click', closeLB);
+    lbClose.addEventListener('click', closeLB);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLB();
+    });
+    lb.dataset.bound = '1';
   }
 }
 
 function renderDocGroup(title, items) {
   const safeTitle = escapeHtml(title);
-  const cards = items
-    .map(
-      i => `
+  const cards = items.map(i => `
     <div class="card">
       <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
       <p><a class="btn" href="${i.url}" target="_blank" rel="noopener">Avaa PDF</a></p>
     </div>
-  `
-    )
-    .join('');
+  `).join('');
   return `
     <section style="margin: 14px 0 20px">
       <h2 style="margin:0 0 10px">${safeTitle}</h2>
@@ -155,11 +187,7 @@ function groupBy(arr, fn) {
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
   }[m]));
 }
 
