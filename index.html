@@ -1,10 +1,58 @@
-<nav id="menu"></nav>
-<h1 data-company></h1>
-<p data-tagline></p>
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RS-Expert Oy</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <b data-company>RS-Expert Oy</b>
+        <span data-tagline>Sähköasennukset ja huolto • Uusimaa</span>
+      </div>
+      <nav id="menu"></nav>
+    </div>
+  </div>
+</header>
 
-<section id="contact">
-  <p data-phone></p>
-  <p data-email></p>
-</section>
+<main class="wrap">
+  <div class="hero">
+    <h1>RS-Expert Oy</h1>
+    <p>Главная страница. Всё меню/контент управляется из /admin.</p>
+    <p id="error" style="color:#ffb4b4"></p>
+    <p>
+      <a class="btn primary" href="/services.html">Palvelut</a>
+      <a class="btn" href="/gallery.html">Galleria</a>
+      <a class="btn" href="/documents.html">Dokumentit</a>
+    </p>
+  </div>
+
+  <section id="contact">
+    <div class="grid">
+      <div class="card">
+        <h3>Puhelin</h3>
+        <p><a data-phone-link class="btn" href="tel:+358">+358…</a></p>
+      </div>
+      <div class="card">
+        <h3>Email</h3>
+        <p><a data-email-link class="btn" href="mailto:info@">info@…</a></p>
+      </div>
+      <div class="card">
+        <h3>Admin</h3>
+        <p><a class="btn" href="/admin/index.html">/admin</a></p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap" style="padding:0">© RS-Expert Oy</div>
+  </footer>
+</main>
 
 <script src="/assets/site.js"></script>
+</body>
+</html>
