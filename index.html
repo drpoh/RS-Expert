@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RS-Expert Oy — Sähköasennus ja huolto | Uusimaa</title>
+  <meta name="description" content="RS-Expert Oy: sähköasennus, vianhaku, sähkökeskukset, valaistus ja huolto Uudellamaalla (Uusimaa). Y-tunnus 3086033-5." />
+  <meta name="theme-color" content="#0b1220" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="RS-Expert Oy" />
+  <meta property="og:description" content="Sähköasennus ja huolto | Uusimaa" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="fi_FI" />
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#101a2e;
+      --muted:#93a4c7;
+      --text:#e7eefc;
+      --brand:#7c5cff;
+      --brand2:#34d399;
+      --line:rgba(231,238,252,.12);
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius:20px;
+      --max:1120px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 70% 0%, rgba(124,92,255,.22), transparent 55%),
+        radial-gradient(900px 600px at 10% 20%, rgba(52,211,153,.12), transparent 45%),
+        var(--bg);
+    }
+    a{color:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:0 20px}
+
+    header{
+      position:sticky; top:0; z-index:50;
+      background: rgba(11,18,32,.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .top{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 0;
+    }
+    .brand{
+      display:flex; gap:12px; align-items:center; text-decoration:none;
+    }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      box-shadow: 0 10px 30px rgba(124,92,255,.25);
+    }
+    .brand b{font-size:15px; letter-spacing:.2px}
+    .brand span{display:block; font-size:12px; color:var(--muted); margin-top:2px}
+
+    nav{display:flex; gap:16px; align-items:center}
+    nav a{
+      text-decoration:none; font-size:13px; color:var(--muted);
+      padding:8px 10px; border-radius:12px;
+    }
+    nav a:hover{background: rgba(231,238,252,.06); color:var(--text)}
+
+    .cta{display:flex; gap:10px; align-items:center;}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(231,238,252,.04);
+      color:var(--text);
+      text-decoration:none;
+      font-size:13px;
+      cursor:pointer;
+      transition:.15s transform, .15s background;
+    }
+    .btn:hover{background: rgba(231,238,252,.07)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(124,92,255,.35);
+      background: linear-gradient(135deg, rgba(124,92,255,.25), rgba(52,211,153,.12));
+      box-shadow: 0 18px 50px rgba(124,92,255,.12);
+    }
+
+    .lang{
+      display:inline-flex; border:1px solid var(--line);
+      border-radius:14px; overflow:hidden;
+      background: rgba(231,238,252,.03);
+    }
+    .lang button{
+      appearance:none; border:0; background:transparent; color:var(--muted);
+      padding:10px 12px; font-size:12px; cursor:pointer;
+    }
+    .lang button.active{color:var(--text); background: rgba(231,238,252,.06)}
+
+    .hero{padding:56px 0 26px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:22px;
+      align-items:stretch;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(16,26,46,.92), rgba(16,26,46,.72));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .heroMain{padding:28px}
+    h1{margin:0; font-size:40px; line-height:1.08; letter-spacing:-.4px}
+    .lead{margin:14px 0 0; color:var(--muted); font-size:15px; line-height:1.55}
+
+    .badges{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+    .badge{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size:12px;
+      background: rgba(231,238,252,.03);
+    }
+    .kpi{
+      padding:18px;
+      display:grid;
+      gap:12px;
+    }
+    .kpi .item{
+      padding:14px;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(231,238,252,.03);
+    }
+    .kpi b{display:block; font-size:18px}
+    .kpi span{display:block; margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35}
+
+    section{padding:22px 0}
+    .secTitle{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:14px}
+    .secTitle h2{margin:0; font-size:20px; letter-spacing:-.2px}
+    .secTitle p{margin:0; color:var(--muted); font-size:13px; line-height:1.45}
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+    }
+    .mini{
+      padding:18px;
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: rgba(231,238,252,.03);
+    }
+    .mini h3{margin:0 0 8px; font-size:15px}
+    .mini p{margin:0; color:var(--muted); font-size:13px; line-height:1.5}
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+
+    .list{margin:0; padding-left:18px; color:var(--muted); font-size:13px; line-height:1.6}
+    .list li{margin:6px 0}
+
+    .contact{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+    input, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(11,18,32,.35);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:110px; resize:vertical}
+    input:focus, textarea:focus{border-color: rgba(124,92,255,.55)}
+
+    footer{
+      padding:26px 0 42px;
+      color:var(--muted);
+      font-size:12px;
+      border-top:1px solid var(--line);
+      margin-top:24px;
+    }
+
+    .burger{display:none}
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr;}
+      h1{font-size:34px}
+      .cards{grid-template-columns: 1fr 1fr}
+      .contact{grid-template-columns: 1fr}
+      nav{display:none}
+      .burger{display:inline-flex}
+    }
+    @media (max-width: 560px){
+      .cards{grid-template-columns: 1fr}
+      .split{grid-template-columns: 1fr}
+      h1{font-size:30px}
+    }
+
+    .drawer{display:none}
+    .drawer.open{display:block}
+    .drawer a{display:block; text-decoration:none; padding:12px 14px; border-top:1px solid var(--line); color:var(--muted)}
+    .drawer a:hover{color:var(--text); background: rgba(231,238,252,.05)}
+
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ElectricalContractor",
+    "name": "RS-Expert Oy",
+    "url": "https://example.com",
+    "telephone": "+358449723588",
+    "email": "robertsild@gmail.com",
+    "areaServed": [
+      "Uusimaa",
+      "Finland"
+    ],
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Siltakatu 73",
+      "postalCode": "04400",
+      "addressLocality": "Järvenpää",
+      "addressCountry": "FI"
+    },
+    "identifier": {
+      "@type": "PropertyValue",
+      "propertyID": "Y-tunnus",
+      "value": "3086033-5"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <a class="brand" href="#top" aria-label="RS-Expert Oy">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <b>RS-Expert Oy</b>
+          <span data-i18n="tagline">Sähköasennukset ja huolto • Uusimaa</span>
+        </div>
+      </a>
+
+      <nav aria-label="Navigaatio">
+        <a href="#services" data-i18n="nav_services">Palvelut</a>
+        <a href="#projects" data-i18n="nav_projects">Kohteet</a>
+        <a href="#about" data-i18n="nav_about">Yritys</a>
+        <a href="#contact" data-i18n="nav_contact">Yhteys</a>
+      </nav>
+
+      <div class="cta">
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" id="btn-fi" class="active">FI</button>
+          <button type="button" id="btn-ru">RU</button>
+        </div>
+        <a class="btn" href="tel:+358449723588" data-i18n="call_btn">Soita</a>
+        <button class="btn burger" id="burger" aria-label="Menu">☰</button>
+        <a class="btn primary" href="#contact" data-i18n="quote_btn">Pyydä tarjous</a>
+      </div>
+    </div>
+
+    <div class="drawer" id="drawer" aria-label="Mobiilivalikko">
+      <a href="#services" data-i18n="nav_services">Palvelut</a>
+      <a href="#projects" data-i18n="nav_projects">Kohteet</a>
+      <a href="#about" data-i18n="nav_about">Yritys</a>
+      <a href="#contact" data-i18n="nav_contact">Yhteys</a>
+    </div>
+  </div>
+</header>
+
+<main id="top" class="wrap">
+
+  <div class="hero">
+    <div class="grid">
+      <div class="card">
+        <div class="heroMain">
+          <h1 data-i18n="hero_h1">Luotettavat sähkötyöt<br/>kotiin, yrityksille ja työmaille</h1>
+          <p class="lead" data-i18n="hero_lead">
+            Sähköasennus, huolto ja vianhaku Uudellamaalla. Selkeä tarjous, sovitut aikataulut ja siisti lopputulos.
+          </p>
+
+          <div class="badges" aria-label="Edut">
+            <div class="badge" data-i18n="badge1">⚡ Nopea käynti ja vianhaku</div>
+            <div class="badge" data-i18n="badge2">🛠️ Keskukset, valaistus, automaatio</div>
+            <div class="badge" data-i18n="badge3">✅ Dokumentointi ja luovutus</div>
+          </div>
+
+          <div class="row" style="margin-top:18px">
+            <a class="btn primary" href="#contact" data-i18n="hero_cta1">Pyydä hinta-arvio</a>
+            <a class="btn" href="#services" data-i18n="hero_cta2">Katso palvelut</a>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card kpi" aria-label="Faktat">
+        <div class="item">
+          <b data-i18n="kpi1_b">Uusimaa</b>
+          <span data-i18n="kpi1_s">Kotipaikka Järvenpää — työt sopimuksella</span>
+        </div>
+        <div class="item">
+          <b data-i18n="kpi2_b">Sähköasennus (43210)</b>
+          <span data-i18n="kpi2_s">Asennukset, huolto, korjaukset ja modernisointi</span>
+        </div>
+        <div class="item">
+          <b data-i18n="kpi3_b">Y-tunnus 3086033-5</b>
+          <span data-i18n="kpi3_s">Selkeät yhteystiedot ja laskutus</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <section id="services">
+    <div class="secTitle">
+      <div>
+        <h2 data-i18n="services_h2">Palvelut</h2>
+        <p data-i18n="services_p">Tyypilliset työt. Jos et löydä omaasi listasta — kysy rohkeasti.</p>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="mini">
+        <h3 data-i18n="srv1_t">Sähköasennukset</h3>
+        <p data-i18n="srv1_p">Johdotukset, pistorasiat, kytkimet, lisälinjat, laitteiden kytkennät.</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="srv2_t">Sähkökeskukset</h3>
+        <p data-i18n="srv2_p">Keskusten rakentaminen/päivitys, suojaukset, merkinnät, automaatio.</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="srv3_t">Valaistus</h3>
+        <p data-i18n="srv3_p">Sisä- ja ulkovalaistus, liiketunnistimet, turvavalot, LED.</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="srv4_t">Vianhaku ja korjaus</h3>
+        <p data-i18n="srv4_p">Mittaukset, vikojen paikannus, ylikuumenemiset, ennaltaehkäisevä huolto.</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="srv5_t">Heikkovirta / IoT</h3>
+        <p data-i18n="srv5_p">Anturit ja perusautomaatio (projektikohtaisesti).</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="srv6_t">Dokumentit</h3>
+        <p data-i18n="srv6_p">Tarjous, materiaalit, luovutus ja suositukset parannuksiin.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="secTitle">
+      <div>
+        <h2 data-i18n="projects_h2">Tyypilliset kohteet</h2>
+        <p data-i18n="projects_p">Esimerkkejä tehtävistä, joita voimme toteuttaa.</p>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="mini">
+        <h3 data-i18n="pr1_t">Koti / asunto</h3>
+        <ul class="list">
+          <li data-i18n="pr1_1">Vanhan asennuksen päivitys ja uudet linjat</li>
+          <li data-i18n="pr1_2">Keittiöryhmät ja kodinkoneet</li>
+          <li data-i18n="pr1_3">Pihavalaistus, autotalli, sauna</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="pr2_t">Yritys / työmaa</h3>
+        <ul class="list">
+          <li data-i18n="pr2_1">Keskukset, jakelu ja tilapäissähköt</li>
+          <li data-i18n="pr2_2">Valaistus ja turvavalaistus</li>
+          <li data-i18n="pr2_3">Huolto ja ennakkotarkastukset</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="secTitle">
+      <div>
+        <h2 data-i18n="about_h2">Yrityksestä</h2>
+        <p data-i18n="about_p">RS-Expert Oy tekee sähkötyöt turvallisesti, siististi ja selkeästi.</p>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="mini">
+        <h3 data-i18n="ab1_t">Toimintatapa</h3>
+        <p data-i18n="ab1_p">Ensin kartoitus ja ratkaisu, sitten työ. Ei yllätyksiä laskussa.</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="ab2_t">Laatu</h3>
+        <p data-i18n="ab2_p">Turvalliset ratkaisut, oikeat suojaukset ja huolellinen toteutus.</p>
+      </div>
+      <div class="mini">
+        <h3 data-i18n="ab3_t">Viestintä</h3>
+        <p data-i18n="ab3_p">Selkeät vaihtoehdot: mikä on järkevää, missä ei kannata säästää.</p>
+      </div>
+    </div>
+
+    <div class="mini" style="margin-top:14px">
+      <h3 data-i18n="cred_t">Yritystiedot</h3>
+      <p class="muted" data-i18n="cred_p">
+        Y-tunnus: 3086033-5 • Toimiala: Sähköasennus (43210) • Kotipaikka: Järvenpää
+      </p>
+      <div class="row" style="margin-top:10px">
+        <span class="badge">Y-tunnus: <span class="muted">3086033-5</span></span>
+        <span class="badge">Osoite: <span class="muted">Siltakatu 73, 04400 Järvenpää</span></span>
+        <span class="badge">Alue: <span class="muted">Uusimaa</span></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="secTitle">
+      <div>
+        <h2 data-i18n="contact_h2">Yhteystiedot</h2>
+        <p data-i18n="contact_p">Kerro lyhyesti työ — palaamme asiaan ehdotuksella.</p>
+      </div>
+    </div>
+
+    <div class="contact">
+      <div class="mini">
+        <h3 data-i18n="contact_left_t">Nopea yhteys</h3>
+        <p class="muted" style="margin-top:8px" data-i18n="contact_left_p">
+          Puhelin ja sähköposti (Asiakastieto).
+        </p>
+
+        <p style="margin:14px 0 0">
+          <b data-i18n="phone">Puhelin</b><br/>
+          <a class="muted" href="tel:+358449723588">044 972 3588</a>
+        </p>
+
+        <p style="margin:12px 0 0">
+          <b>Email</b><br/>
+          <a class="muted" href="mailto:robertsild@gmail.com">robertsild@gmail.com</a>
+        </p>
+
+        <p style="margin:12px 0 0">
+          <b data-i18n="addr_t">Osoite</b><br/>
+          <span class="muted">Siltakatu 73, 04400 Järvenpää</span>
+        </p>
+
+        <p style="margin:12px 0 0">
+          <b data-i18n="visit_t">Käyntiosoite</b><br/>
+          <span class="muted">c/o Robert Sild, Siltakatu 73, 04400 Järvenpää</span>
+        </p>
+
+        <div class="row" style="margin-top:14px">
+          <a class="btn" href="mailto:robertsild@gmail.com?subject=RS-Expert%20—%20Tarjouspyyntö" data-i18n="email_btn">Lähetä sähköposti</a>
+          <a class="btn" href="#top" data-i18n="up_btn">Ylös</a>
+        </div>
+      </div>
+
+      <form class="mini" id="quoteForm">
+        <h3 data-i18n="form_t">Tarjouspyyntö</h3>
+        <div>
+          <label for="name" data-i18n="f_name">Nimi</label>
+          <input id="name" name="name" autocomplete="name" />
+
+          <label for="phone" data-i18n="f_phone">Puhelin</label>
+          <input id="phone" name="phone" autocomplete="tel" />
+
+          <label for="addr" data-i18n="f_addr">Kaupunki / osoite (suuntaa-antava)</label>
+          <input id="addr" name="addr" autocomplete="street-address" />
+
+          <label for="msg" data-i18n="f_msg">Mitä pitäisi tehdä?</label>
+          <textarea id="msg" name="msg"></textarea>
+
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" type="submit" data-i18n="send_btn">Lähetä</button>
+            <span class="muted" style="font-size:12px" data-i18n="form_note">Lomake avaa sähköpostiohjelman (mailto).</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap" style="padding:0">
+      <div class="row" style="justify-content:space-between; align-items:flex-start">
+        <div>
+          <b>RS-Expert Oy</b><br/>
+          <span class="muted">Sähköasennus • Uusimaa</span><br/>
+          <span class="muted">Y-tunnus 3086033-5</span>
+        </div>
+        <div class="muted" style="text-align:right">
+          <span>©</span> <span id="year"></span> <span>Kaikki oikeudet pidätetään</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+  // Mobile menu
+  const burger = document.getElementById('burger');
+  const drawer = document.getElementById('drawer');
+  if (burger) burger.addEventListener('click', () => drawer.classList.toggle('open'));
+
+  // Year
+  document.getElementById('year').textContent = String(new Date().getFullYear());
+
+  // Language switch (FI/RU)
+  const dict = {
+    fi: {
+      tagline: 'Sähköasennukset ja huolto • Uusimaa',
+      nav_services: 'Palvelut',
+      nav_projects: 'Kohteet',
+      nav_about: 'Yritys',
+      nav_contact: 'Yhteys',
+      call_btn: 'Soita',
+      quote_btn: 'Pyydä tarjous',
+      hero_h1: 'Luotettavat sähkötyöt<br/>kotiin, yrityksille ja työmaille',
+      hero_lead: 'Sähköasennus, huolto ja vianhaku Uudellamaalla. Selkeä tarjous, sovitut aikataulut ja siisti lopputulos.',
+      badge1: '⚡ Nopea käynti ja vianhaku',
+      badge2: '🛠️ Keskukset, valaistus, automaatio',
+      badge3: '✅ Dokumentointi ja luovutus',
+      hero_cta1: 'Pyydä hinta-arvio',
+      hero_cta2: 'Katso palvelut',
+      kpi1_b: 'Uusimaa',
+      kpi1_s: 'Kotipaikka Järvenpää — työt sopimuksella',
+      kpi2_b: 'Sähköasennus (43210)',
+      kpi2_s: 'Asennukset, huolto, korjaukset ja modernisointi',
+      kpi3_b: 'Y-tunnus 3086033-5',
+      kpi3_s: 'Selkeät yhteystiedot ja laskutus',
+      services_h2: 'Palvelut',
+      services_p: 'Tyypilliset työt. Jos et löydä omaasi listasta — kysy rohkeasti.',
+      srv1_t: 'Sähköasennukset',
+      srv1_p: 'Johdotukset, pistorasiat, kytkimet, lisälinjat, laitteiden kytkennät.',
+      srv2_t: 'Sähkökeskukset',
+      srv2_p: 'Keskusten rakentaminen/päivitys, suojaukset, merkinnät, automaatio.',
+      srv3_t: 'Valaistus',
+      srv3_p: 'Sisä- ja ulkovalaistus, liiketunnistimet, turvavalot, LED.',
+      srv4_t: 'Vianhaku ja korjaus',
+      srv4_p: 'Mittaukset, vikojen paikannus, ylikuumenemiset, ennaltaehkäisevä huolto.',
+      srv5_t: 'Heikkovirta / IoT',
+      srv5_p: 'Anturit ja perusautomaatio (projektikohtaisesti).',
+      srv6_t: 'Dokumentit',
+      srv6_p: 'Tarjous, materiaalit, luovutus ja suositukset parannuksiin.',
+      projects_h2: 'Tyypilliset kohteet',
+      projects_p: 'Esimerkkejä tehtävistä, joita voimme toteuttaa.',
+      pr1_t: 'Koti / asunto',
+      pr1_1: 'Vanhan asennuksen päivitys ja uudet linjat',
+      pr1_2: 'Keittiöryhmät ja kodinkoneet',
+      pr1_3: 'Pihavalaistus, autotalli, sauna',
+      pr2_t: 'Yritys / työmaa',
+      pr2_1: 'Keskukset, jakelu ja tilapäissähköt',
+      pr2_2: 'Valaistus ja turvavalaistus',
+      pr2_3: 'Huolto ja ennakkotarkastukset',
+      about_h2: 'Yrityksestä',
+      about_p: 'RS-Expert Oy tekee sähkötyöt turvallisesti, siististi ja selkeästi.',
+      ab1_t: 'Toimintatapa',
+      ab1_p: 'Ensin kartoitus ja ratkaisu, sitten työ. Ei yllätyksiä laskussa.',
+      ab2_t: 'Laatu',
+      ab2_p: 'Turvalliset ratkaisut, oikeat suojaukset ja huolellinen toteutus.',
+      ab3_t: 'Viestintä',
+      ab3_p: 'Selkeät vaihtoehdot: mikä on järkevää, missä ei kannata säästää.',
+      cred_t: 'Yritystiedot',
+      cred_p: 'Y-tunnus: 3086033-5 • Toimiala: Sähköasennus (43210) • Kotipaikka: Järvenpää',
+      contact_h2: 'Yhteystiedot',
+      contact_p: 'Kerro lyhyesti työ — palaamme asiaan ehdotuksella.',
+      contact_left_t: 'Nopea yhteys',
+      contact_left_p: 'Puhelin ja sähköposti (Asiakastieto).',
+      phone: 'Puhelin',
+      addr_t: 'Osoite',
+      visit_t: 'Käyntiosoite',
+      email_btn: 'Lähetä sähköposti',
+      up_btn: 'Ylös',
+      form_t: 'Tarjouspyyntö',
+      f_name: 'Nimi',
+      f_phone: 'Puhelin',
+      f_addr: 'Kaupunki / osoite (suuntaa-antava)',
+      f_msg: 'Mitä pitäisi tehdä?',
+      send_btn: 'Lähetä',
+      form_note: 'Lomake avaa sähköpostiohjelman (mailto).'
+    },
+    ru: {
+      tagline: 'Электромонтаж и сервис • Uusimaa',
+      nav_services: 'Услуги',
+      nav_projects: 'Проекты',
+      nav_about: 'О компании',
+      nav_contact: 'Контакты',
+      call_btn: 'Позвонить',
+      quote_btn: 'Запросить предложение',
+      hero_h1: 'Надёжные электромонтажные работы<br/>для дома, бизнеса и стройки',
+      hero_lead: 'Электромонтаж, обслуживание и диагностика в Uusimaa. Понятная смета, сроки и аккуратная сдача.',
+      badge1: '⚡ Быстрый выезд и диагностика',
+      badge2: '🛠️ Щиты, освещение, автоматика',
+      badge3: '✅ Документы и актирование',
+      hero_cta1: 'Запросить расчёт',
+      hero_cta2: 'Смотреть услуги',
+      kpi1_b: 'Uusimaa',
+      kpi1_s: 'Kotipaikka Järvenpää — работа по договору',
+      kpi2_b: 'Sähköasennus (43210)',
+      kpi2_s: 'Монтаж, сервис, ремонт и модернизация',
+      kpi3_b: 'Y-tunnus 3086033-5',
+      kpi3_s: 'Понятные контакты и документы',
+      services_h2: 'Услуги',
+      services_p: 'Типовые работы. Если вашей задачи нет в списке — напишите.',
+      srv1_t: 'Электромонтаж',
+      srv1_p: 'Проводка, розетки, выключатели, новые линии, подключение оборудования.',
+      srv2_t: 'Щиты и защита',
+      srv2_p: 'Сборка/модернизация щитов, защита, маркировка, автоматика.',
+      srv3_t: 'Освещение',
+      srv3_p: 'Внутреннее/наружное освещение, датчики движения, аварийные светильники, LED.',
+      srv4_t: 'Диагностика и ремонт',
+      srv4_p: 'Поиск неисправностей, измерения, перегрев контактов, профилактика.',
+      srv5_t: 'Слаботочка / IoT',
+      srv5_p: 'Датчики и базовая автоматика (по проекту).',
+      srv6_t: 'Документы',
+      srv6_p: 'Смета, материалы, сдача работ и рекомендации.',
+      projects_h2: 'Типовые проекты',
+      projects_p: 'Примеры задач, которые можем реализовать.',
+      pr1_t: 'Дом / квартира',
+      pr1_1: 'Обновление электрики и добавление линий',
+      pr1_2: 'Кухонные группы и техника',
+      pr1_3: 'Уличное освещение, гараж, сауна',
+      pr2_t: 'Бизнес / стройка',
+      pr2_1: 'Щиты, распределение, временное питание',
+      pr2_2: 'Освещение и аварийное освещение',
+      pr2_3: 'Обслуживание и профилактика',
+      about_h2: 'О компании',
+      about_p: 'RS-Expert Oy делает работы безопасно, аккуратно и с понятным результатом.',
+      ab1_t: 'Подход',
+      ab1_p: 'Сначала осмотр и решение, затем работы. Без сюрпризов в счёте.',
+      ab2_t: 'Качество',
+      ab2_p: 'Безопасные решения, правильная защита и аккуратная сборка.',
+      ab3_t: 'Коммуникация',
+      ab3_p: 'Объясняем варианты: что лучше, где не стоит экономить.',
+      cred_t: 'Данные компании',
+      cred_p: 'Y-tunnus: 3086033-5 • Toimiala: Sähköasennus (43210) • Kotipaikka: Järvenpää',
+      contact_h2: 'Контакты',
+      contact_p: 'Опишите задачу — ответим и предложим решение.',
+      contact_left_t: 'Быстрая связь',
+      contact_left_p: 'Телефон и email (Asiakastieto).',
+      phone: 'Телефон',
+      addr_t: 'Адрес',
+      visit_t: 'Адрес для посещения',
+      email_btn: 'Написать email',
+      up_btn: 'Наверх',
+      form_t: 'Заявка',
+      f_name: 'Имя',
+      f_phone: 'Телефон',
+      f_addr: 'Город / адрес (примерно)',
+      f_msg: 'Что нужно сделать?',
+      send_btn: 'Отправить',
+      form_note: 'Форма откроет почтовый клиент (mailto).'
+    }
+  };
+
+  function setLang(lang){
+    document.documentElement.lang = (lang === 'ru') ? 'ru' : 'fi';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if (dict[lang] && dict[lang][k]) el.innerHTML = dict[lang][k];
+    });
+    document.getElementById('btn-fi').classList.toggle('active', lang==='fi');
+    document.getElementById('btn-ru').classList.toggle('active', lang==='ru');
+  }
+
+  document.getElementById('btn-fi').addEventListener('click', () => setLang('fi'));
+  document.getElementById('btn-ru').addEventListener('click', () => setLang('ru'));
+
+  // Contact form -> mailto
+  document.getElementById('quoteForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const addr = document.getElementById('addr').value.trim();
+    const msg = document.getElementById('msg').value.trim();
+
+    const subject = encodeURIComponent('RS-Expert — Tarjouspyyntö');
+    const body = encodeURIComponent(
+      `Nimi: ${name}\nPuhelin: ${phone}\nOsoite/kaupunki: ${addr}\n\nTyö:\n${msg}\n`
+    );
+
+    window.location.href = `mailto:robertsild@gmail.com?subject=${subject}&body=${body}`;
+  });
+
+  // Default language
+  setLang('fi');
+</script>
+
+</body>
+</html>
