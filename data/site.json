@@ -1,160 +1,78 @@
-{
-  "basic": {
-    "companyName": "RS-Expert Oy",
-    "tagline": "sähköasennukset",
-    "phone": "+358449723588",
-    "email": "robertsild@gmail.com"
-  },
-  "menu": [
-    {
-      "label": "Etusivu",
-      "href": "/index.html"
-    },
-    {
-      "label": "Palvelut",
-      "href": "/services.html"
-    },
-    {
-      "label": "Galleria",
-      "href": "/gallery.html"
-    },
-    {
-      "label": "Dokumentit",
-      "href": "/documents.html"
-    },
-    {
-      "label": "Yhteys",
-      "href": "/index.html#contact"
-    }
-  ],
-  "services": [
-    {
-      "title": "Sähköasennukset",
-      "text": "Johdotukset, pistorasiat, kytkimet, laitteiden kytkennät.",
-      "enabled": true
-    },
-    {
-      "title": "Sähkökeskukset",
-      "text": "Keskusten päivitys, suojaukset, merkinnät, dokumentointi.",
-      "enabled": true
-    },
-    {
-      "title": "Vianhaku",
-      "text": "Mittaukset, vikojen paikannus, ylikuumenemiset, huolto.",
-      "enabled": true
-    },
-    {
-      "title": "Remontit ja uudisrakennus",
-      "text": "Sähköistys osana remonttia: reititykset, kaapeloinnit, kalusteasennukset sekä yhteistyö muiden urakoitsijoiden kanssa.",
-      "enabled": true
-    },
-    {
-      "title": "Sauna, pesutilat ja ulkovalaistus",
-      "text": "Saunan ja märkätilojen sähkötyöt, lämmityksen ohjaus, pihavalaistus ja ajastukset. Ratkaisut myös älyohjauksella.",
-      "enabled": true
-    },
-    {
-      "title": "Sähkölämmitys ja ohjaukset",
-      "text": "Termostaatit, kontaktorit, ohjauskeskukset ja kuormien hallinta. Autetaan myös optimoinnissa ja ajastuksissa.",
-      "enabled": true
-    },
-    {
-      "title": "Sähköauton lataus (perusvalmius)",
-      "text": "Latausratkaisujen perusvalmiuden tarkistus, kuorman arviointi ja asennusvalmistelut. Toteutus kohteen mukaan.",
-      "enabled": true
-    },
-    {
-      "title": "Älykoti ja automaatio (Home Assistant)",
-      "text": "Valojen, lämmityksen ja laitteiden ohjaukset sekä automaatiot. Suunnitellaan ratkaisut järkevästi ja turvallisesti.",
-      "enabled": true
-    }
-  ],
-  "documents": [
-    {
-      "title": "Yritysesite (PDF)",
-      "url": "/assets/uploads/rs-expert-esite.pdf",
-      "category": "Muut",
-      "enabled": true
-    },
-    {
-      "title": "Hinnasto (suuntaa-antava)",
-      "url": "/assets/uploads/hinnasto.pdf",
-      "category": "Hinnasto",
-      "enabled": true
-    },
-    {
-      "title": "Turvallisuus & työskentelykäytännöt",
-      "url": "/assets/uploads/turvallisuus.pdf",
-      "category": "Ohjeet",
-      "enabled": true
-    },
-    {
-      "title": "Vastuuvakuutus (todistus)",
-      "url": "/assets/uploads/vastuuvakuutus.pdf",
-      "category": "Sertifikaatit",
-      "enabled": false
-    }
-  ],
-  "gallery": [
-    {
-      "title": "Sähkökeskuksen päivitys",
-      "city": "Järvenpää",
-      "image": "/assets/uploads/gallery-keskus.jpg",
-      "text": "Keskuksen siistintä, ryhmämerkinnät ja suojalaitteiden päivitys.",
-      "type": "Sähkökeskus",
-      "enabled": true
-    },
-    {
-      "title": "Keittiön valaistus ja pistorasiat",
-      "city": "Kerava",
-      "image": "/assets/uploads/gallery-keittio.jpg",
-      "text": "Uudet valaisimet, lisäpistorasiat ja toimiva käytettävyys.",
-      "type": "Asennus",
-      "enabled": true
-    },
-    {
-      "title": "Vianhaku: laukeava sulake",
-      "city": "Helsinki",
-      "image": "/assets/uploads/gallery-vianhaku.jpg",
-      "text": "Vian paikannus ja korjaus – turvallinen toiminta palautettiin nopeasti.",
-      "type": "Vianhaku",
-      "enabled": true
-    },
-    {
-      "title": "Saunan sähkötyöt",
-      "city": "Tuusula",
-      "image": "/assets/uploads/gallery-sauna.jpg",
-      "text": "Saunan ja pesutilojen sähköasennukset kohteen vaatimusten mukaan.",
-      "type": "Remontti",
-      "enabled": true
-    },
-    {
-      "title": "Ulkovalaistus",
-      "city": "Vantaa",
-      "image": "/assets/uploads/gallery-ulkovalot.jpg",
-      "text": "Pihavalaistus ja ohjausratkaisut (ajastus/automaatio).",
-      "type": "Asennus",
-      "enabled": true
-    },
-    {
-      "title": "Älyohjaus (valot & lämmitys)",
-      "city": "Espoo",
-      "image": "/assets/uploads/gallery-alykoti.jpg",
-      "text": "Käytännöllinen automaatio – helppo arki, selkeä hallinta.",
-      "type": "Muu",
-      "enabled": true
-    },
-    {
-      "title": "тест",
-      "city": "",
-      "image": "/assets/uploads/A5.1.jpg",
-      "text": "",
-      "type": "Asennus",
-      "enabled": true
-    }
-  ],
-  "email": "info@rs-expert.fi",
-  "companyName": "RS-Expert Oy",
-  "tagline": "Sähköasennukset ja huolto • Uusimaa",
-  "phone": "+358449723588"
+// ===== UX Add-ons (2025): bottom CTA bar + gallery filters + lazyload =====
+
+function ensureBottomBar(phone, email) {
+  if (document.getElementById('bottomBar')) return;
+
+  const bar = document.createElement('div');
+  bar.id = 'bottomBar';
+  bar.innerHTML = `
+    <div class="bb-wrap">
+      <a class="bb-btn bb-primary" href="tel:${(phone||'').replace(/\s+/g,'')}">📞 Soita</a>
+      <a class="bb-btn" href="/index.html#contact">💬 Viesti</a>
+      <a class="bb-btn" href="mailto:${email||''}">✉️ Email</a>
+    </div>
+  `;
+  document.body.appendChild(bar);
+
+  // show on scroll (less intrusive)
+  let shown = false;
+  const onScroll = () => {
+    const y = window.scrollY || 0;
+    if (y > 220 && !shown) { bar.classList.add('show'); shown = true; }
+    if (y <= 220 && shown) { bar.classList.remove('show'); shown = false; }
+  };
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+}
+
+function makeGalleryFilters(items) {
+  const host = document.getElementById('galleryFilters');
+  if (!host) return;
+
+  const types = uniq(items.map(x => x.type).filter(Boolean));
+  const cities = uniq(items.map(x => x.city).filter(Boolean));
+
+  host.innerHTML = `
+    <div class="gf">
+      <select id="fType">
+        <option value="">Kaikki tyypit</option>
+        ${types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}
+      </select>
+      <select id="fCity">
+        <option value="">Kaikki kaupungit</option>
+        ${cities.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+      </select>
+      <button class="gf-btn" id="fClear">Tyhjennä</button>
+    </div>
+  `;
+
+  const fType = document.getElementById('fType');
+  const fCity = document.getElementById('fCity');
+  const fClear = document.getElementById('fClear');
+
+  const apply = () => {
+    const t = fType.value;
+    const c = fCity.value;
+    document.querySelectorAll('#gallery .card').forEach(card => {
+      const ct = card.getAttribute('data-type') || '';
+      const cc = card.getAttribute('data-city') || '';
+      const ok = (!t || ct === t) && (!c || cc === c);
+      card.style.display = ok ? '' : 'none';
+    });
+  };
+
+  fType.addEventListener('change', apply);
+  fCity.addEventListener('change', apply);
+  fClear.addEventListener('click', () => { fType.value=''; fCity.value=''; apply(); });
+}
+
+function uniq(a){ return Array.from(new Set(a)); }
+function esc(s){ return String(s).replace(/"/g,'&quot;'); }
+
+// Patch: add loading="lazy" to gallery images (if present)
+function enableLazyImages() {
+  document.querySelectorAll('img').forEach(img => {
+    if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+    img.setAttribute('decoding','async');
+  });
 }
