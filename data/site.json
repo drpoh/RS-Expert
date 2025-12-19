@@ -1,0 +1,16 @@
+{
+  "companyName": "RS-Expert Oy",
+  "tagline": "Sähköasennukset ja huolto • Uusimaa",
+  "phone": "+358XXXXXXXXX",
+  "email": "info@rs-expert.fi",
+  "area": "Uusimaa",
+  "menu": [
+    { "label": "Palvelut", "href": "#services" },
+    { "label": "Dokumentit", "href": "#documents" },
+    { "label": "Galleria", "href": "#gallery" },
+    { "label": "Yhteys", "href": "#contact" }
+  ],
+  "services": [],
+  "documents": [],
+  "gallery": []
+}
