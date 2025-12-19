@@ -1,0 +1,53 @@
+backend:
+  name: github
+  repo: drpoh/RS-Expert
+  branch: main
+  base_url: https://<ТВОЙ-AUTH-WORKER>.workers.dev
+
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
+
+collections:
+  - name: "site"
+    label: "Sivuston sisältö"
+    files:
+      - file: "data/site.json"
+        label: "Asetukset, menu, palvelut, galleria, dokumentit"
+        name: "site"
+        format: "json"
+        fields:
+          - { label: "Yrityksen nimi", name: "companyName", widget: "string" }
+          - { label: "Tagline", name: "tagline", widget: "string" }
+          - { label: "Puhelin", name: "phone", widget: "string" }
+          - { label: "Email", name: "email", widget: "string" }
+          - { label: "Alue", name: "area", widget: "string", default: "Uusimaa" }
+
+          - label: "Menu"
+            name: "menu"
+            widget: "list"
+            fields:
+              - { label: "Teksti", name: "label", widget: "string" }
+              - { label: "Linkki (ankkuri tai sivu)", name: "href", widget: "string" }
+
+          - label: "Palvelut"
+            name: "services"
+            widget: "list"
+            fields:
+              - { label: "Otsikko", name: "title", widget: "string" }
+              - { label: "Kuvaus", name: "text", widget: "text" }
+
+          - label: "Dokumentit"
+            name: "documents"
+            widget: "list"
+            fields:
+              - { label: "Nimi", name: "title", widget: "string" }
+              - { label: "PDF/Linkki", name: "url", widget: "string" }
+
+          - label: "Galleria"
+            name: "gallery"
+            widget: "list"
+            fields:
+              - { label: "Otsikko", name: "title", widget: "string" }
+              - { label: "Kaupunki", name: "city", widget: "string", required: false }
+              - { label: "Kuva", name: "image", widget: "image" }
+              - { label: "Kuvaus", name: "text", widget: "text", required: false }
