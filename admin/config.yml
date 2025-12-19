@@ -27,7 +27,7 @@ collections:
             widget: "object"
             fields:
               - { label: "Yrityksen nimi", name: "companyName", widget: "string", required: true, hint: "Näkyy otsikossa ja sivun yläosassa." }
-              - { label: "Tagline", name: "tagline", widget: "string", required: true, hint: "Lyhyt kuvaus: esim. 'Sähköasennukset ja huolto • Uusimaa'." }
+              - { label: "Tagline", name: "tagline", widget: "string", required: true, hint: "Lyhyt kuvaus, esim. 'Sähköasennukset ja huolto • Uusimaa'." }
               - { label: "Puhelin", name: "phone", widget: "string", required: true, hint: "Suositus: +358... (välilyönnit sallittu)." }
               - { label: "Email", name: "email", widget: "string", required: true, hint: "Esim. info@rs-expert.fi" }
 
@@ -36,7 +36,6 @@ collections:
             widget: "list"
             hint: "Vaihda järjestystä vetämällä. Lisää/poista kohteita tarvittaessa."
             summary: "{{fields.label}} → {{fields.href}}"
-            allow_add: true
             collapsed: true
             fields:
               - { label: "Teksti", name: "label", widget: "string", required: true }
@@ -56,18 +55,17 @@ collections:
             widget: "list"
             hint: "Palvelut näkyvät sivulla /services.html. Järjestys = näkyvyysjärjestys."
             summary: "{{fields.title}}"
-            allow_add: true
             collapsed: true
             fields:
               - { label: "Otsikko", name: "title", widget: "string", required: true }
               - { label: "Kuvaus", name: "text", widget: "text", required: true }
+              - { label: "Näkyvissä", name: "enabled", widget: "boolean", default: true, required: false }
 
           - label: "Dokumentit"
             name: "documents"
             widget: "list"
             hint: "Lisää PDF:t. Ne näkyvät sivulla /documents.html."
             summary: "{{fields.title}}"
-            allow_add: true
             collapsed: true
             fields:
               - { label: "Nimi", name: "title", widget: "string", required: true }
@@ -88,12 +86,11 @@ collections:
             widget: "list"
             hint: "Lisää kuvia töistä. Ne näkyvät sivulla /gallery.html."
             summary: "{{fields.title}} — {{fields.city}}"
-            allow_add: true
             collapsed: true
             fields:
               - { label: "Otsikko", name: "title", widget: "string", required: true }
-              - { label: "Kaupunki", name: "city", widget: "string", required: false, hint: "Esim. Järvenpää, Helsinki..." }
-              - { label: "Kuva", name: "image", widget: "image", required: true, hint: "Lataa kuva (JPG/PNG).", media_library: { allow_multiple: false } }
+              - { label: "Kaupunki", name: "city", widget: "string", required: false }
+              - { label: "Kuva", name: "image", widget: "image", required: true, media_library: { allow_multiple: false } }
               - { label: "Kuvaus", name: "text", widget: "text", required: false }
               - label: "Työn tyyppi"
                 name: "type"
