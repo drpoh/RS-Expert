@@ -1,31 +1,46 @@
 {
   "basic": {
     "companyName": "RS-Expert Oy",
-    "tagline": "Sähköasennukset, vianhaku ja sähkökeskukset • Uusimaa",
-    "phone": "+358 XX XXX XXXX",
-    "email": "info@rs-expert.fi"
+    "tagline": "sähköasennukset",
+    "phone": "+358449723588",
+    "email": "robertsild@gmail.com"
   },
   "menu": [
-    { "label": "Etusivu", "href": "/index.html" },
-    { "label": "Palvelut", "href": "/services.html" },
-    { "label": "Galleria", "href": "/gallery.html" },
-    { "label": "Dokumentit", "href": "/documents.html" },
-    { "label": "Yhteys", "href": "/index.html#contact" }
+    {
+      "label": "Etusivu",
+      "href": "/index.html"
+    },
+    {
+      "label": "Palvelut",
+      "href": "/services.html"
+    },
+    {
+      "label": "Galleria",
+      "href": "/gallery.html"
+    },
+    {
+      "label": "Dokumentit",
+      "href": "/documents.html"
+    },
+    {
+      "label": "Yhteys",
+      "href": "/index.html#contact"
+    }
   ],
   "services": [
     {
-      "title": "Sähköasennukset (koti & yritys)",
-      "text": "Pistorasiat, kytkimet, valaisimet, keittiö- ja kodinkoneliitännät sekä pienet ja keskisuuret asennustyöt siistillä työnjäljellä.",
+      "title": "Sähköasennukset",
+      "text": "Johdotukset, pistorasiat, kytkimet, laitteiden kytkennät.",
       "enabled": true
     },
     {
-      "title": "Vianhaku ja korjaukset",
-      "text": "Sähkövikojen paikannus, ylikuumenemiset, sulakkeiden laukeamiset, epävakaat laitteet. Tarvittaessa mittaukset ja raportointi.",
+      "title": "Sähkökeskukset",
+      "text": "Keskusten päivitys, suojaukset, merkinnät, dokumentointi.",
       "enabled": true
     },
     {
-      "title": "Sähkökeskukset ja suojaukset",
-      "text": "Keskusten päivitykset, vikavirtasuojat, ryhmämerkinnät ja dokumentointi. Turvallisuus ennen kaikkea.",
+      "title": "Vianhaku",
+      "text": "Mittaukset, vikojen paikannus, ylikuumenemiset, huolto.",
       "enabled": true
     },
     {
@@ -128,6 +143,18 @@
       "text": "Käytännöllinen automaatio – helppo arki, selkeä hallinta.",
       "type": "Muu",
       "enabled": true
+    },
+    {
+      "title": "тест",
+      "city": "",
+      "image": "/assets/uploads/A5.1.jpg",
+      "text": "",
+      "type": "Asennus",
+      "enabled": true
     }
-  ]
+  ],
+  "email": "info@rs-expert.fi",
+  "companyName": "RS-Expert Oy",
+  "tagline": "Sähköasennukset ja huolto • Uusimaa",
+  "phone": "+358449723588"
 }
