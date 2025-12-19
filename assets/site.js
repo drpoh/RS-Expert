@@ -3,7 +3,7 @@ async function loadSite() {
   if (!res.ok) throw new Error('Cannot load /data/site.json: ' + res.status);
   const d = await res.json();
 
-  // Header
+  // Header texts
   document.querySelectorAll('[data-company]').forEach(e => e.textContent = d.companyName || 'RS-Expert Oy');
   document.querySelectorAll('[data-tagline]').forEach(e => e.textContent = d.tagline || '');
 
@@ -30,7 +30,12 @@ async function loadSite() {
   if (s) {
     const items = Array.isArray(d.services) ? d.services : [];
     s.innerHTML = items.length
-      ? items.map(i => `<div class="card"><h3>${escapeHtml(i.title||'')}</h3><p>${escapeHtml(i.text||'')}</p></div>`).join('')
+      ? items.map(i => `
+          <div class="card">
+            <h3>${escapeHtml(i.title || '')}</h3>
+            <p>${escapeHtml(i.text || '')}</p>
+          </div>
+        `).join('')
       : `<div class="card"><p>Добавь услуги в /admin → Palvelut</p></div>`;
   }
 
@@ -39,7 +44,12 @@ async function loadSite() {
   if (docs) {
     const items = Array.isArray(d.documents) ? d.documents : [];
     docs.innerHTML = items.length
-      ? items.map(i => `<div class="card"><h3>${escapeHtml(i.title||'Dokumentti')}</h3><p><a class="btn" href="${i.url}" target="_blank" rel="noopener">Avaa</a></p></div>`).join('')
+      ? items.map(i => `
+          <div class="card">
+            <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
+            <p><a class="btn" href="${i.url}" target="_blank" rel="noopener">Avaa PDF</a></p>
+          </div>
+        `).join('')
       : `<div class="card"><p>Добавь PDF в /admin → Dokumentit</p></div>`;
   }
 
@@ -49,18 +59,21 @@ async function loadSite() {
     const items = Array.isArray(d.gallery) ? d.gallery : [];
     g.innerHTML = items.length
       ? items.map(i => `
-        <div class="card">
-          ${i.image ? `<img src="${i.image}" alt="">` : ''}
-          <h3>${escapeHtml(i.title||'')}</h3>
-          ${i.city ? `<p>${escapeHtml(i.city)}</p>` : ''}
-          ${i.text ? `<p>${escapeHtml(i.text)}</p>` : ''}
-        </div>`).join('')
+          <div class="card">
+            ${i.image ? `<img src="${i.image}" alt="">` : ''}
+            <h3>${escapeHtml(i.title || '')}</h3>
+            ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
+            ${i.text ? `<p>${escapeHtml(i.text)}</p>` : ''}
+          </div>
+        `).join('')
       : `<div class="card"><p>Добавь фото в /admin → Galleria</p></div>`;
   }
 }
 
 function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  return String(s).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
 }
 
 loadSite().catch(err => {
