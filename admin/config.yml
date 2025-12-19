@@ -2,7 +2,6 @@ backend:
   name: github
   repo: drpoh/RS-Expert
   branch: main
-  base_url: https://rsexpert.robertsild.workers.dev
 
 media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
