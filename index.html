@@ -3,16 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RS-Expert Oy</title>
+  <title>RS-Expert Oy — Sähköasennukset Uusimaa</title>
+  <meta name="description" content="RS-Expert Oy: sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla. Nopea yhteydenotto ja selkeä työnjälki." />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<div id="lightbox" style="display:none">
-  <div id="lightbox-bg"></div>
-  <img id="lightbox-img" />
-  <button id="lightbox-close">×</button>
-</div>
-
 <body>
+
 <header>
   <div class="wrap">
     <div class="top">
@@ -26,40 +22,100 @@
 </header>
 
 <main class="wrap">
-  <div class="hero">
-    <h1>RS-Expert Oy</h1>
-    <p>Luotettavat sähkötyöt kotiin, yrityksille ja työmaille Uudellamaalla.</p>
-    <p id="error" class="err"></p>
-    <p>
-      <a class="btn primary" href="/services.html">Palvelut</a>
-      <a class="btn" href="/gallery.html">Galleria</a>
-      <a class="btn" href="/documents.html">Dokumentit</a>
-    </p>
-  </div>
 
-  <section id="contact">
-    <h2>Yhteys</h2>
-    <div class="grid">
-      <div class="card">
-        <h3>Puhelin</h3>
-        <p><a data-phone-link class="btn" href="tel:+358">+358…</a></p>
+  <!-- HERO -->
+  <section class="hero" style="padding-bottom:18px">
+    <div class="card" style="padding:18px">
+      <h1 style="margin-bottom:6px">Sähkötyöt Uudellamaalla — nopeasti ja siististi</h1>
+      <p style="margin-top:0">
+        Asennukset, vianhaku ja sähkökeskukset. Selkeät sopimukset, dokumentointi ja turvallinen työnjälki.
+      </p>
+
+      <p id="error" class="err"></p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <a class="btn primary" href="/services.html">Katso palvelut</a>
+        <a class="btn" href="/gallery.html">Katso työt</a>
+        <a class="btn" href="/documents.html">Dokumentit</a>
+        <a class="btn" href="#contact">Ota yhteyttä</a>
       </div>
-      <div class="card">
-        <h3>Email</h3>
-        <p><a data-email-link class="btn" href="mailto:info@">info@…</a></p>
-      </div>
-      <div class="card">
-        <h3>Admin</h3>
-        <p><a class="btn" href="/admin/index.html">Avaa CMS</a></p>
-        <p class="small">Kirjaudu tokenilla (GitHub personal access token).</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
+        <div class="card" style="padding:12px">
+          <b style="display:block">✅ Luotettava</b>
+          <p class="small" style="margin:6px 0 0">Sovituista asioista pidetään kiinni.</p>
+        </div>
+        <div class="card" style="padding:12px">
+          <b style="display:block">🧾 Dokumentointi</b>
+          <p class="small" style="margin:6px 0 0">Selkeät merkinnät ja tarvittavat paperit.</p>
+        </div>
+        <div class="card" style="padding:12px">
+          <b style="display:block">🧰 Siisti työnjälki</b>
+          <p class="small" style="margin:6px 0 0">Työmaa jää siistiksi ja turvalliseksi.</p>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- QUICK CONTACT -->
+  <section id="contact" style="margin-top:10px">
+    <h2>Yhteys</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Puhelin</h3>
+        <p><a data-phone-link class="btn primary" href="tel:+358">+358…</a></p>
+        <p class="small">Soita — sovitaan aika nopeasti.</p>
+      </div>
+      <div class="card">
+        <h3>Email</h3>
+        <p><a data-email-link class="btn" href="mailto:info@">info@…</a></p>
+        <p class="small">Lähetä kuva / lyhyt kuvaus työstä.</p>
+      </div>
+      <div class="card">
+        <h3>Nopea polku</h3>
+        <p><a class="btn" href="/admin/index.html">Avaa CMS</a></p>
+        <p class="small">Vain sinulle (suojattu /admin).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREVIEWS -->
+  <section style="margin-top:18px">
+    <h2>Palvelut (esikatselu)</h2>
+    <div id="servicesPreview" class="grid"></div>
+    <p style="margin-top:10px">
+      <a class="btn" href="/services.html">Kaikki palvelut →</a>
+    </p>
+  </section>
+
+  <section style="margin-top:18px">
+    <h2>Uusimmat työt</h2>
+    <div id="galleryPreview" class="grid"></div>
+    <p style="margin-top:10px">
+      <a class="btn" href="/gallery.html">Katso koko galleria →</a>
+    </p>
+  </section>
+
+  <section style="margin-top:18px">
+    <h2>Dokumentit</h2>
+    <div id="documentsPreview" class="grid"></div>
+    <p style="margin-top:10px">
+      <a class="btn" href="/documents.html">Kaikki dokumentit →</a>
+    </p>
+  </section>
+
   <footer>
-    <div class="wrap" style="padding:0">© RS-Expert Oy</div>
+    <div class="wrap" style="padding:0">© <span data-company>RS-Expert Oy</span></div>
   </footer>
+
 </main>
+
+<!-- Lightbox (если уже используешь, оставь; если нет — всё равно не мешает) -->
+<div id="lightbox" style="display:none">
+  <div id="lightbox-bg"></div>
+  <img id="lightbox-img" />
+  <button id="lightbox-close">×</button>
+</div>
 
 <script src="/assets/site.js"></script>
 </body>
