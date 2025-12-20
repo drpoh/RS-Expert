@@ -13,14 +13,12 @@ async function loadSite() {
 
   const d = await res.json();
 
-  // Backwards compatible: allow both old flat fields and new basic.*
   const basic = d.basic || {};
   const companyName = basic.companyName || d.companyName || 'RS-Expert Oy';
   const tagline = basic.tagline || d.tagline || '';
   const phone = basic.phone || d.phone || '';
   const email = basic.email || d.email || '';
 
-  // Header texts
   document.querySelectorAll('[data-company]').forEach(e => (e.textContent = companyName));
   document.querySelectorAll('[data-tagline]').forEach(e => (e.textContent = tagline));
 
@@ -30,7 +28,7 @@ async function loadSite() {
     nav.innerHTML = d.menu.map(m => `<a href="${safeUrl(m.href)}">${escapeHtml(m.label)}</a>`).join('');
   }
 
-  // Contacts (update all matching links)
+  // Contacts
   document.querySelectorAll('[data-phone-link]').forEach(a => {
     if (!phone) return;
     a.href = 'tel:' + phone.replace(/\s+/g, '');
@@ -43,46 +41,25 @@ async function loadSite() {
     if (looksLikePlaceholder(a.textContent)) a.textContent = email;
   });
 
-  // Services
   const servicesAll = (Array.isArray(d.services) ? d.services : []).filter(x => x?.enabled !== false);
-
-  const servicesEl = document.getElementById('services');
-  if (servicesEl) {
-    servicesEl.innerHTML = servicesAll.length
-      ? servicesAll.map(i => `
-          <div class="card pad">
-            <h3>${escapeHtml(i.title || '')}</h3>
-            <p>${escapeHtml(i.text || '')}</p>
-          </div>
-        `).join('')
-      : `<div class="card pad"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
-  }
-
-  // Services preview (home)
-  const servicesPreview = document.getElementById('servicesPreview');
-  if (servicesPreview) {
-    const slice = servicesAll.slice(0, 6);
-    servicesPreview.innerHTML = slice.length
-      ? slice.map(i => `
-          <div class="card pad">
-            <h3>${escapeHtml(i.title || '')}</h3>
-            <p>${escapeHtml(i.text || '')}</p>
-          </div>
-        `).join('')
-      : `<div class="card pad"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
-  }
-
-  // Services bullets (services.html)
-  const bullets = document.getElementById('servicesBullets');
-  if (bullets) {
-    bullets.innerHTML = servicesAll.length
-      ? servicesAll.map(s => `<li>${escapeHtml(s.title || '')}</li>`).join('')
-      : `<li>Lisää palvelut admin-paneelissa: /admin</li>`;
-  }
-
-  // Documents
   const docsAll = (Array.isArray(d.documents) ? d.documents : []).filter(x => x?.enabled !== false);
+  const galleryAll = (Array.isArray(d.gallery) ? d.gallery : []).filter(x => x?.enabled !== false);
 
+  // ===== Services page list
+  const servicesEl = document.getElementById('services');
+  if (servicesEl) servicesEl.innerHTML = renderServicesGrid(servicesAll);
+
+  // ===== Home services preview
+  const servicesPreview = document.getElementById('servicesPreview');
+  if (servicesPreview) servicesPreview.innerHTML = renderServicesGrid(servicesAll.slice(0, 6));
+
+  // Services bullets
+  const bullets = document.getElementById('servicesBullets');
+  if (bullets) bullets.innerHTML = servicesAll.length
+    ? servicesAll.map(s => `<li>${escapeHtml(s.title || '')}</li>`).join('')
+    : `<li>Lisää palvelut admin-paneelissa: /admin</li>`;
+
+  // Documents page
   const docsEl = document.getElementById('documents');
   if (docsEl) {
     if (!docsAll.length) {
@@ -90,83 +67,142 @@ async function loadSite() {
     } else {
       const groups = groupBy(docsAll, it => it.category || 'Muut');
       const order = ['Sertifikaatit', 'Hinnasto', 'Ohjeet', 'Muut'];
-
       docsEl.innerHTML =
         order.filter(cat => groups[cat]).map(cat => renderDocGroup(cat, groups[cat])).join('') +
         Object.keys(groups).filter(cat => !order.includes(cat)).map(cat => renderDocGroup(cat, groups[cat])).join('');
     }
   }
 
-  // Documents preview (home)
+  // Home docs preview
   const docsPreview = document.getElementById('documentsPreview');
-  if (docsPreview) {
-    const slice = docsAll.slice(0, 3);
-    docsPreview.innerHTML = slice.length
-      ? slice.map(i => `
-          <div class="card pad">
-            <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
-            ${i.category ? `<p class="small">${escapeHtml(i.category)}</p>` : ``}
-            <p><a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a></p>
-          </div>
-        `).join('')
-      : `<div class="card pad"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
-  }
+  if (docsPreview) docsPreview.innerHTML = renderDocsPreview(docsAll.slice(0, 3));
 
-  // Gallery
-  const galleryAll = (Array.isArray(d.gallery) ? d.gallery : []).filter(x => x?.enabled !== false);
-
+  // Gallery page
   const galleryEl = document.getElementById('gallery');
   if (galleryEl) {
-    galleryEl.innerHTML = galleryAll.length
-      ? galleryAll.map(i => `
-          <div class="card pad" data-type="${escapeAttr(i.type || '')}" data-city="${escapeAttr(i.city || '')}">
-            ${i.image ? `<img class="clickable" src="${safeUrl(i.image)}" alt="" data-lightbox>` : ''}
-            <h3>${escapeHtml(i.title || '')}</h3>
-            ${i.type ? `<p class="small">${escapeHtml(i.type)}</p>` : ''}
-            ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
-            ${i.text ? `<p>${escapeHtml(i.text)}</p>` : ''}
-          </div>
-        `).join('')
-      : `<div class="card pad"><p>Lisää kuvia admin-paneelissa: /admin</p></div>`;
-
+    galleryEl.innerHTML = renderGalleryGrid(galleryAll);
     attachLightbox(galleryEl);
   }
 
-  // Gallery preview (home)
+  // Home gallery preview
   const galleryPreview = document.getElementById('galleryPreview');
   if (galleryPreview) {
-    const slice = galleryAll.slice(0, 6);
-    galleryPreview.innerHTML = slice.length
-      ? slice.map(i => `
-          <div class="card pad" data-type="${escapeAttr(i.type || '')}" data-city="${escapeAttr(i.city || '')}">
-            ${i.image ? `<img class="clickable" src="${safeUrl(i.image)}" alt="" data-lightbox>` : ''}
-            <h3>${escapeHtml(i.title || '')}</h3>
-            ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
-          </div>
-        `).join('')
-      : `<div class="card pad"><p>Lisää kuvia admin-paneelissa: /admin</p></div>`;
-
+    galleryPreview.innerHTML = renderGalleryGrid(galleryAll.slice(0, 6), true);
     attachLightbox(galleryPreview);
   }
 
-  // Gallery filters (if placeholder exists)
+  // Gallery filters placeholder
   makeGalleryFilters(galleryAll);
 
-  // Performance tweaks
-  enableLazyImages();
+  // Reviews/Trust on home
+  const reviewsEl = document.getElementById('reviews');
+  if (reviewsEl) {
+    const reviewsAll = (Array.isArray(d.reviews) ? d.reviews : defaultReviews()).filter(x => x?.enabled !== false);
+    reviewsEl.innerHTML = renderReviews(reviewsAll);
+  }
 
-  // Mobile conversion
+  // FAQ on home
+  const faqEl = document.getElementById('faq');
+  if (faqEl) {
+    const faqAll = (Array.isArray(d.faq) ? d.faq : defaultFaq()).filter(x => x?.enabled !== false);
+    faqEl.innerHTML = renderFaq(faqAll);
+    bindFaq();
+  }
+
+  enableLazyImages();
   ensureBottomBar(phone, email);
 }
 
-/* ===== Components ===== */
+/* ===== Renderers ===== */
+
+function renderServicesGrid(items) {
+  if (!items.length) {
+    return `<div class="card pad"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
+  }
+  return items.map(i => {
+    const icon = i.icon || pickIcon(i.title);
+    const tag = i.tag || '';
+    return `
+      <a class="serviceCard" href="/services.html" style="text-decoration:none">
+        <div class="inner">
+          <div class="serviceIcon">${escapeHtml(icon)}</div>
+          <h3>${escapeHtml(i.title || '')}</h3>
+          <p class="small">${escapeHtml(shortText(i.text || '', 90))}</p>
+          <div class="meta">
+            ${tag ? `<span class="pill">✨ ${escapeHtml(tag)}</span>` : ``}
+            <span class="pill">Uusimaa</span>
+            <span class="pill">Ota yhteyttä →</span>
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+function renderGalleryGrid(items, compact=false) {
+  if (!items.length) {
+    return `<div class="card pad"><p>Lisää kuvia admin-paneelissa: /admin</p></div>`;
+  }
+  return items.map(i => `
+    <div class="card pad galleryCard" data-type="${escapeAttr(i.type || '')}" data-city="${escapeAttr(i.city || '')}">
+      ${i.image ? `<img class="clickable" src="${safeUrl(i.image)}" alt="" data-lightbox>` : ''}
+      <h3>${escapeHtml(i.title || '')}</h3>
+      <p class="small" style="margin:6px 0 0">
+        ${[i.type, i.city].filter(Boolean).map(escapeHtml).join(' • ')}
+      </p>
+      ${(!compact && i.text) ? `<p>${escapeHtml(shortText(i.text, 110))}</p>` : ``}
+    </div>
+  `).join('');
+}
+
+function renderDocsPreview(items) {
+  if (!items.length) return `<div class="card pad"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
+  return items.map(i => `
+    <div class="card pad">
+      <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
+      ${i.category ? `<p class="small">${escapeHtml(i.category)}</p>` : ``}
+      <p style="margin-top:10px">
+        <a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a>
+      </p>
+    </div>
+  `).join('');
+}
+
+function renderReviews(items) {
+  return `<div class="grid two">` + items.map(r => `
+    <div class="reviewCard">
+      <div class="reviewTop">
+        <div>
+          <b>${escapeHtml(r.title || 'Palaute')}</b>
+          <div class="small">${escapeHtml([r.city, r.service].filter(Boolean).join(' • '))}</div>
+        </div>
+        <div class="stars">${'★★★★★'.slice(0, clampStars(r.stars))}</div>
+      </div>
+      <div class="quote">“${escapeHtml(r.text || '')}”</div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+function renderFaq(items) {
+  return items.map((f, idx) => `
+    <div class="faqItem" data-faq>
+      <button class="faqQ" type="button">
+        <span>${escapeHtml(f.q || '')}</span>
+        <span class="faqChevron">⌄</span>
+      </button>
+      <div class="faqA">${escapeHtml(f.a || '')}</div>
+    </div>
+  `).join('');
+}
 
 function renderDocGroup(title, items) {
   const safeTitle = escapeHtml(title);
   const cards = items.map(i => `
     <div class="card pad">
       <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
-      <p><a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a></p>
+      <p style="margin-top:10px">
+        <a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a>
+      </p>
     </div>
   `).join('');
   return `
@@ -177,6 +213,15 @@ function renderDocGroup(title, items) {
   `;
 }
 
+/* ===== FAQ binding ===== */
+function bindFaq() {
+  document.querySelectorAll('[data-faq]').forEach(box => {
+    const btn = box.querySelector('.faqQ');
+    btn?.addEventListener('click', () => box.classList.toggle('open'));
+  });
+}
+
+/* ===== Lightbox ===== */
 function attachLightbox(container) {
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lightbox-img');
@@ -201,15 +246,12 @@ function attachLightbox(container) {
   if (!lb.dataset.bound) {
     lbBg.addEventListener('click', closeLB);
     lbClose.addEventListener('click', closeLB);
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeLB();
-    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
     lb.dataset.bound = '1';
   }
 }
 
-/* ===== Add-ons (free) ===== */
-
+/* ===== Filters / perf / bottom bar ===== */
 function ensureBottomBar(phone, email) {
   if (document.getElementById('bottomBar')) return;
   if (window.matchMedia && window.matchMedia('(min-width: 980px)').matches) return;
@@ -269,18 +311,13 @@ function makeGalleryFilters(items) {
     document.querySelectorAll('#gallery .card').forEach(card => {
       const ct = card.getAttribute('data-type') || '';
       const cc = card.getAttribute('data-city') || '';
-      const ok = (!t || ct === t) && (!c || cc === c);
-      card.style.display = ok ? '' : 'none';
+      card.style.display = ((!t || ct === t) && (!c || cc === c)) ? '' : 'none';
     });
   };
 
   fType.addEventListener('change', apply);
   fCity.addEventListener('change', apply);
-  fClear.addEventListener('click', () => {
-    fType.value = '';
-    fCity.value = '';
-    apply();
-  });
+  fClear.addEventListener('click', () => { fType.value=''; fCity.value=''; apply(); });
 }
 
 function enableLazyImages() {
@@ -290,76 +327,44 @@ function enableLazyImages() {
   });
 }
 
+/* ===== Defaults ===== */
+function defaultReviews() {
+  return [
+    { title: 'Nopea ja siisti työ', city: 'Järvenpää', service: 'Sähkökeskus', stars: 5, text: 'Kommunikointi oli selkeää ja työ tehtiin sovitusti.', enabled: true },
+    { title: 'Vika löytyi nopeasti', city: 'Helsinki', service: 'Vianhaku', stars: 5, text: 'Sulake laukesi jatkuvasti — korjaus onnistui saman käynnin aikana.', enabled: true }
+  ];
+}
+function defaultFaq() {
+  return [
+    { q: 'Teettekö pieniä töitä?', a: 'Kyllä. Myös pienet asennukset ja korjaukset onnistuvat.', enabled: true },
+    { q: 'Kuinka nopeasti pääsette paikalle?', a: 'Usein järjestyy aika nopeasti — soita ja sovitaan.', enabled: true },
+    { q: 'Voinko lähettää kuvan?', a: 'Kyllä. Kuva auttaa arvioinnissa ja nopeuttaa toteutusta.', enabled: true },
+    { q: 'Palveletteko taloyhtiöitä ja yrityksiä?', a: 'Kyllä. Sovitaan toteutus ja dokumentointi tarpeen mukaan.', enabled: true }
+  ];
+}
+
 /* ===== Utils ===== */
-
 function groupBy(arr, fn) {
-  return arr.reduce((acc, x) => {
-    const k = fn(x);
-    (acc[k] ||= []).push(x);
-    return acc;
-  }, {});
+  return arr.reduce((acc, x) => { const k = fn(x); (acc[k] ||= []).push(x); return acc; }, {});
 }
-
-function uniq(a) {
-  return Array.from(new Set(a));
+function uniq(a){ return Array.from(new Set(a)); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function escapeAttr(s){ return String(s).replace(/["&<>]/g, m => ({'"':'&quot;','&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function safeUrl(u){ const s=String(u||'').trim(); if(!s) return '#'; if(s.startsWith('/')) return s; if(s.startsWith('http://')||s.startsWith('https://')) return s; return '#'; }
+function looksLikePlaceholder(t){ const s=String(t||'').trim(); return s===''||s.includes('…')||s.includes('+358')||s.includes('@'); }
+function shortText(s,n){ const t=String(s||''); return t.length>n ? t.slice(0,n-1).trim()+'…' : t; }
+function pickIcon(title){
+  const t = String(title||'').toLowerCase();
+  if (t.includes('vianh')) return '🧯';
+  if (t.includes('keskus')) return '🧰';
+  if (t.includes('äly') || t.includes('autom')) return '🤖';
+  if (t.includes('sauna') || t.includes('ulk')) return '💡';
+  return '🔌';
 }
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, m => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[m]));
-}
-
-function escapeAttr(s) {
-  return String(s).replace(/["&<>]/g, m => ({
-    '"': '&quot;',
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;'
-  }[m]));
-}
-
-function safeUrl(u) {
-  const s = String(u || '').trim();
-  if (!s) return '#';
-  if (s.startsWith('/')) return s;
-  if (s.startsWith('http://') || s.startsWith('https://')) return s;
-  return '#';
-}
-
-function looksLikePlaceholder(t) {
-  const s = String(t || '').trim();
-  return s === '' || s.includes('…') || s.includes('+358') || s.includes('@');
-}
+function clampStars(n){ const x = Number(n||5); return Math.max(1, Math.min(5, Math.round(x))); }
 
 loadSite().catch(err => {
   console.error(err);
   const el = document.getElementById('error');
   if (el) el.textContent = 'Ошибка: ' + err.message;
 });
-// ===== Premium scroll reveal =====
-(function initReveal() {
-  // Mark sections/cards to reveal
-  const targets = [
-    ...document.querySelectorAll('section'),
-    ...document.querySelectorAll('.card')
-  ];
-
-  targets.forEach(el => el.classList.add('reveal'));
-
-  // IntersectionObserver reveal
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('is-in');
-        io.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.12 });
-
-  targets.forEach(el => io.observe(el));
-})();
