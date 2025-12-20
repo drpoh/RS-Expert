@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RS-Expert Oy — Sähköasennukset Uusimaa</title>
-  <meta name="description" content="RS-Expert Oy: sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla. Nopea yhteydenotto ja siisti työnjälki." />
+  <title>RS-Expert Oy — Sähkötyöt Uusimaa</title>
+  <meta name="description" content="RS-Expert Oy: sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla. Soita tai lähetä tarjouspyyntö." />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body>
 
-<!-- Topbar (премиум + доверие) -->
+<!-- Color topbar -->
 <div class="topbar">
   <div class="wrap">
     <div class="row">
@@ -21,7 +21,7 @@
       <div class="kv">
         <a href="/services.html">Palvelut</a>
         <a href="/gallery.html">Galleria</a>
-        <a href="/documents.html">Dokumentit</a>
+        <a href="/contact.html">Yhteys</a>
       </div>
     </div>
   </div>
@@ -32,7 +32,7 @@
     <div class="top">
       <div class="brand">
         <b data-company>RS-Expert Oy</b>
-        <span data-tagline>Sähköasennukset, vianhaku ja sähkökeskukset • Uusimaa</span>
+        <span data-tagline>Sähköasennukset • Vianhaku • Sähkökeskukset</span>
       </div>
       <nav id="menu"></nav>
     </div>
@@ -44,189 +44,105 @@
   <!-- HERO -->
   <section class="hero">
     <div class="card pad glow">
-      <span class="kicker">⚡ Sähkötyöt • Kotitaloudet • Taloyhtiöt • Yritykset</span>
-      <h1 style="margin-top:12px">Turvalliset sähkötyöt — nopeasti ja siististi</h1>
-      <p style="max-width:85ch">
-        Asennukset, vianhaku ja sähkökeskukset Uudellamaalla. Selkeä viestintä, hyvä dokumentointi ja ammattimainen lopputulos.
-      </p>
-
-      <p id="error" class="err"></p>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-        <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
-        <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
-        <a class="btn" href="/services.html">Katso palvelut</a>
-        <a class="btn ghost" href="#contact">Yhteys</a>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <span class="kicker">⚡ Sähkötyöt</span>
+        <span class="kicker" style="border-color:rgba(34,211,238,.35)">🛡️ Turvallisesti</span>
+        <span class="kicker" style="border-color:rgba(52,211,153,.35)">🧾 Dokumentointi</span>
+        <span class="kicker" style="border-color:rgba(251,191,36,.35)">🏠 Koti & yritys</span>
       </div>
 
+      <h1 style="margin-top:14px">Nopeasti. Siististi. Selkeästi.</h1>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
+        <a class="btn" href="/contact.html">💬 Lähetä pyyntö</a>
+        <a class="btn" href="/services.html">✨ Palvelut</a>
+        <a class="btn" href="/gallery.html">🖼️ Työt</a>
+      </div>
+
+      <p id="error" class="err" style="margin-top:10px"></p>
+
+      <!-- Mini stats -->
       <div class="grid tight" style="margin-top:16px">
         <div class="card soft pad">
-          <b style="display:block">✅ Siisti työnjälki</b>
-          <p class="small" style="margin:6px 0 0">Työmaa jää turvalliseksi ja siistiksi.</p>
+          <b style="display:block">✅ Sovitusti</b>
+          <p class="small" style="margin:6px 0 0">Aikataulu ja työn sisältö selkeästi.</p>
         </div>
         <div class="card soft pad">
-          <b style="display:block">🧾 Dokumentointi</b>
-          <p class="small" style="margin:6px 0 0">Merkinnät ja tarvittavat paperit kuntoon.</p>
+          <b style="display:block">⚙️ Kaikki yhdestä</b>
+          <p class="small" style="margin:6px 0 0">Asennus • Vianhaku • Keskukset.</p>
         </div>
         <div class="card soft pad">
-          <b style="display:block">🛠️ Ratkaisukeskeinen</b>
-          <p class="small" style="margin:6px 0 0">Ehdotetaan järkevin toteutus ja aikataulu.</p>
+          <b style="display:block">✨ Siisti lopputulos</b>
+          <p class="small" style="margin:6px 0 0">Työmaa jää siistiksi.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- TRUST / SOCIAL PROOF -->
-  <section class="section">
-    <div class="grid two">
-      <div class="card pad">
-        <h2>Miksi RS-Expert?</h2>
-        <ul class="list">
-          <li>Selkeä hinnoittelu ja sopiminen etukäteen</li>
-          <li>Turvallisuus ja määräysten mukainen toteutus</li>
-          <li>Nopea yhteydenotto ja sujuva aikataulu</li>
-          <li>Asennukset + vianhaku + keskukset samasta paikasta</li>
-        </ul>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-          <a class="btn primary" href="/gallery.html">Katso työnäytteet</a>
-          <a class="btn" href="/documents.html">Sertifikaatit & dokumentit</a>
-        </div>
-      </div>
+  <!-- Quick tiles -->
+  <section class="section" style="padding-top:10px">
+    <div class="grid">
+      <a class="card pad" href="/services.html" style="text-decoration:none">
+        <span class="kicker" style="border-color:rgba(124,92,255,.45)">🔌 Asennukset</span>
+        <h3 style="margin-top:10px">Valot, pistorasiat, kodinkoneet</h3>
+        <p class="small">Nopea toteutus + siisti työnjälki</p>
+      </a>
 
-      <div class="card pad">
-        <h2>Palvelemme</h2>
-        <p style="margin-top:0">
-          Helsinki • Espoo • Vantaa • Järvenpää • Kerava • Tuusula • muu Uusimaa
-        </p>
-        <div class="card soft pad" style="margin-top:12px">
-          <b style="display:block">Nopea tarjouspyyntö</b>
-          <p class="small" style="margin:6px 0 0">
-            Lähetä: osoite + mitä pitää tehdä + toivottu aikataulu (+ kuva).
+      <a class="card pad" href="/services.html" style="text-decoration:none">
+        <span class="kicker" style="border-color:rgba(251,113,133,.45)">🧯 Vianhaku</span>
+        <h3 style="margin-top:10px">Laukeava sulake / häiriöt</h3>
+        <p class="small">Paikannus + korjaus</p>
+      </a>
+
+      <a class="card pad" href="/services.html" style="text-decoration:none">
+        <span class="kicker" style="border-color:rgba(34,211,238,.45)">🧰 Sähkökeskus</span>
+        <h3 style="margin-top:10px">Suojaukset & merkinnät</h3>
+        <p class="small">Turvallisuus + dokumentit</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- Services preview (short, colorful) -->
+  <section class="section">
+    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin:0">Palvelut</h2>
+        <p class="small" style="margin:6px 0 0">Päivitä sisältöä /admin → näkyy heti</p>
+      </div>
+      <a class="btn" href="/services.html">Kaikki →</a>
+    </div>
+    <div id="servicesPreview" class="grid" style="margin-top:12px"></div>
+  </section>
+
+  <!-- Gallery preview -->
+  <section class="section">
+    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin:0">Työnäytteet</h2>
+        <p class="small" style="margin:6px 0 0">Klikkaa kuvaa (lightbox)</p>
+      </div>
+      <a class="btn" href="/gallery.html">Katso lisää →</a>
+    </div>
+    <div id="galleryPreview" class="grid" style="margin-top:12px"></div>
+  </section>
+
+  <!-- Super short contact -->
+  <section class="section" id="contact">
+    <div class="card pad glow">
+      <div class="grid two">
+        <div>
+          <span class="kicker">💬 Yhteys</span>
+          <h2 style="margin-top:10px;margin-bottom:6px">Tarvitsetko sähkömiestä?</h2>
+          <p class="small" style="margin-top:0">
+            Soita tai lähetä pyyntö. Liitä osoite + kuvaus (+ kuva).
           </p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-            <a class="btn primary" data-email-link href="mailto:info@">Lähetä email</a>
-            <a class="btn" data-phone-link href="tel:+358">Soita</a>
-          </div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SERVICES PREVIEW -->
-  <section class="section">
-    <h2>Palvelut</h2>
-    <p class="muted" style="margin-top:-6px">Valitse palvelu — sovitaan toteutus ja aikataulu.</p>
-    <div id="servicesPreview" class="grid"></div>
-    <p style="margin-top:12px">
-      <a class="btn" href="/services.html">Kaikki palvelut →</a>
-    </p>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="section">
-    <h2>Miten homma etenee</h2>
-    <div class="grid">
-      <div class="card pad">
-        <span class="kicker">1) Kartoitus</span>
-        <h3 style="margin-top:10px">Kuvaus ja arvio</h3>
-        <p>Soita tai lähetä viesti. Kysymme tarvittavat tiedot ja annamme suuntaa-antavan arvion.</p>
-      </div>
-      <div class="card pad">
-        <span class="kicker">2) Toteutus</span>
-        <h3 style="margin-top:10px">Työ sovitusti</h3>
-        <p>Toteutus turvallisesti ja siististi. Tarvittaessa vaiheistus remonttikohteissa.</p>
-      </div>
-      <div class="card pad">
-        <span class="kicker">3) Viimeistely</span>
-        <h3 style="margin-top:10px">Testaus & dokumentointi</h3>
-        <p>Testaus, merkinnät ja dokumentit. Työmaa jää siistiksi.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- LATEST WORKS -->
-  <section class="section">
-    <h2>Uusimmat työt</h2>
-    <p class="muted" style="margin-top:-6px">Klikkaa kuvaa avataksesi isona.</p>
-    <div id="galleryPreview" class="grid"></div>
-    <p style="margin-top:12px">
-      <a class="btn" href="/gallery.html">Koko galleria →</a>
-    </p>
-  </section>
-
-  <!-- DOCUMENTS PREVIEW -->
-  <section class="section">
-    <h2>Dokumentit</h2>
-    <p class="muted" style="margin-top:-6px">Sertifikaatit, ohjeet ja hinnasto (jos käytössä).</p>
-    <div id="documentsPreview" class="grid"></div>
-    <p style="margin-top:12px">
-      <a class="btn" href="/documents.html">Kaikki dokumentit →</a>
-    </p>
-  </section>
-
-  <!-- REVIEWS -->
-  <section class="section">
-    <h2>Asiakaspalaute</h2>
-    <div class="grid two">
-      <div class="card pad">
-        <b style="display:block">“Nopea ja siisti työ”</b>
-        <p class="small">Järvenpää • Sähkökeskus</p>
-        <p>Kommunikointi oli selkeää ja työ tehtiin sovitusti. Suosittelen.</p>
-      </div>
-      <div class="card pad">
-        <b style="display:block">“Vika löytyi nopeasti”</b>
-        <p class="small">Helsinki • Vianhaku</p>
-        <p>Sulake laukesi jatkuvasti — vika paikannettiin ja korjattiin saman käynnin aikana.</p>
-      </div>
-    </div>
-    <p class="small">Haluatko, että teen näistä CMS:llä muokattavat (lisäät itse uusia)?</p>
-  </section>
-
-  <!-- FAQ -->
-  <section class="section">
-    <h2>Usein kysyttyä</h2>
-    <div class="grid two">
-      <div class="card pad">
-        <b style="display:block">Kuinka nopeasti pääsette paikalle?</b>
-        <p>Riippuu kohteesta ja työstä. Usein järjestyy aika nopeasti — soita ja katsotaan.</p>
-      </div>
-      <div class="card pad">
-        <b style="display:block">Teettekö pieniä töitä?</b>
-        <p>Kyllä. Myös pienet asennukset ja korjaukset onnistuvat.</p>
-      </div>
-      <div class="card pad">
-        <b style="display:block">Voinko lähettää kuvan ongelmasta?</b>
-        <p>Kyllä. Kuva ja lyhyt kuvaus helpottaa arviointia.</p>
-      </div>
-      <div class="card pad">
-        <b style="display:block">Palveletteko taloyhtiöitä ja yrityksiä?</b>
-        <p>Kyllä. Sovitaan toteutus ja dokumentointi tarpeen mukaan.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
-  <section id="contact" class="section">
-    <h2>Yhteys</h2>
-    <div class="grid">
-      <div class="card pad">
-        <h3>Puhelin</h3>
-        <p><a class="btn primary" data-phone-link href="tel:+358">+358…</a></p>
-        <p class="small">Nopea tapa sopia aika.</p>
-      </div>
-      <div class="card pad">
-        <h3>Email</h3>
-        <p><a class="btn" data-email-link href="mailto:info@">info@…</a></p>
-        <p class="small">Osoite + kuvaus + aikataulu (+ kuva).</p>
-      </div>
-      <div class="card pad">
-        <h3>Linkit</h3>
-        <p style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn" href="/services.html">Palvelut</a>
-          <a class="btn" href="/gallery.html">Galleria</a>
-          <a class="btn" href="/documents.html">Dokumentit</a>
-        </p>
-        <p class="small">Sisältöä voi muokata /admin (suojattu).</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
+          <a class="btn" href="/contact.html">💬 Lähetä pyyntö</a>
+          <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
+        </div>
       </div>
     </div>
   </section>
@@ -237,7 +153,7 @@
 
 </main>
 
-<!-- Lightbox (если используешь) -->
+<!-- Lightbox (для превью галереи) -->
 <div id="lightbox" style="display:none">
   <div id="lightbox-bg"></div>
   <img id="lightbox-img" />
