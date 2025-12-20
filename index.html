@@ -3,9 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RS-Expert Oy — Sähkötyöt Uusimaa</title>
-  <meta name="description" content="RS-Expert Oy: sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla. Soita tai lähetä tarjouspyyntö." />
+  <title>RS-Expert Oy — Sähköasennukset Uusimaa</title>
+  <meta name="description" content="RS-Expert Oy – sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla." />
+
   <link rel="stylesheet" href="/assets/styles.css" />
+
+  <!-- TALLY POPUP (REQUIRED) -->
+  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
 
@@ -20,7 +24,7 @@
       <div class="kv">
         <a href="/services.html">Palvelut</a>
         <a href="/gallery.html">Galleria</a>
-        <a href="/contact.html">Yhteys</a>
+        <a href="/documents.html">Dokumentit</a>
       </div>
     </div>
   </div>
@@ -40,141 +44,95 @@
 
 <main class="wrap">
 
-  <!-- 4) HERO (premium, less text) -->
+  <!-- HERO -->
   <section class="hero">
     <div class="card pad glow">
-      <div class="heroGrid">
-        <div>
-          <div class="pills">
-            <span class="pill">⚡ Sähkötyöt</span>
-            <span class="pill">🛡️ Turvallisesti</span>
-            <span class="pill">🧾 Dokumentointi</span>
-            <span class="pill">🏠 Koti & yritys</span>
-          </div>
+      <div class="pills">
+        <span class="pill">⚡ Sähkötyöt</span>
+        <span class="pill">🏠 Koti & yritys</span>
+        <span class="pill">📍 Uusimaa</span>
+      </div>
 
-          <h1 style="margin-top:14px">Nopeasti. Siististi. Selkeästi.</h1>
+      <h1 style="margin-top:14px">
+        Luotettavat sähkötyöt<br>
+        nopeasti ja siististi
+      </h1>
 
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-            <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
-            <a class="btn" href="/contact.html">💬 Lähetä pyyntö</a>
-            <a class="btn" href="/services.html">✨ Palvelut</a>
-            <a class="btn" href="/gallery.html">🖼️ Työt</a>
-          </div>
+      <p class="lead">
+        Asennukset, vianhaku ja sähkökeskukset. Ota yhteyttä — vastaamme nopeasti.
+      </p>
 
-          <p id="error" class="err" style="margin-top:10px"></p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+        <!-- TALLY POPUP BUTTON -->
+        <button
+          class="btn primary"
+          data-tally-open="81z8Dk"
+          data-tally-width="420"
+          data-tally-overlay="1"
+          data-tally-emoji-text="👋"
+          data-tally-emoji-animation="wave"
+        >
+          💬 Pyydä tarjous
+        </button>
 
-          <div class="trustRow" style="margin-top:14px">
-            <div class="trustItem"><b>✅ Sovitusti</b><div class="small">Selkeä sisältö & aikataulu</div></div>
-            <div class="trustItem"><b>⚙️ Kaikki yhdestä</b><div class="small">Asennus • Vianhaku • Keskukset</div></div>
-            <div class="trustItem"><b>✨ Siisti jälki</b><div class="small">Työmaa jää siistiksi</div></div>
-            <div class="trustItem"><b>📍 Uusimaa</b><div class="small">Hki • Espoo • Vantaa</div></div>
-          </div>
-        </div>
-
-        <aside class="heroSide">
-          <div class="mini">
-            <b>📞 Nopein tapa</b>
-            <div class="small">Soita ja sovitaan aika</div>
-            <div style="margin-top:10px">
-              <a class="btn primary" data-phone-link href="tel:+358">Soita</a>
-            </div>
-          </div>
-          <div class="mini">
-            <b>💬 Tarjouspyyntö</b>
-            <div class="small">Osoite + kuvaus (+ kuva)</div>
-            <div style="margin-top:10px">
-              <a class="btn" href="/contact.html">Lähetä</a>
-              <a class="btn" data-email-link href="mailto:info@">Email</a>
-            </div>
-          </div>
-          <div class="mini">
-            <b>🧾 Dokumentit</b>
-            <div class="small">PDF / ohjeet / hinnasto</div>
-            <div style="margin-top:10px">
-              <a class="btn" href="/documents.html">Avaa</a>
-            </div>
-          </div>
-        </aside>
+        <a class="btn" data-phone-link href="tel:+358">📞 Soita</a>
+        <a class="btn" href="/services.html">🔌 Palvelut</a>
       </div>
     </div>
   </section>
 
-  <!-- 1) SERVICES (cards like sahkopiste) -->
+  <!-- SERVICES PREVIEW -->
   <section class="section">
-    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <h2 style="margin:0">Palvelut</h2>
-        <p class="small" style="margin:6px 0 0">Lyhyesti. Selkeästi. Klikkaa →</p>
-      </div>
-      <a class="btn" href="/services.html">Kaikki palvelut →</a>
-    </div>
-    <div id="servicesPreview" class="grid" style="margin-top:12px"></div>
+    <h2>Palvelut</h2>
+    <div id="servicesPreview" class="grid three"></div>
   </section>
 
-  <!-- 2) GALLERY (visual, less text) -->
+  <!-- GALLERY PREVIEW -->
   <section class="section">
-    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <h2 style="margin:0">Työnäytteet</h2>
-        <p class="small" style="margin:6px 0 0">Klikkaa kuvaa (lightbox)</p>
-      </div>
-      <a class="btn" href="/gallery.html">Koko galleria →</a>
-    </div>
-    <div id="galleryPreview" class="grid" style="margin-top:12px"></div>
+    <h2>Työnäytteet</h2>
+    <div id="galleryPreview" class="grid three"></div>
   </section>
 
-  <!-- 5) REVIEWS / TRUST -->
+  <!-- TRUST -->
   <section class="section">
-    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <h2 style="margin:0">Asiakaspalaute</h2>
-        <p class="small" style="margin:6px 0 0">Luottamus ratkaisee — lyhyet palautteet</p>
+    <div class="grid three">
+      <div class="card pad">
+        <b>✅ Selkeä hinnoittelu</b>
+        <p class="small">Sovitaan etukäteen — ei yllätyksiä.</p>
       </div>
-      <a class="btn" href="/contact.html">Pyydä tarjous →</a>
-    </div>
-    <div id="reviews" style="margin-top:12px"></div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="section">
-    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <h2 style="margin:0">FAQ</h2>
-        <p class="small" style="margin:6px 0 0">Nopeat vastaukset</p>
+      <div class="card pad">
+        <b>⚡ Nopea reagointi</b>
+        <p class="small">Usein aika järjestyy nopeasti.</p>
+      </div>
+      <div class="card pad">
+        <b>🧰 Ammattitaito</b>
+        <p class="small">Turvallinen ja siisti lopputulos.</p>
       </div>
     </div>
-    <div id="faq" class="grid two" style="margin-top:12px"></div>
   </section>
 
-  <!-- 3) CONTACT CTA (short) -->
+  <!-- CTA -->
   <section class="section">
-    <div class="card pad glow">
-      <div class="grid two">
-        <div>
-          <span class="kicker">💬 Yhteys</span>
-          <h2 style="margin-top:10px;margin-bottom:6px">Tarvitsetko sähkömiestä?</h2>
-          <p class="small" style="margin-top:0">Soita tai lähetä pyyntö — vastaamme nopeasti.</p>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-          <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
-          <a class="btn" href="/contact.html">💬 Lähetä pyyntö</a>
-          <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
-        </div>
-      </div>
+    <div class="card pad glow center">
+      <h2>Tarvitsetko sähkömiestä?</h2>
+      <p class="small">Lähetä pyyntö tai soita — vastaamme nopeasti.</p>
+
+      <button
+        class="btn primary"
+        data-tally-open="81z8Dk"
+        data-tally-width="420"
+        data-tally-overlay="1"
+      >
+        💬 Lähetä pyyntö
+      </button>
     </div>
   </section>
 
   <footer>
     <div>© <span data-company>RS-Expert Oy</span></div>
   </footer>
-</main>
 
-<!-- Lightbox -->
-<div id="lightbox" style="display:none">
-  <div id="lightbox-bg"></div>
-  <img id="lightbox-img" />
-  <button id="lightbox-close">×</button>
-</div>
+</main>
 
 <script src="/assets/site.js"></script>
 </body>
