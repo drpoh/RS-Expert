@@ -4,9 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Galleria — RS-Expert</title>
+  <meta name="description" content="RS-Expert Oy: työnäytteet ja kuvat sähköasennuksista Uudellamaalla." />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body>
+
 <header>
   <div class="wrap">
     <div class="top">
@@ -20,16 +22,41 @@
 </header>
 
 <main class="wrap">
-  <div class="hero">
-    <h1>Galleria</h1>
-    <p id="error" class="err"></p>
-  </div>
+  <section class="hero">
+    <div class="card pad glow">
+      <span class="kicker">🖼️ Galleria</span>
+      <h1 style="margin-top:12px">Työnäytteet</h1>
+      <p style="max-width:80ch">
+        Valitse työn tyyppi tai kaupunki suodattimista. Klikkaa kuvaa avataksesi sen isona.
+      </p>
+      <p id="error" class="err"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <a class="btn" href="/services.html">Palvelut</a>
+        <a class="btn" href="/documents.html">Dokumentit</a>
+        <a class="btn primary" href="/index.html#contact">Ota yhteyttä</a>
+      </div>
+    </div>
+  </section>
 
+  <!-- ✅ Filters placeholder -->
+  <div id="galleryFilters" style="margin: 10px 0 14px"></div>
+
+  <!-- ✅ Gallery -->
   <div id="gallery" class="grid"></div>
 
-  <footer><div class="wrap" style="padding:0">© RS-Expert Oy</div></footer>
+  <footer>
+    <div>© <span data-company>RS-Expert Oy</span></div>
+  </footer>
 </main>
+
+<!-- Lightbox -->
+<div id="lightbox" style="display:none">
+  <div id="lightbox-bg"></div>
+  <img id="lightbox-img" />
+  <button id="lightbox-close">×</button>
+</div>
 
 <script src="/assets/site.js"></script>
 </body>
 </html>
+```0
