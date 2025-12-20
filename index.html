@@ -9,7 +9,6 @@
 </head>
 <body>
 
-<!-- Color topbar -->
 <div class="topbar">
   <div class="wrap">
     <div class="row">
@@ -41,102 +40,120 @@
 
 <main class="wrap">
 
-  <!-- HERO -->
+  <!-- 4) HERO (premium, less text) -->
   <section class="hero">
     <div class="card pad glow">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <span class="kicker">⚡ Sähkötyöt</span>
-        <span class="kicker" style="border-color:rgba(34,211,238,.35)">🛡️ Turvallisesti</span>
-        <span class="kicker" style="border-color:rgba(52,211,153,.35)">🧾 Dokumentointi</span>
-        <span class="kicker" style="border-color:rgba(251,191,36,.35)">🏠 Koti & yritys</span>
-      </div>
+      <div class="heroGrid">
+        <div>
+          <div class="pills">
+            <span class="pill">⚡ Sähkötyöt</span>
+            <span class="pill">🛡️ Turvallisesti</span>
+            <span class="pill">🧾 Dokumentointi</span>
+            <span class="pill">🏠 Koti & yritys</span>
+          </div>
 
-      <h1 style="margin-top:14px">Nopeasti. Siististi. Selkeästi.</h1>
+          <h1 style="margin-top:14px">Nopeasti. Siististi. Selkeästi.</h1>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-        <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
-        <a class="btn" href="/contact.html">💬 Lähetä pyyntö</a>
-        <a class="btn" href="/services.html">✨ Palvelut</a>
-        <a class="btn" href="/gallery.html">🖼️ Työt</a>
-      </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+            <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
+            <a class="btn" href="/contact.html">💬 Lähetä pyyntö</a>
+            <a class="btn" href="/services.html">✨ Palvelut</a>
+            <a class="btn" href="/gallery.html">🖼️ Työt</a>
+          </div>
 
-      <p id="error" class="err" style="margin-top:10px"></p>
+          <p id="error" class="err" style="margin-top:10px"></p>
 
-      <!-- Mini stats -->
-      <div class="grid tight" style="margin-top:16px">
-        <div class="card soft pad">
-          <b style="display:block">✅ Sovitusti</b>
-          <p class="small" style="margin:6px 0 0">Aikataulu ja työn sisältö selkeästi.</p>
+          <div class="trustRow" style="margin-top:14px">
+            <div class="trustItem"><b>✅ Sovitusti</b><div class="small">Selkeä sisältö & aikataulu</div></div>
+            <div class="trustItem"><b>⚙️ Kaikki yhdestä</b><div class="small">Asennus • Vianhaku • Keskukset</div></div>
+            <div class="trustItem"><b>✨ Siisti jälki</b><div class="small">Työmaa jää siistiksi</div></div>
+            <div class="trustItem"><b>📍 Uusimaa</b><div class="small">Hki • Espoo • Vantaa</div></div>
+          </div>
         </div>
-        <div class="card soft pad">
-          <b style="display:block">⚙️ Kaikki yhdestä</b>
-          <p class="small" style="margin:6px 0 0">Asennus • Vianhaku • Keskukset.</p>
-        </div>
-        <div class="card soft pad">
-          <b style="display:block">✨ Siisti lopputulos</b>
-          <p class="small" style="margin:6px 0 0">Työmaa jää siistiksi.</p>
-        </div>
+
+        <aside class="heroSide">
+          <div class="mini">
+            <b>📞 Nopein tapa</b>
+            <div class="small">Soita ja sovitaan aika</div>
+            <div style="margin-top:10px">
+              <a class="btn primary" data-phone-link href="tel:+358">Soita</a>
+            </div>
+          </div>
+          <div class="mini">
+            <b>💬 Tarjouspyyntö</b>
+            <div class="small">Osoite + kuvaus (+ kuva)</div>
+            <div style="margin-top:10px">
+              <a class="btn" href="/contact.html">Lähetä</a>
+              <a class="btn" data-email-link href="mailto:info@">Email</a>
+            </div>
+          </div>
+          <div class="mini">
+            <b>🧾 Dokumentit</b>
+            <div class="small">PDF / ohjeet / hinnasto</div>
+            <div style="margin-top:10px">
+              <a class="btn" href="/documents.html">Avaa</a>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   </section>
 
-  <!-- Quick tiles -->
-  <section class="section" style="padding-top:10px">
-    <div class="grid">
-      <a class="card pad" href="/services.html" style="text-decoration:none">
-        <span class="kicker" style="border-color:rgba(124,92,255,.45)">🔌 Asennukset</span>
-        <h3 style="margin-top:10px">Valot, pistorasiat, kodinkoneet</h3>
-        <p class="small">Nopea toteutus + siisti työnjälki</p>
-      </a>
-
-      <a class="card pad" href="/services.html" style="text-decoration:none">
-        <span class="kicker" style="border-color:rgba(251,113,133,.45)">🧯 Vianhaku</span>
-        <h3 style="margin-top:10px">Laukeava sulake / häiriöt</h3>
-        <p class="small">Paikannus + korjaus</p>
-      </a>
-
-      <a class="card pad" href="/services.html" style="text-decoration:none">
-        <span class="kicker" style="border-color:rgba(34,211,238,.45)">🧰 Sähkökeskus</span>
-        <h3 style="margin-top:10px">Suojaukset & merkinnät</h3>
-        <p class="small">Turvallisuus + dokumentit</p>
-      </a>
-    </div>
-  </section>
-
-  <!-- Services preview (short, colorful) -->
+  <!-- 1) SERVICES (cards like sahkopiste) -->
   <section class="section">
     <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
         <h2 style="margin:0">Palvelut</h2>
-        <p class="small" style="margin:6px 0 0">Päivitä sisältöä /admin → näkyy heti</p>
+        <p class="small" style="margin:6px 0 0">Lyhyesti. Selkeästi. Klikkaa →</p>
       </div>
-      <a class="btn" href="/services.html">Kaikki →</a>
+      <a class="btn" href="/services.html">Kaikki palvelut →</a>
     </div>
     <div id="servicesPreview" class="grid" style="margin-top:12px"></div>
   </section>
 
-  <!-- Gallery preview -->
+  <!-- 2) GALLERY (visual, less text) -->
   <section class="section">
     <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
         <h2 style="margin:0">Työnäytteet</h2>
         <p class="small" style="margin:6px 0 0">Klikkaa kuvaa (lightbox)</p>
       </div>
-      <a class="btn" href="/gallery.html">Katso lisää →</a>
+      <a class="btn" href="/gallery.html">Koko galleria →</a>
     </div>
     <div id="galleryPreview" class="grid" style="margin-top:12px"></div>
   </section>
 
-  <!-- Super short contact -->
-  <section class="section" id="contact">
+  <!-- 5) REVIEWS / TRUST -->
+  <section class="section">
+    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin:0">Asiakaspalaute</h2>
+        <p class="small" style="margin:6px 0 0">Luottamus ratkaisee — lyhyet palautteet</p>
+      </div>
+      <a class="btn" href="/contact.html">Pyydä tarjous →</a>
+    </div>
+    <div id="reviews" style="margin-top:12px"></div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section">
+    <div style="display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin:0">FAQ</h2>
+        <p class="small" style="margin:6px 0 0">Nopeat vastaukset</p>
+      </div>
+    </div>
+    <div id="faq" class="grid two" style="margin-top:12px"></div>
+  </section>
+
+  <!-- 3) CONTACT CTA (short) -->
+  <section class="section">
     <div class="card pad glow">
       <div class="grid two">
         <div>
           <span class="kicker">💬 Yhteys</span>
           <h2 style="margin-top:10px;margin-bottom:6px">Tarvitsetko sähkömiestä?</h2>
-          <p class="small" style="margin-top:0">
-            Soita tai lähetä pyyntö. Liitä osoite + kuvaus (+ kuva).
-          </p>
+          <p class="small" style="margin-top:0">Soita tai lähetä pyyntö — vastaamme nopeasti.</p>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
           <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
@@ -150,10 +167,9 @@
   <footer>
     <div>© <span data-company>RS-Expert Oy</span></div>
   </footer>
-
 </main>
 
-<!-- Lightbox (для превью галереи) -->
+<!-- Lightbox -->
 <div id="lightbox" style="display:none">
   <div id="lightbox-bg"></div>
   <img id="lightbox-img" />
