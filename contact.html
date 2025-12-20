@@ -4,17 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yhteydenotto — RS-Expert Oy</title>
-  <meta name="description" content="Lähetä tarjouspyyntö tai kysy aikataulua. RS-Expert Oy — sähkötyöt Uudellamaalla." />
+  <meta name="description" content="Tarjouspyyntö ja yhteydenotto. RS-Expert Oy — sähkötyöt Uudellamaalla." />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="row">
+      <div class="badge">
+        <span class="dot"></span>
+        <span>Nopea apu • Uusimaa</span>
+        <b><a data-phone-link href="tel:+358">+358…</a></b>
+      </div>
+      <div class="kv">
+        <a href="/services.html">Palvelut</a>
+        <a href="/gallery.html">Galleria</a>
+        <a href="/documents.html">Dokumentit</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <header>
   <div class="wrap">
     <div class="top">
       <div class="brand">
         <b data-company>RS-Expert Oy</b>
-        <span data-tagline></span>
+        <span data-tagline>Sähköasennukset • Vianhaku • Sähkökeskukset • Uusimaa</span>
       </div>
       <nav id="menu"></nav>
     </div>
@@ -22,61 +39,100 @@
 </header>
 
 <main class="wrap">
+
   <section class="hero">
     <div class="card pad glow">
-      <span class="kicker">💬 Yhteydenotto</span>
-      <h1 style="margin-top:12px">Pyydä tarjous / kysy aikaa</h1>
-      <p style="max-width:80ch">
-        Kerro lyhyesti: osoite, mitä pitää tehdä ja toivottu aikataulu. Voit myös liittää kuvan (Google Formissa).
-      </p>
+      <div class="pills">
+        <span class="pill">💬 Tarjouspyyntö</span>
+        <span class="pill">📷 Lisää kuva</span>
+        <span class="pill">🧾 Selkeä sopimus</span>
+      </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+      <h1 style="margin-top:14px">Lähetä pyyntö — vastaamme nopeasti</h1>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
         <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
         <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
-        <a class="btn" href="/services.html">Palvelut</a>
-        <a class="btn" href="/gallery.html">Galleria</a>
+        <a class="btn" href="/services.html">✨ Palvelut</a>
+        <a class="btn" href="/gallery.html">🖼️ Työt</a>
       </div>
-      <p id="error" class="err"></p>
+
+      <p id="error" class="err" style="margin-top:10px"></p>
     </div>
   </section>
 
   <section class="section">
     <div class="grid two">
+
+      <!-- Left: what to send -->
       <div class="card pad">
-        <h2>Nopea viesti</h2>
-        <p class="small">Jos haluat nopeimman ajan, soita. Muuten täytä lomake.</p>
-        <ul class="list">
-          <li>Osoite (kaupunki + katu)</li>
-          <li>Työn kuvaus</li>
-          <li>Toivottu aikataulu</li>
-          <li>Kuva (jos mahdollista)</li>
-        </ul>
-        <hr />
-        <p class="small">Vaihtoehto: lähetä sama sisältö sähköpostiin.</p>
-        <p><a class="btn" data-email-link href="mailto:info@">Lähetä email</a></p>
+        <span class="kicker">✅ Mitä kirjoittaa?</span>
+        <h2 style="margin-top:10px">Nopea viesti = nopea aika</h2>
+
+        <div class="trustRow" style="margin-top:12px">
+          <div class="trustItem">
+            <b>📍 Osoite</b>
+            <div class="small">Kaupunki + katu</div>
+          </div>
+          <div class="trustItem">
+            <b>🛠️ Työn kuvaus</b>
+            <div class="small">Mitä pitää tehdä?</div>
+          </div>
+          <div class="trustItem">
+            <b>🗓️ Aikataulu</b>
+            <div class="small">Milloin tarvitaan?</div>
+          </div>
+          <div class="trustItem">
+            <b>📷 Kuva</b>
+            <div class="small">Auttaa arvioinnissa</div>
+          </div>
+        </div>
+
+        <hr style="margin:16px 0">
+
+        <div class="card soft pad">
+          <b style="display:block">⚡ Vinkki</b>
+          <p class="small" style="margin:6px 0 0">
+            Jos kyseessä on <b>kiireellinen vika</b> (laukeava sulake, käry, kuumeneva pistorasia),
+            soita mieluummin heti.
+          </p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+            <a class="btn primary" data-phone-link href="tel:+358">Soita nyt</a>
+            <a class="btn" href="/documents.html">Dokumentit</a>
+          </div>
+        </div>
+
+        <div class="card soft pad" style="margin-top:12px">
+          <b style="display:block">✉️ Vaihtoehto</b>
+          <p class="small" style="margin:6px 0 0">Voit lähettää saman sisällön myös sähköpostilla.</p>
+          <p style="margin:10px 0 0">
+            <a class="btn" data-email-link href="mailto:info@">Lähetä email</a>
+          </p>
+        </div>
       </div>
 
+      <!-- Right: form -->
       <div class="card pad">
-        <h2>Lomake</h2>
-        <p class="small">Tämä on Google Form (ilmainen). Vastaukset tallentuvat Google Sheetiin.</p>
+        <span class="kicker">📝 Lomake</span>
+        <h2 style="margin-top:10px">Tarjouspyyntö</h2>
+        <p class="small" style="margin-top:6px">
+          Lomake on Google Form (ilmainen). Vastaukset tallentuvat Google Sheetiin.
+        </p>
 
-        <!-- ✅ ВСТАВЬ СЮДА СВОЙ GOOGLE FORM EMBED URL -->
-        <!-- Как получить: Google Forms → Send → <> Embed → Copy -->
-        <iframe
-          title="Tarjouspyyntö"
-          src="PASTE_YOUR_GOOGLE_FORM_EMBED_URL_HERE"
-          width="100%"
-          height="640"
-          frameborder="0"
-          marginheight="0"
-          marginwidth="0"
-          style="border:1px solid rgba(255,255,255,.10); border-radius:18px; background:rgba(255,255,255,.03)"
-        >Ladataan…</iframe>
+        <div class="formWrap" style="margin-top:12px">
+          <iframe
+            title="Tarjouspyyntö"
+            src="PASTE_GOOGLE_FORM_EMBED_URL_HERE"
+            loading="lazy"
+          >Ladataan…</iframe>
+        </div>
 
         <p class="small" style="margin-top:10px">
-          Kun olet liittänyt lomakkeen linkin, tämä toimii heti.
+          Jos iframe ei näy, avaa lomake uudessa välilehdessä:
+          <a class="btn" href="PASTE_GOOGLE_FORM_LINK_HERE" target="_blank" rel="noopener">Avaa lomake</a>
         </p>
       </div>
+
     </div>
   </section>
 
