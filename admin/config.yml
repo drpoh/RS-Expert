@@ -7,53 +7,15 @@ media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
 
 collections:
-  - name: "site"
-    label: "Sivuston sisältö"
+  - name: "content"
+    label: "Content"
     files:
       - file: "data/site.json"
-        label: "Asetukset ja sisältö"
+        label: "Site data"
         name: "site"
         format: "json"
         fields:
-          - { label: "Yrityksen nimi", name: "companyName", widget: "string" }
+          - { label: "Company name", name: "companyName", widget: "string" }
           - { label: "Tagline", name: "tagline", widget: "string" }
-          - { label: "Puhelin", name: "phone", widget: "string" }
+          - { label: "Phone", name: "phone", widget: "string" }
           - { label: "Email", name: "email", widget: "string" }
-
-          - label: "Menu"
-            name: "menu"
-            widget: "list"
-            fields:
-              - { label: "Teksti", name: "label", widget: "string" }
-              - label: "Linkki"
-                name: "href"
-                widget: "select"
-                options:
-                  - { label: "Etusivu", value: "/index.html" }
-                  - { label: "Palvelut", value: "/services.html" }
-                  - { label: "Galleria", value: "/gallery.html" }
-                  - { label: "Dokumentit", value: "/documents.html" }
-                  - { label: "Yhteys", value: "/contact.html" }
-
-          - label: "Palvelut"
-            name: "services"
-            widget: "list"
-            fields:
-              - { label: "Otsikko", name: "title", widget: "string" }
-              - { label: "Kuvaus", name: "text", widget: "text" }
-
-          - label: "Dokumentit"
-            name: "documents"
-            widget: "list"
-            fields:
-              - { label: "Nimi", name: "title", widget: "string" }
-              - { label: "PDF", name: "url", widget: "file" }
-
-          - label: "Galleria"
-            name: "gallery"
-            widget: "list"
-            fields:
-              - { label: "Otsikko", name: "title", widget: "string" }
-              - { label: "Kaupunki", name: "city", widget: "string", required: false }
-              - { label: "Kuva", name: "image", widget: "image" }
-              - { label: "Kuvaus", name: "text", widget: "text", required: false }
