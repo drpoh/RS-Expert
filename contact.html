@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yhteydenotto — RS-Expert Oy</title>
+  <meta name="description" content="Lähetä tarjouspyyntö tai kysy aikataulua. RS-Expert Oy — sähkötyöt Uudellamaalla." />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <b data-company>RS-Expert Oy</b>
+        <span data-tagline></span>
+      </div>
+      <nav id="menu"></nav>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="card pad glow">
+      <span class="kicker">💬 Yhteydenotto</span>
+      <h1 style="margin-top:12px">Pyydä tarjous / kysy aikaa</h1>
+      <p style="max-width:80ch">
+        Kerro lyhyesti: osoite, mitä pitää tehdä ja toivottu aikataulu. Voit myös liittää kuvan (Google Formissa).
+      </p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        <a class="btn primary" data-phone-link href="tel:+358">📞 Soita</a>
+        <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
+        <a class="btn" href="/services.html">Palvelut</a>
+        <a class="btn" href="/gallery.html">Galleria</a>
+      </div>
+      <p id="error" class="err"></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="grid two">
+      <div class="card pad">
+        <h2>Nopea viesti</h2>
+        <p class="small">Jos haluat nopeimman ajan, soita. Muuten täytä lomake.</p>
+        <ul class="list">
+          <li>Osoite (kaupunki + katu)</li>
+          <li>Työn kuvaus</li>
+          <li>Toivottu aikataulu</li>
+          <li>Kuva (jos mahdollista)</li>
+        </ul>
+        <hr />
+        <p class="small">Vaihtoehto: lähetä sama sisältö sähköpostiin.</p>
+        <p><a class="btn" data-email-link href="mailto:info@">Lähetä email</a></p>
+      </div>
+
+      <div class="card pad">
+        <h2>Lomake</h2>
+        <p class="small">Tämä on Google Form (ilmainen). Vastaukset tallentuvat Google Sheetiin.</p>
+
+        <!-- ✅ ВСТАВЬ СЮДА СВОЙ GOOGLE FORM EMBED URL -->
+        <!-- Как получить: Google Forms → Send → <> Embed → Copy -->
+        <iframe
+          title="Tarjouspyyntö"
+          src="PASTE_YOUR_GOOGLE_FORM_EMBED_URL_HERE"
+          width="100%"
+          height="640"
+          frameborder="0"
+          marginheight="0"
+          marginwidth="0"
+          style="border:1px solid rgba(255,255,255,.10); border-radius:18px; background:rgba(255,255,255,.03)"
+        >Ladataan…</iframe>
+
+        <p class="small" style="margin-top:10px">
+          Kun olet liittänyt lomakkeen linkin, tämä toimii heti.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>© <span data-company>RS-Expert Oy</span></div>
+  </footer>
+</main>
+
+<script src="/assets/site.js"></script>
+</body>
+</html>
