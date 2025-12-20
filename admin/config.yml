@@ -55,7 +55,7 @@ collections:
               - { label: "Näkyy", name: "enabled", widget: "boolean", default: true }
 
           - label: "Galleria"
-            name: "gallery"
+            name: "Gallery"
             widget: "list"
             fields:
               - { label: "Otsikko", name: "title", widget: "string" }
