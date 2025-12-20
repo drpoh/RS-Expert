@@ -341,3 +341,25 @@ loadSite().catch(err => {
   const el = document.getElementById('error');
   if (el) el.textContent = 'Ошибка: ' + err.message;
 });
+// ===== Premium scroll reveal =====
+(function initReveal() {
+  // Mark sections/cards to reveal
+  const targets = [
+    ...document.querySelectorAll('section'),
+    ...document.querySelectorAll('.card')
+  ];
+
+  targets.forEach(el => el.classList.add('reveal'));
+
+  // IntersectionObserver reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  targets.forEach(el => io.observe(el));
+})();
