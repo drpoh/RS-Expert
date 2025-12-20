@@ -1,25 +1,13 @@
-/**
- * RS-Expert site.js (Free dynamic mode)
- * - Loads /data/site.json from GitHub Raw => updates instantly after CMS publish
- * - Renders menu, contacts, services, gallery, documents
- * - Gallery: lightbox + optional filters (if #galleryFilters exists)
- * - Mobile: bottom CTA bar
- */
+// RS-Expert site.js (FREE dynamic content mode via GitHub Raw)
 
 const REPO_OWNER = 'drpoh';
 const REPO_NAME = 'RS-Expert';
 const REPO_BRANCH = 'main';
-
-// GitHub Raw base (content served directly from repo)
 const REPO_RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}`;
-
-// Path inside repo to content JSON
 const SITE_JSON_PATH = '/data/site.json';
 
 async function loadSite() {
-  // Cache-buster so you see updates instantly
   const url = `${REPO_RAW_BASE}${SITE_JSON_PATH}?ts=${Date.now()}`;
-
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Cannot load site data from GitHub Raw: ' + res.status);
 
@@ -39,27 +27,20 @@ async function loadSite() {
   // Menu
   const nav = document.getElementById('menu');
   if (nav && Array.isArray(d.menu)) {
-    nav.innerHTML = d.menu
-      .map(m => `<a href="${safeUrl(m.href)}">${escapeHtml(m.label)}</a>`)
-      .join('');
+    nav.innerHTML = d.menu.map(m => `<a href="${safeUrl(m.href)}">${escapeHtml(m.label)}</a>`).join('');
   }
 
-  // Contacts (support multiple phone links on page)
+  // Contacts (update all matching links)
   document.querySelectorAll('[data-phone-link]').forEach(a => {
     if (!phone) return;
     a.href = 'tel:' + phone.replace(/\s+/g, '');
-    // если это кнопка "Soita" — не перетираем текст, иначе ставим номер
-    if ((a.textContent || '').includes('…') || (a.textContent || '').includes('+')) {
-      a.textContent = phone;
-    }
+    if (looksLikePlaceholder(a.textContent)) a.textContent = phone;
   });
 
   document.querySelectorAll('[data-email-link]').forEach(a => {
     if (!email) return;
     a.href = 'mailto:' + email;
-    if ((a.textContent || '').includes('…') || (a.textContent || '').includes('@')) {
-      a.textContent = email;
-    }
+    if (looksLikePlaceholder(a.textContent)) a.textContent = email;
   });
 
   // Services
@@ -91,7 +72,7 @@ async function loadSite() {
       : `<div class="card pad"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
   }
 
-  // Services bullets (for services.html)
+  // Services bullets (services.html)
   const bullets = document.getElementById('servicesBullets');
   if (bullets) {
     bullets.innerHTML = servicesAll.length
@@ -168,7 +149,7 @@ async function loadSite() {
     attachLightbox(galleryPreview);
   }
 
-  // Gallery filters (only if <div id="galleryFilters"> exists on this page)
+  // Gallery filters (if placeholder exists)
   makeGalleryFilters(galleryAll);
 
   // Performance tweaks
@@ -227,11 +208,10 @@ function attachLightbox(container) {
   }
 }
 
-/* ===== UX Add-ons: bottom CTA bar + gallery filters + lazyload ===== */
+/* ===== Add-ons (free) ===== */
 
 function ensureBottomBar(phone, email) {
   if (document.getElementById('bottomBar')) return;
-  // show only on small screens
   if (window.matchMedia && window.matchMedia('(min-width: 980px)').matches) return;
 
   const tel = (phone || '').replace(/\s+/g, '');
@@ -330,7 +310,7 @@ function escapeHtml(s) {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#039;',
+    "'": '&#039;'
   }[m]));
 }
 
@@ -339,17 +319,21 @@ function escapeAttr(s) {
     '"': '&quot;',
     '&': '&amp;',
     '<': '&lt;',
-    '>': '&gt;',
+    '>': '&gt;'
   }[m]));
 }
 
-// Allow only site-relative links or safe http(s)
 function safeUrl(u) {
   const s = String(u || '').trim();
   if (!s) return '#';
   if (s.startsWith('/')) return s;
   if (s.startsWith('http://') || s.startsWith('https://')) return s;
   return '#';
+}
+
+function looksLikePlaceholder(t) {
+  const s = String(t || '').trim();
+  return s === '' || s.includes('…') || s.includes('+358') || s.includes('@');
 }
 
 loadSite().catch(err => {
