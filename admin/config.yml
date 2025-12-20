@@ -2,6 +2,7 @@ backend:
   name: github
   repo: drpoh/RS-Expert
   branch: main
+  auth_type: personal_access_token
 
 media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
