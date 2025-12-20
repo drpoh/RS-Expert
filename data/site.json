@@ -1,7 +1,7 @@
 {
   "basic": {
     "companyName": "RS-Expert Oy",
-    "tagline": "Sähköasennukset, vianhaku ja sähkökeskukset • Uusimaa",
+    "tagline": "Sähköasennukset • Vianhaku • Sähkökeskukset • Uusimaa",
     "phone": "+358 XX XXX XXXX",
     "email": "info@rs-expert.fi"
   },
@@ -14,33 +14,45 @@
   ],
   "services": [
     {
-      "title": "Sähköasennukset (koti & yritys)",
-      "text": "Pistorasiat, kytkimet, valaisimet, kodinkoneliitännät sekä pienet ja keskisuuret asennukset siistillä työnjäljellä.",
+      "title": "Sähköasennukset",
+      "text": "Valaisimet, pistorasiat, kytkimet, kodinkoneliitännät ja pienet asennukset.",
+      "icon": "🔌",
+      "tag": "Koti & yritys",
       "enabled": true
     },
     {
       "title": "Vianhaku ja korjaukset",
-      "text": "Sähkövikojen paikannus, laukeavat sulakkeet, ylikuumenemiset ja häiriöt. Tarvittaessa mittaukset ja dokumentointi.",
+      "text": "Laukeavat sulakkeet, häiriöt ja viat — paikannus ja korjaus nopeasti.",
+      "icon": "🧯",
+      "tag": "Nopea apu",
       "enabled": true
     },
     {
-      "title": "Sähkökeskukset ja suojaukset",
-      "text": "Keskusten päivitykset, vikavirtasuojat, ryhmämerkinnät ja turvallinen toteutus määräysten mukaan.",
+      "title": "Sähkökeskukset",
+      "text": "Keskusten päivitykset, vikavirtasuojat, merkinnät ja turvallinen toteutus.",
+      "icon": "🧰",
+      "tag": "Turvallisuus",
       "enabled": true
     },
     {
       "title": "Remontit ja uudisrakennus",
-      "text": "Sähköistys osana remonttia: reititykset, kaapeloinnit, kalusteasennukset ja yhteistyö muiden urakoitsijoiden kanssa.",
+      "text": "Sähköistys osana remonttia: kaapeloinnit, kalusteasennukset, vaiheistus.",
+      "icon": "🏗️",
+      "tag": "Projektit",
       "enabled": true
     },
     {
-      "title": "Sauna, pesutilat ja ulkovalaistus",
-      "text": "Saunan ja märkätilojen sähkötyöt, pihavalaistus ja ohjausratkaisut (ajastus/automaatio).",
+      "title": "Sauna & pesutilat",
+      "text": "Märkätilojen ja saunan sähkötyöt, valaistus ja ohjaukset.",
+      "icon": "💡",
+      "tag": "Märkätilat",
       "enabled": true
     },
     {
-      "title": "Älykoti ja automaatio (Home Assistant)",
-      "text": "Valojen, lämmityksen ja laitteiden ohjaus sekä automaatiot. Suunnitellaan järkevästi ja turvallisesti.",
+      "title": "Älykoti / automaatio",
+      "text": "Valojen, lämmityksen ja laitteiden ohjaus sekä automaatiot (Home Assistant).",
+      "icon": "🤖",
+      "tag": "Smart",
       "enabled": true
     }
   ],
@@ -87,6 +99,62 @@
       "image": "/assets/uploads/gallery-vianhaku.jpg",
       "text": "Vian paikannus ja korjaus — turvallinen toiminta palautettiin nopeasti.",
       "type": "Vianhaku",
+      "enabled": true
+    }
+  ],
+  "reviews": [
+    {
+      "title": "Nopea ja siisti työ",
+      "city": "Järvenpää",
+      "service": "Sähkökeskus",
+      "stars": 5,
+      "text": "Kommunikointi oli selkeää ja työ tehtiin sovitusti. Suosittelen.",
+      "enabled": true
+    },
+    {
+      "title": "Vika löytyi nopeasti",
+      "city": "Helsinki",
+      "service": "Vianhaku",
+      "stars": 5,
+      "text": "Sulake laukesi jatkuvasti — vika paikannettiin ja korjattiin saman käynnin aikana.",
+      "enabled": true
+    },
+    {
+      "title": "Hyvä aikataulu ja selkeä hinta",
+      "city": "Vantaa",
+      "service": "Asennus",
+      "stars": 5,
+      "text": "Työ tehtiin sovitussa ajassa, ja hinta oli selkeä etukäteen.",
+      "enabled": true
+    },
+    {
+      "title": "Siisti jälki remonttikohteessa",
+      "city": "Espoo",
+      "service": "Remontti",
+      "stars": 5,
+      "text": "Sähköt tehtiin vaiheittain ja työmaa pidettiin siistinä koko ajan.",
+      "enabled": true
+    }
+  ],
+  "faq": [
+    {
+      "q": "Teettekö pieniä töitä?",
+      "a": "Kyllä. Myös pienet asennukset ja korjaukset onnistuvat.",
+      "enabled": true
+    },
+    {
+      "q": "Kuinka nopeasti pääsette paikalle?",
+      "a": "Usein järjestyy aika nopeasti — soita ja sovitaan.",
+      "enabled": true
+    },
+    {
+      "q": "Voinko lähettää kuvan ongelmasta?",
+      "a": "Kyllä. Kuva auttaa arvioinnissa ja nopeuttaa toteutusta.",
+      "enabled": true
+    },
+    {
+      "q": "Palveletteko taloyhtiöitä ja yrityksiä?",
+      "a": "Kyllä. Sovitaan toteutus ja dokumentointi tarpeen mukaan.",
       "enabled": true
     }
   ]
