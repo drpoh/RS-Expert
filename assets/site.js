@@ -317,4 +317,3 @@ loadSite().catch(err => {
   const el = document.getElementById('error');
   if (el) el.textContent = 'Ошибка: ' + err.message;
 });
-```0
