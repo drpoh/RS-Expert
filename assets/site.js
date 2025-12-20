@@ -1,6 +1,28 @@
+/**
+ * RS-Expert site.js (Free dynamic mode)
+ * - Loads /data/site.json from GitHub Raw => updates instantly after CMS publish
+ * - Renders menu, contacts, services, gallery, documents
+ * - Gallery: lightbox + optional filters (if #galleryFilters exists)
+ * - Mobile: bottom CTA bar
+ */
+
+const REPO_OWNER = 'drpoh';
+const REPO_NAME = 'RS-Expert';
+const REPO_BRANCH = 'main';
+
+// GitHub Raw base (content served directly from repo)
+const REPO_RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}`;
+
+// Path inside repo to content JSON
+const SITE_JSON_PATH = '/data/site.json';
+
 async function loadSite() {
-  const res = await fetch('/data/site.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error('Cannot load /data/site.json: ' + res.status);
+  // Cache-buster so you see updates instantly
+  const url = `${REPO_RAW_BASE}${SITE_JSON_PATH}?ts=${Date.now()}`;
+
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Cannot load site data from GitHub Raw: ' + res.status);
+
   const d = await res.json();
 
   // Backwards compatible: allow both old flat fields and new basic.*
@@ -17,20 +39,28 @@ async function loadSite() {
   // Menu
   const nav = document.getElementById('menu');
   if (nav && Array.isArray(d.menu)) {
-    nav.innerHTML = d.menu.map(m => `<a href="${m.href}">${escapeHtml(m.label)}</a>`).join('');
+    nav.innerHTML = d.menu
+      .map(m => `<a href="${safeUrl(m.href)}">${escapeHtml(m.label)}</a>`)
+      .join('');
   }
 
-  // Contacts
-  const phoneA = document.querySelector('[data-phone-link]');
-  if (phoneA && phone) {
-    phoneA.href = 'tel:' + phone.replace(/\s+/g, '');
-    phoneA.textContent = phone;
-  }
-  const emailA = document.querySelector('[data-email-link]');
-  if (emailA && email) {
-    emailA.href = 'mailto:' + email;
-    emailA.textContent = email;
-  }
+  // Contacts (support multiple phone links on page)
+  document.querySelectorAll('[data-phone-link]').forEach(a => {
+    if (!phone) return;
+    a.href = 'tel:' + phone.replace(/\s+/g, '');
+    // если это кнопка "Soita" — не перетираем текст, иначе ставим номер
+    if ((a.textContent || '').includes('…') || (a.textContent || '').includes('+')) {
+      a.textContent = phone;
+    }
+  });
+
+  document.querySelectorAll('[data-email-link]').forEach(a => {
+    if (!email) return;
+    a.href = 'mailto:' + email;
+    if ((a.textContent || '').includes('…') || (a.textContent || '').includes('@')) {
+      a.textContent = email;
+    }
+  });
 
   // Services
   const servicesAll = (Array.isArray(d.services) ? d.services : []).filter(x => x?.enabled !== false);
@@ -61,7 +91,7 @@ async function loadSite() {
       : `<div class="card pad"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
   }
 
-  // Services bullets (like "Teemme mm. seuraavia ...")
+  // Services bullets (for services.html)
   const bullets = document.getElementById('servicesBullets');
   if (bullets) {
     bullets.innerHTML = servicesAll.length
@@ -95,7 +125,7 @@ async function loadSite() {
           <div class="card pad">
             <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
             ${i.category ? `<p class="small">${escapeHtml(i.category)}</p>` : ``}
-            <p><a class="btn" href="${i.url}" target="_blank" rel="noopener">Avaa PDF</a></p>
+            <p><a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a></p>
           </div>
         `).join('')
       : `<div class="card pad"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
@@ -109,7 +139,7 @@ async function loadSite() {
     galleryEl.innerHTML = galleryAll.length
       ? galleryAll.map(i => `
           <div class="card pad" data-type="${escapeAttr(i.type || '')}" data-city="${escapeAttr(i.city || '')}">
-            ${i.image ? `<img class="clickable" src="${i.image}" alt="" data-lightbox>` : ''}
+            ${i.image ? `<img class="clickable" src="${safeUrl(i.image)}" alt="" data-lightbox>` : ''}
             <h3>${escapeHtml(i.title || '')}</h3>
             ${i.type ? `<p class="small">${escapeHtml(i.type)}</p>` : ''}
             ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
@@ -121,14 +151,14 @@ async function loadSite() {
     attachLightbox(galleryEl);
   }
 
-  // Gallery preview (home) — 6 latest
+  // Gallery preview (home)
   const galleryPreview = document.getElementById('galleryPreview');
   if (galleryPreview) {
     const slice = galleryAll.slice(0, 6);
     galleryPreview.innerHTML = slice.length
       ? slice.map(i => `
           <div class="card pad" data-type="${escapeAttr(i.type || '')}" data-city="${escapeAttr(i.city || '')}">
-            ${i.image ? `<img class="clickable" src="${i.image}" alt="" data-lightbox>` : ''}
+            ${i.image ? `<img class="clickable" src="${safeUrl(i.image)}" alt="" data-lightbox>` : ''}
             <h3>${escapeHtml(i.title || '')}</h3>
             ${i.city ? `<p class="small">${escapeHtml(i.city)}</p>` : ''}
           </div>
@@ -138,13 +168,13 @@ async function loadSite() {
     attachLightbox(galleryPreview);
   }
 
-  // Gallery filters (if placeholder exists on page)
+  // Gallery filters (only if <div id="galleryFilters"> exists on this page)
   makeGalleryFilters(galleryAll);
 
   // Performance tweaks
   enableLazyImages();
 
-  // Mobile conversion: bottom CTA bar
+  // Mobile conversion
   ensureBottomBar(phone, email);
 }
 
@@ -155,7 +185,7 @@ function renderDocGroup(title, items) {
   const cards = items.map(i => `
     <div class="card pad">
       <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
-      <p><a class="btn" href="${i.url}" target="_blank" rel="noopener">Avaa PDF</a></p>
+      <p><a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a></p>
     </div>
   `).join('');
   return `
@@ -187,7 +217,6 @@ function attachLightbox(container) {
     document.body.style.overflow = '';
   };
 
-  // Bind once
   if (!lb.dataset.bound) {
     lbBg.addEventListener('click', closeLB);
     lbClose.addEventListener('click', closeLB);
@@ -198,10 +227,12 @@ function attachLightbox(container) {
   }
 }
 
-/* ===== UX Add-ons (2025): bottom CTA bar + gallery filters + lazyload ===== */
+/* ===== UX Add-ons: bottom CTA bar + gallery filters + lazyload ===== */
 
 function ensureBottomBar(phone, email) {
   if (document.getElementById('bottomBar')) return;
+  // show only on small screens
+  if (window.matchMedia && window.matchMedia('(min-width: 980px)').matches) return;
 
   const tel = (phone || '').replace(/\s+/g, '');
   const mail = email || '';
@@ -210,8 +241,8 @@ function ensureBottomBar(phone, email) {
   bar.id = 'bottomBar';
   bar.innerHTML = `
     <div class="bb-wrap">
-      <a class="bb-btn bb-primary" href="tel:${tel}">📞 Soita</a>
-      <a class="bb-btn" href="/index.html#contact">💬 Viesti</a>
+      <a class="bb-btn bb-primary" href="tel:${escapeAttr(tel)}">📞 Soita</a>
+      <a class="bb-btn" href="/contact.html">💬 Lähetä</a>
       <a class="bb-btn" href="mailto:${escapeAttr(mail)}">✉️ Email</a>
     </div>
   `;
@@ -220,8 +251,8 @@ function ensureBottomBar(phone, email) {
   let shown = false;
   const onScroll = () => {
     const y = window.scrollY || 0;
-    if (y > 220 && !shown) { bar.classList.add('show'); shown = true; }
-    if (y <= 220 && shown) { bar.classList.remove('show'); shown = false; }
+    if (y > 180 && !shown) { bar.classList.add('show'); shown = true; }
+    if (y <= 180 && shown) { bar.classList.remove('show'); shown = false; }
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
@@ -310,6 +341,15 @@ function escapeAttr(s) {
     '<': '&lt;',
     '>': '&gt;',
   }[m]));
+}
+
+// Allow only site-relative links or safe http(s)
+function safeUrl(u) {
+  const s = String(u || '').trim();
+  if (!s) return '#';
+  if (s.startsWith('/')) return s;
+  if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  return '#';
 }
 
 loadSite().catch(err => {
