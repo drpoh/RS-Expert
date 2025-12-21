@@ -99,14 +99,51 @@
     return url.toString();
   }
 
+  function withLang(href, lang) {
+    if (!href) return "#";
+    if (lang !== "ru") return href;
+    return href.includes("?") ? `${href}&lang=ru` : `${href}?lang=ru`;
+  }
+
+  async function copyToClipboard(text) {
+    const value = String(text || "");
+    if (!value) return false;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch (e) {}
+
+    // fallback
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
   const UI = {
     fi: {
       call: "Soita",
       email: "Email",
+      instagram: "Instagram",
+      instagramCTA: "Katso Instagram",
       requestQuote: "Pyydä tarjous",
       services: "Palvelut",
       works: "Työnäytteet",
       gallery: "Galleria",
+      references: "Referenssit",
       showAll: "Näytä kaikki →",
       seeGallery: "Katso galleria →",
       reviews: "Asiakaspalaute",
@@ -116,23 +153,31 @@
       documents: "Dokumentit",
       docsLead: "PDF-dokumentit ja ohjeet.",
       galleryLead: "Työnäytteitä ja toteutuksia.",
+      referencesLead: "Päivittyy — lisäämme kohteita ja projekteja pian.",
       quoteTitle: "Tarjouspyyntö",
       quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
       phoneLabel: "Puhelin",
       contactTitle: "Yhteystiedot",
       contactCTA: "Pyydä tarjous",
       addressLabel: "Osoite",
-      ibanLabel: "Pankki",
       yLabel: "Y-tunnus",
-      instagram: "Instagram"
+      billingTitle: "Laskutusosoite",
+      ibanLabel: "IBAN",
+      copyIban: "Kopioi IBAN",
+      copied: "Kopioitu!",
+      verkkolaskuLabel: "Verkkolaskuosoite",
+      operaattoriLabel: "Operaattori"
     },
     ru: {
       call: "Позвонить",
       email: "Email",
+      instagram: "Instagram",
+      instagramCTA: "Смотреть Instagram",
       requestQuote: "Заявка",
       services: "Услуги",
       works: "Примеры работ",
       gallery: "Галерея",
+      references: "Референсы",
       showAll: "Показать все →",
       seeGallery: "Смотреть галерею →",
       reviews: "Отзывы",
@@ -142,15 +187,20 @@
       documents: "Документы",
       docsLead: "PDF-документы и инструкции.",
       galleryLead: "Примеры выполненных работ.",
+      referencesLead: "Страница будет пополняться — скоро добавим проекты.",
       quoteTitle: "Заявка на расчёт",
       quoteLead: "Опишите объект и пожелания — быстро ответим.",
       phoneLabel: "Телефон",
       contactTitle: "Контакты",
       contactCTA: "Оставить заявку",
       addressLabel: "Адрес",
-      ibanLabel: "Банк",
       yLabel: "Y-tunnus",
-      instagram: "Instagram"
+      billingTitle: "Реквизиты для счета",
+      ibanLabel: "IBAN",
+      copyIban: "Копировать IBAN",
+      copied: "Скопировано!",
+      verkkolaskuLabel: "Verkkolaskuosoite",
+      operaattoriLabel: "Оператор"
     }
   };
 
@@ -167,11 +217,7 @@
 
     const pageSeo = data?.seo?.pages?.[path] || {};
 
-    const title =
-      t(pageSeo.title, lang) ||
-      data?.companyName ||
-      "RS-Expert Oy";
-
+    const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
     const description =
       t(pageSeo.description, lang) ||
       t(data?.site?.defaultDescription, lang) ||
@@ -221,7 +267,6 @@
     const info = data?.businessInfo || {};
     const addressText = t(info?.address, lang);
 
-    // Пытаемся аккуратно разобрать адрес "Street, ZIP City"
     let street = "";
     let postalCode = "";
     let addressLocality = "";
@@ -244,9 +289,7 @@
       telephone: b.telephone || data?.phone,
       email: b.email || data?.email,
       image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
-      areaServed: (b.areaServed || [])
-        .filter(Boolean)
-        .map((x) => ({ "@type": "City", name: x })),
+      areaServed: (b.areaServed || []).filter(Boolean).map((x) => ({ "@type": "City", name: x })),
       openingHours: b.openingHours || [],
       inLanguage: lang
     };
@@ -267,7 +310,6 @@
         addressLocality: addressLocality || undefined,
         addressCountry: "FI"
       };
-      // clean undefined
       Object.keys(schema.address).forEach((k) => {
         if (schema.address[k] === undefined) delete schema.address[k];
       });
@@ -289,13 +331,6 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  function withLang(href, lang) {
-    if (!href) return "#";
-    if (lang !== "ru") return href;
-    // не добавляем второй ?
-    return href.includes("?") ? `${href}&lang=ru` : `${href}?lang=ru`;
-  }
-
   // ---------- UI render ----------
   function renderHeader(data, lang) {
     const header = $("#site-header");
@@ -312,6 +347,9 @@
       .join("");
 
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+
     const topLeftText = [
       lang === "ru" ? "Быстрая помощь" : "Nopea apu",
       data.region || "",
@@ -323,6 +361,10 @@
     const fiActive = lang === "fi" ? " lang__btn--active" : "";
     const ruActive = lang === "ru" ? " lang__btn--active" : "";
 
+    const igBtn = ig
+      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+      : "";
+
     header.innerHTML = `
       <div class="topbar">
         <div class="topbar__left">${escapeHtml(topLeftText)}</div>
@@ -331,6 +373,7 @@
             <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
             <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
           </div>
+          ${igBtn}
           <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
         </div>
@@ -356,31 +399,32 @@
     const ig = info.instagram || "";
     const addr = t(info.address, lang);
     const y = info.yTunnus || "";
-    const iban = info.iban || "";
 
     const igHtml = ig
-      ? `<span class="dot">•</span><a href="${escapeHtml(ig)}" target="_blank" rel="noopener">${escapeHtml(ui(lang, "instagram"))}</a>`
+      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
       : "";
 
     const line2Parts = [];
     if (addr) line2Parts.push(`${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`);
     if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
-    if (iban) line2Parts.push(`${escapeHtml(ui(lang, "ibanLabel"))}: ${escapeHtml(iban)}`);
 
     footer.innerHTML = `
       <div class="footer__inner">
         <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+
         <div class="footer__meta">
           <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
           <span class="dot">•</span>
           <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
           ${igHtml}
         </div>
+
         ${
           line2Parts.length
             ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>`
             : ``
         }
+
         <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
       </div>
     `;
@@ -392,6 +436,8 @@
 
     const hero = data.hero || {};
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
 
     const badgesHtml = (hero.badges || [])
       .map((b) => `<span class="badge">${escapeHtml(t(b, lang))}</span>`)
@@ -466,6 +512,10 @@
       })
       .join("");
 
+    const instagramCta = ig
+      ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
+      : "";
+
     el.innerHTML = `
       <section class="hero">
         <h1 class="hero__title">${escapeHtml(t(hero.title, lang))}</h1>
@@ -474,6 +524,7 @@
         <div class="hero__cta">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          ${instagramCta}
         </div>
       </section>
 
@@ -504,6 +555,7 @@
         <div class="cta__buttons">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          ${instagramCta}
         </div>
       </section>
 
@@ -571,6 +623,21 @@
         <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
         <p class="lead">${escapeHtml(ui(lang, "galleryLead"))}</p>
         <div class="grid grid--gallery">${itemsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderReferencesPage(_data, lang) {
+    const el = $("#page-referenssit");
+    if (!el) return;
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "references"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "referencesLead"))}</p>
+        <div class="card card--pad">
+          <p style="margin:0;">${escapeHtml(lang === "ru" ? "Пока пусто." : "Toistaiseksi tyhjä.")}</p>
+        </div>
       </section>
     `;
   }
@@ -647,16 +714,46 @@
     const info = data.businessInfo || {};
     const addr = t(info.address, lang);
     const y = info.yTunnus || "";
-    const iban = info.iban || "";
     const ig = info.instagram || "";
+    const bill = info.billing || {};
+    const iban = bill.iban || "";
+    const eaddr = bill.verkkolaskuosoite || "";
+    const op = bill.operaattori || "";
 
     const igHtml = ig
-      ? `<div><strong>${escapeHtml(ui(lang, "instagram"))}:</strong> <a href="${escapeHtml(ig)}" target="_blank" rel="noopener">${escapeHtml(ig)}</a></div>`
+      ? `<div class="igblock">
+           <a class="igcard" href="${escapeHtml(ig)}" target="_blank" rel="noopener">
+             <div class="igcard__title">📸 ${escapeHtml(ui(lang, "instagram"))}</div>
+             <div class="igcard__sub">${escapeHtml(lang === "ru" ? "Основные фото и работы здесь" : "Tärkeimmät kuvat ja työt täällä")}</div>
+           </a>
+         </div>`
       : "";
+
+    const billingHtml = `
+      <div class="card card--pad">
+        <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
+        <div class="stack">
+          ${
+            iban
+              ? `<div class="rowline">
+                   <div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> <span class="mono">${escapeHtml(iban)}</span></div>
+                   <button class="copybtn" type="button" data-copy="${escapeHtml(iban)}">${escapeHtml(ui(lang, "copyIban"))}</button>
+                 </div>
+                 <div class="copystatus" id="copy-status" aria-live="polite"></div>`
+              : ""
+          }
+          ${eaddr ? `<div><strong>${escapeHtml(ui(lang, "verkkolaskuLabel"))}:</strong> <span class="mono">${escapeHtml(eaddr)}</span></div>` : ""}
+          ${op ? `<div><strong>${escapeHtml(ui(lang, "operaattoriLabel"))}:</strong> ${escapeHtml(op)}</div>` : ""}
+        </div>
+      </div>
+    `;
 
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
+
+        ${igHtml}
+
         <div class="card card--pad">
           <div class="stack">
             <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
@@ -667,14 +764,15 @@
 
             ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
             ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
-            ${iban ? `<div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> ${escapeHtml(iban)}</div>` : ""}
-            ${igHtml}
 
             <div class="mt">
               <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
             </div>
           </div>
         </div>
+
+        <div class="mt"></div>
+        ${billingHtml}
       </section>
     `;
   }
@@ -696,6 +794,22 @@
     });
   }
 
+  function bindCopyButtons(lang) {
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-copy]");
+      if (!btn) return;
+
+      const text = btn.getAttribute("data-copy") || "";
+      const ok = await copyToClipboard(text);
+      const status = document.getElementById("copy-status");
+
+      if (status) {
+        status.textContent = ok ? ui(lang, "copied") : "";
+        if (ok) setTimeout(() => (status.textContent = ""), 1800);
+      }
+    });
+  }
+
   // ---------- boot ----------
   let data;
   try {
@@ -712,6 +826,7 @@
   applyLocalBusinessSchema(data, lang);
 
   bindLanguageSwitcher(data);
+  bindCopyButtons(lang);
 
   renderHeader(data, lang);
   renderFooter(data, lang);
@@ -719,6 +834,7 @@
   renderHome(data, lang);
   renderServicesPage(data, lang);
   renderGalleryPage(data, lang);
+  renderReferencesPage(data, lang);
   renderDocumentsPage(data, lang);
   renderTarjousPage(data, lang);
   renderContactPage(data, lang);
