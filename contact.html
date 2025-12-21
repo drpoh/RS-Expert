@@ -3,24 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Yhteydenotto — RS-Expert Oy</title>
+  <title>Yhteys — RS-Expert Oy</title>
   <meta name="description" content="Ota yhteyttä RS-Expert Oy — sähkötyöt Uudellamaalla." />
   <link rel="stylesheet" href="/assets/styles.css" />
   <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
 
+<div class="topbar">
+  <div class="wrap">
+    <div class="row">
+      <div class="badge">
+        <span class="dot"></span>
+        <span>Yhteys • RS-Expert</span>
+        <b><a data-phone-link href="tel:+358">+358…</a></b>
+      </div>
+      <div class="kv">
+        <a href="/index.html">Etusivu</a>
+        <a href="/tarjouspyynto.html">Tarjouspyyntö</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="wrap">
     <div class="top">
       <div class="brand">
-        <a href="/index.html" style="text-decoration:none;color:inherit">
-          <b data-company>RS-Expert Oy</b>
-        </a>
+        <a href="/index.html"><b data-company>RS-Expert Oy</b></a>
         <span data-tagline></span>
       </div>
       <nav id="menu"></nav>
     </div>
+    <div id="error"></div>
   </div>
 </header>
 
@@ -29,30 +44,29 @@
   <section class="hero">
     <div class="card pad glow">
       <h1>Ota yhteyttä</h1>
-      <p class="lead">Lähetä tarjouspyyntö popup-lomakkeella tai soita suoraan.</p>
+      <p class="lead">Nopea yhteydenotto: lähetä tarjouspyyntö tai soita.</p>
 
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
-        <button class="btn primary" data-tally-open="81z8Dk" data-tally-width="420" data-tally-overlay="1">💬 Lähetä pyyntö</button>
+      <div class="cta">
+        <button class="btn primary" data-tally-open="" data-tally-width="420" data-tally-overlay="1">💬 Lähetä pyyntö</button>
         <a class="btn" data-phone-link href="tel:+358">📞 Soita</a>
-        <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
+        <a class="btn" data-email-link href="mailto:">✉️ Email</a>
       </div>
-    </div>
-  </section>
 
-  <section class="section">
-    <div class="grid three">
-      <div class="card pad">
-        <b>📍 Alue</b>
-        <p class="small">Uusimaa</p>
+      <div class="section grid three">
+        <div class="card pad">
+          <b>📍 Alue</b>
+          <p class="small">Uusimaa</p>
+        </div>
+        <div class="card pad">
+          <b>⏱️ Vastausaika</b>
+          <p class="small">Usein nopeasti</p>
+        </div>
+        <div class="card pad">
+          <b>🛡️ Turvallisesti</b>
+          <p class="small">Määräysten mukainen toteutus</p>
+        </div>
       </div>
-      <div class="card pad">
-        <b>⏱️ Vastausaika</b>
-        <p class="small">Usein nopeasti</p>
-      </div>
-      <div class="card pad">
-        <b>✅ Luotettavasti</b>
-        <p class="small">Siisti työnjälki ja selkeä sopimus</p>
-      </div>
+
     </div>
   </section>
 
