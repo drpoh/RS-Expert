@@ -1,3 +1,7 @@
+"i18n": {
+  "default": "fi",
+  "available": ["fi", "ru"]
+}
 {
   "companyName": "RS-Expert Oy",
   "tagline": "Sähköasennukset • vianhaku • sähkökeskukset",
