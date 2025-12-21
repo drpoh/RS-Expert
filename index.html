@@ -3,98 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RS-Expert Oy — Sähkötyöt Uusimaa</title>
-  <meta name="description" content="RS-Expert Oy – sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla." />
+
+  <!-- Base SEO (будет переопределено/дополнено site.js из data/site.json) -->
+  <title>RS-Expert Oy</title>
+  <meta name="description" content="Sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla." />
+  <meta name="robots" content="index,follow" />
+
+  <!-- OG placeholders -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="RS-Expert Oy" />
+  <meta property="og:title" content="RS-Expert Oy" />
+  <meta property="og:description" content="Sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla." />
+  <meta property="og:image" content="/assets/uploads/og-cover.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="canonical" href="https://rs-expert.pages.dev/" />
+  <link rel="icon" href="/assets/uploads/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/uploads/apple-touch-icon.png" />
+
+  <!-- LocalBusiness JSON-LD -->
+  <script id="ld-json" type="application/ld+json">{}</script>
+
   <link rel="stylesheet" href="/assets/styles.css" />
-  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
+  <header id="site-header"></header>
 
-<div class="topbar">
-  <div class="wrap">
-    <div class="row">
-      <div class="badge">
-        <span class="dot"></span>
-        <span>Nopea apu • <span id="regionTop">Uusimaa</span></span>
-        <b><a data-phone-link href="tel:+358">+358…</a></b>
-      </div>
-      <div class="kv">
-        <a href="/services.html">Palvelut</a>
-        <a href="/gallery.html">Galleria</a>
-        <a href="/tarjouspyynto.html">Tarjouspyyntö</a>
-      </div>
-    </div>
-  </div>
-</div>
+  <main class="container">
+    <div id="page-home"></div>
+  </main>
 
-<header>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <b data-company>RS-Expert Oy</b>
-        <span data-tagline></span>
-      </div>
-      <nav id="menu"></nav>
-    </div>
-    <div id="error"></div>
-  </div>
-</header>
+  <footer id="site-footer"></footer>
 
-<main class="wrap">
-
-  <section class="hero" id="hero"></section>
-
-  <section class="section">
-    <div class="row" style="align-items:end">
-      <h2 style="margin:0">Palvelut</h2>
-      <a class="btn" href="/services.html">Näytä kaikki</a>
-    </div>
-    <div id="servicesPreview" class="grid three"></div>
-  </section>
-
-  <section class="section">
-    <div class="row" style="align-items:end">
-      <h2 style="margin:0">Työnäytteet</h2>
-      <a class="btn" href="/gallery.html">Katso galleria</a>
-    </div>
-    <div id="galleryPreview" class="grid three"></div>
-  </section>
-
-  <section class="section">
-    <div id="highlights" class="grid three"></div>
-  </section>
-
-  <section class="section">
-    <div class="grid two">
-      <div>
-        <h2>Asiakaspalaute</h2>
-        <div id="reviewsList" class="grid three"></div>
-      </div>
-      <div>
-        <h2>Usein kysyttyä</h2>
-        <div id="faqList"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="card pad glow center">
-      <h2>Tarvitsetko sähkömiestä?</h2>
-      <p class="small">Lähetä pyyntö — palaamme nopeasti.</p>
-      <div class="cta" style="justify-content:center">
-        <button class="btn primary" data-tally-open="" data-tally-width="420" data-tally-overlay="1">💬 Pyydä tarjous</button>
-        <a class="btn" data-phone-link href="tel:+358">📞 Soita</a>
-        <a class="btn" href="/tarjouspyynto.html">🧾 Tarjouspyyntö</a>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    <div>© <span data-company>RS-Expert Oy</span></div>
-  </footer>
-
-</main>
-
-<script src="/assets/site.js"></script>
+  <script src="/assets/site.js" defer></script>
 </body>
 </html>
