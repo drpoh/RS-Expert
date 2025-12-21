@@ -253,8 +253,7 @@
       t(data?.tagline, lang) ||
       "";
 
-    const pageUrlFi = absoluteUrl(baseUrl, path === "/index.html" ? "/" :f
-      : path);
+    const pageUrlFi = absoluteUrl(baseUrl, path === "/index.html" ? "/" : path);
     const pageUrlRu = setLangInUrl("ru");
 
     const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
