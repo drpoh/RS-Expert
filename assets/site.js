@@ -30,7 +30,7 @@
       else el.setAttribute("name", nameOrProp);
       document.head.appendChild(el);
     }
-    el.setAttribute("content", value);
+    el.setAttribute("content", String(value ?? ""));
   }
 
   function setCanonical(url) {
@@ -91,7 +91,6 @@
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     const b = data?.business || {};
 
-    // Минимально полезный LocalBusiness без адреса (адрес можно добавить позже)
     const schema = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
@@ -106,7 +105,7 @@
       openingHours: b.openingHours || []
     };
 
-    // чистим пустые поля
+    // remove empty
     Object.keys(schema).forEach((k) => {
       const v = schema[k];
       if (
@@ -123,43 +122,41 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  // ---------- UI render (минимально, чтобы сайт не ломался) ----------
+  // ---------- UI render ----------
   function renderHeader(data) {
     const header = $("#site-header");
     if (!header) return;
 
-    const menu = (data.menu || [])
+    const menuHtml = (data.menu || [])
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(
-        (m) =>
-          `<a class="nav__link" href="${escapeHtml(m.href)}">${escapeHtml(
-            m.label
-          )}</a>`
-      )
+      .map((m) => {
+        const href = escapeHtml(m.href || "#");
+        const label = escapeHtml(m.label || "");
+        return `<a class="nav__link" href="${href}">${label}</a>`;
+      })
       .join("");
+
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const topLeftText = [
+      "Nopea apu",
+      data.region || "",
+      data.phone || ""
+    ].filter(Boolean).join(" • ");
 
     header.innerHTML = `
       <div class="topbar">
-        <div class="topbar__left">${escapeHtml(
-          `Nopea apu • ${data.region || ""} ${data.phone || ""}`.trim()
-        )}</div>
+        <div class="topbar__left">${escapeHtml(topLeftText)}</div>
         <div class="topbar__right">
-          <a class="topbar__btn" href="tel:${escapeHtml(
-            (data.phone || "").replaceAll(" ", "")
-          )}">Soita</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(
-            data.email || ""
-          )}">Email</a>
+          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">Soita</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">Email</a>
         </div>
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="/index.html" class="brand__link">${escapeHtml(
-            data.companyName || "RS-Expert Oy"
-          )}</a>
+          <a href="/index.html" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
         </div>
-        <nav class="nav__links">${menu}</nav>
+        <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
           <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
         </div>
@@ -170,21 +167,18 @@
   function renderFooter(data) {
     const footer = $("#site-footer");
     if (!footer) return;
+
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+
     footer.innerHTML = `
       <div class="footer__inner">
-        <div class="footer__brand">${escapeHtml(data.companyName || "")}</div>
+        <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
         <div class="footer__meta">
-          <a href="tel:${escapeHtml(
-            (data.phone || "").replaceAll(" ", "")
-          )}">${escapeHtml(data.phone || "")}</a>
+          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
           <span class="dot">•</span>
-          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(
-            data.email || ""
-          )}</a>
+          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
         </div>
-        <div class="footer__copy">© ${escapeHtml(
-          data.companyName || "RS-Expert Oy"
-        )}</div>
+        <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
       </div>
     `;
   }
@@ -194,115 +188,108 @@
     if (!el) return;
 
     const hero = data.hero || {};
-    const badges = (hero.badges || [])
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+
+    const badgesHtml = (hero.badges || [])
       .map((b) => `<span class="badge">${escapeHtml(b)}</span>`)
       .join("");
 
-    const highlights = (data.highlights || [])
+    const highlightsHtml = (data.highlights || [])
       .filter((x) => x && x.enabled !== false)
-      .map(
-        (h) => `
-        <div class="card">
-          <div class="card__icon">${escapeHtml(h.icon || "")}</div>
-          <div class="card__title">${escapeHtml(h.title || "")}</div>
-          <div class="card__text">${escapeHtml(h.text || "")}</div>
-        </div>
-      `
-      )
+      .map((h) => {
+        return `
+          <div class="card">
+            <div class="card__icon">${escapeHtml(h.icon || "")}</div>
+            <div class="card__title">${escapeHtml(h.title || "")}</div>
+            <div class="card__text">${escapeHtml(h.text || "")}</div>
+          </div>
+        `;
+      })
       .join("");
 
-    const services = (data.services || [])
+    const servicesHtml = (data.services || [])
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .slice(0, 6)
-      .map(
-        (s) => `
-        <div class="service">
-          <div class="service__top">
-            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
-            <div class="service__tag">${escapeHtml(s.tag || "")}</div>
+      .map((s) => {
+        return `
+          <div class="service">
+            <div class="service__top">
+              <div class="service__icon">${escapeHtml(s.icon || "")}</div>
+              <div class="service__tag">${escapeHtml(s.tag || "")}</div>
+            </div>
+            <div class="service__title">${escapeHtml(s.title || "")}</div>
+            <div class="service__text">${escapeHtml(s.text || "")}</div>
           </div>
-          <div class="service__title">${escapeHtml(s.title || "")}</div>
-          <div class="service__text">${escapeHtml(s.text || "")}</div>
-        </div>
-      `
-      )
+        `;
+      })
       .join("");
 
-    const gallery = (data.gallery || [])
+    const galleryHtml = (data.gallery || [])
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .slice(0, 3)
-      .map(
-        (g) => `
-        <a class="work" href="/gallery.html" aria-label="${escapeHtml(
-          g.title || "Galleria"
-        )}">
-          <img class="work__img" src="${escapeHtml(g.image || "")}" alt="${escapeHtml(
-          g.title || ""
-        )}">
-          <div class="work__meta">
-            <div class="work__title">${escapeHtml(g.title || "")}</div>
-            <div class="work__sub">${escapeHtml(
-              [g.city, g.type].filter(Boolean).join(" • ")
-            )}</div>
-          </div>
-        </a>
-      `
-      )
+      .map((g) => {
+        const meta = [g.city, g.type].filter(Boolean).join(" • ");
+        return `
+          <a class="work" href="/gallery.html" aria-label="${escapeHtml(g.title || "Galleria")}">
+            <img class="work__img" src="${escapeHtml(g.image || "")}" alt="${escapeHtml(g.title || "")}">
+            <div class="work__meta">
+              <div class="work__title">${escapeHtml(g.title || "")}</div>
+              <div class="work__sub">${escapeHtml(meta)}</div>
+            </div>
+          </a>
+        `;
+      })
       .join("");
 
-    const reviews = (data.reviews || [])
+    const reviewsHtml = (data.reviews || [])
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((r) => {
-        const stars = "★".repeat(Number(r.stars || 0)).padEnd(5, "☆");
+        const starsCount = Number(r.stars || 0);
+        const stars = "★".repeat(starsCount).padEnd(5, "☆");
+        const meta = [r.city, r.service].filter(Boolean).join(" • ");
         return `
           <div class="review">
             <div class="review__top">
               <div class="review__title">${escapeHtml(r.title || "")}</div>
-              <div class="review__stars" aria-label="${escapeHtml(
-                String(r.stars || 0)
-              )} stars">${stars}</div>
+              <div class="review__stars" aria-label="${escapeHtml(String(starsCount))} stars">${stars}</div>
             </div>
-            <div class="review__meta">${escapeHtml(
-              [r.city, r.service].filter(Boolean).join(" • ")
-            )}</div>
+            <div class="review__meta">${escapeHtml(meta)}</div>
             <div class="review__text">${escapeHtml(r.text || "")}</div>
           </div>
         `;
       })
       .join("");
 
-    const faq = (data.faq || [])
+    const faqHtml = (data.faq || [])
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(
-        (f) => `
-        <details class="faq">
-          <summary class="faq__q">${escapeHtml(f.q || "")}</summary>
-          <div class="faq__a">${escapeHtml(f.a || "")}</div>
-        </details>
-      `
-      )
+      .map((f) => {
+        return `
+          <details class="faq">
+            <summary class="faq__q">${escapeHtml(f.q || "")}</summary>
+            <div class="faq__a">${escapeHtml(f.a || "")}</div>
+          </details>
+        `;
+      })
       .join("");
 
     el.innerHTML = `
       <section class="hero">
         <h1 class="hero__title">${escapeHtml(hero.title || "")}</h1>
         <p class="hero__subtitle">${escapeHtml(hero.subtitle || "")}</p>
-        <div class="hero__badges">${badges}</div>
+        <div class="hero__badges">${badgesHtml}</div>
         <div class="hero__cta">
           <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(
-            (data.phone || "").replaceAll(" ", "")
-          )}">Soita</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">Soita</a>
         </div>
       </section>
 
       <section class="section">
         <h2>Palvelut</h2>
-        <div class="grid grid--services">${services}</div>
+        <div class="grid grid--services">${servicesHtml}</div>
         <div class="section__more">
           <a class="link" href="/services.html">Näytä kaikki →</a>
         </div>
@@ -310,7 +297,7 @@
 
       <section class="section">
         <h2>Työnäytteet</h2>
-        <div class="grid grid--works">${gallery}</div>
+        <div class="grid grid--works">${galleryHtml}</div>
         <div class="section__more">
           <a class="link" href="/gallery.html">Katso galleria →</a>
         </div>
@@ -318,12 +305,12 @@
 
       <section class="section">
         <h2>Asiakaspalaute</h2>
-        <div class="grid grid--reviews">${reviews}</div>
+        <div class="grid grid--reviews">${reviewsHtml}</div>
       </section>
 
       <section class="section">
         <h2>Usein kysyttyä</h2>
-        <div class="stack">${faq}</div>
+        <div class="stack">${faqHtml}</div>
       </section>
 
       <section class="section section--cta">
@@ -331,5 +318,186 @@
         <p>Lähetä pyyntö — palaamme nopeasti.</p>
         <div class="cta__buttons">
           <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(
-            (data.phone || "").r
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">Soita</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Miksi valita meidät</h2>
+        <div class="grid grid--highlights">${highlightsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderServicesPage(data) {
+    const el = $("#page-services");
+    if (!el) return;
+
+    const servicesHtml = (data.services || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((s) => {
+        return `
+          <div class="service service--big">
+            <div class="service__top">
+              <div class="service__icon">${escapeHtml(s.icon || "")}</div>
+              <div class="service__tag">${escapeHtml(s.tag || "")}</div>
+            </div>
+            <div class="service__title">${escapeHtml(s.title || "")}</div>
+            <div class="service__text">${escapeHtml(s.text || "")}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>Palvelut</h1>
+        <p class="lead">${escapeHtml(data.tagline || "")}</p>
+        <div class="grid grid--services">${servicesHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderGalleryPage(data) {
+    const el = $("#page-gallery");
+    if (!el) return;
+
+    const itemsHtml = (data.gallery || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((g) => {
+        const meta = [g.city, g.type].filter(Boolean).join(" • ");
+        return `
+          <article class="workcard">
+            <img class="workcard__img" src="${escapeHtml(g.image || "")}" alt="${escapeHtml(g.title || "")}">
+            <div class="workcard__body">
+              <div class="workcard__title">${escapeHtml(g.title || "")}</div>
+              <div class="workcard__meta">${escapeHtml(meta)}</div>
+              <div class="workcard__text">${escapeHtml(g.text || "")}</div>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>Galleria</h1>
+        <p class="lead">Työnäytteitä ja toteutuksia.</p>
+        <div class="grid grid--gallery">${itemsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderDocumentsPage(data) {
+    const el = $("#page-documents");
+    if (!el) return;
+
+    const docsHtml = (data.documents || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((d) => {
+        const url = escapeHtml(d.url || "#");
+        return `
+          <a class="doc" href="${url}" target="_blank" rel="noopener">
+            <div class="doc__title">${escapeHtml(d.title || "")}</div>
+            <div class="doc__meta">${escapeHtml(d.category || "PDF")}</div>
+          </a>
+        `;
+      })
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>Dokumentit</h1>
+        <p class="lead">PDF-dokumentit ja ohjeet.</p>
+        <div class="grid grid--docs">${docsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderTarjousPage(data) {
+    const el = $("#page-tarjous");
+    if (!el) return;
+
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const formId = data.tallyFormId || "";
+    const iframeSrc = formId ? `https://tally.so/r/${encodeURIComponent(formId)}` : "";
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>Tarjouspyyntö</h1>
+        <p class="lead">Kerro kohde ja toiveet — palaamme nopeasti.</p>
+
+        <div class="card card--pad">
+          <div class="stack">
+            <div><strong>Puhelin:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+          </div>
+        </div>
+
+        ${
+          iframeSrc
+            ? `<div class="tally">
+                 <iframe
+                   title="Tarjouspyyntö"
+                   src="${iframeSrc}"
+                   loading="lazy"
+                   style="width:100%;height:900px;border:0;border-radius:16px;"
+                 ></iframe>
+               </div>`
+            : `<div class="card card--pad">Lisää tallyFormId data/site.json tiedostoon.</div>`
+        }
+      </section>
+    `;
+  }
+
+  function renderContactPage(data) {
+    const el = $("#page-contact");
+    if (!el) return;
+
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>Yhteystiedot</h1>
+        <div class="card card--pad">
+          <div class="stack">
+            <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
+            <div>${escapeHtml(regionCity)}</div>
+            <div><a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+            <div class="mt">
+              <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  // ---------- boot ----------
+  let data;
+  try {
+    const res = await fetch("/data/site.json", { cache: "no-cache" });
+    data = await res.json();
+  } catch (e) {
+    console.error("Failed to load /data/site.json", e);
+    return;
+  }
+
+  applySeo(data);
+  applyLocalBusinessSchema(data);
+
+  renderHeader(data);
+  renderFooter(data);
+
+  renderHome(data);
+  renderServicesPage(data);
+  renderGalleryPage(data);
+  renderDocumentsPage(data);
+  renderTarjousPage(data);
+  renderContactPage(data);
+})();
