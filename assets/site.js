@@ -1,370 +1,328 @@
-// RS-Expert site.js (FREE dynamic content mode via GitHub Raw)
+/* RS-Expert dynamic site.js
+   Data source: Cloudflare Worker proxy -> Airtable
+   Worker: https://rs-expert-data.robertsild.workers.dev
+*/
+(() => {
+  const API_BASE = "https://rs-expert-data.robertsild.workers.dev/api";
+  const DEFAULT_VIEW = "Grid view";
 
-const REPO_OWNER = 'drpoh';
-const REPO_NAME = 'RS-Expert';
-const REPO_BRANCH = 'main';
-const REPO_RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}`;
-const SITE_JSON_PATH = '/data/site.json';
+  // ---------- Helpers ----------
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-async function loadSite() {
-  const url = `${REPO_RAW_BASE}${SITE_JSON_PATH}?ts=${Date.now()}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Cannot load site data from GitHub Raw: ' + res.status);
+  const esc = (s) =>
+    String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
 
-  const d = await res.json();
+  const asBool = (v, def = true) => (typeof v === "boolean" ? v : def);
+  const asNum = (v, def = 9999) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : def;
+  };
 
-  const basic = d.basic || {};
-  const companyName = basic.companyName || d.companyName || 'RS-Expert Oy';
-  const tagline = basic.tagline || d.tagline || '';
-  const phone = basic.phone || d.phone || '';
-  const email = basic.email || d.email || '';
+  // Airtable Attachment -> first file url
+  const firstAttachmentUrl = (att) => {
+    if (!att) return "";
+    if (typeof att === "string") return att;
+    if (Array.isArray(att) && att.length) return att[0]?.url || "";
+    return att?.url || "";
+  };
 
-  document.querySelectorAll('[data-company]').forEach(e => (e.textContent = companyName));
-  document.querySelectorAll('[data-tagline]').forEach(e => (e.textContent = tagline));
-
-  // Menu
-  const nav = document.getElementById('menu');
-  if (nav && Array.isArray(d.menu)) {
-    nav.innerHTML = d.menu.map(m => `<a href="${safeUrl(m.href)}">${escapeHtml(m.label)}</a>`).join('');
+  async function fetchTable(table, view = DEFAULT_VIEW) {
+    const url = `${API_BASE}/${encodeURIComponent(table)}?view=${encodeURIComponent(view)}&t=${Date.now()}`;
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) {
+      throw new Error(`Failed to load ${table}: ${res.status}`);
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   }
 
-  // Contacts
-  document.querySelectorAll('[data-phone-link]').forEach(a => {
-    if (!phone) return;
-    a.href = 'tel:' + phone.replace(/\s+/g, '');
-    if (looksLikePlaceholder(a.textContent)) a.textContent = phone;
-  });
+  function sortAndFilter(items) {
+    return (items || [])
+      .filter((x) => asBool(x.enabled, true))
+      .sort((a, b) => asNum(a.order) - asNum(b.order));
+  }
 
-  document.querySelectorAll('[data-email-link]').forEach(a => {
-    if (!email) return;
-    a.href = 'mailto:' + email;
-    if (looksLikePlaceholder(a.textContent)) a.textContent = email;
-  });
+  // ---------- Global apply (header/footer) ----------
+  function applySite(site) {
+    const companyName = site?.companyName || "RS-Expert Oy";
+    const tagline = site?.tagline || "";
+    const phone = site?.phone || "";
+    const email = site?.email || "";
 
-  const servicesAll = (Array.isArray(d.services) ? d.services : []).filter(x => x?.enabled !== false);
-  const docsAll = (Array.isArray(d.documents) ? d.documents : []).filter(x => x?.enabled !== false);
-  const galleryAll = (Array.isArray(d.gallery) ? d.gallery : []).filter(x => x?.enabled !== false);
+    $$("[data-company]").forEach((el) => (el.textContent = companyName));
+    $$("[data-tagline]").forEach((el) => (el.textContent = tagline));
 
-  // ===== Services page list
-  const servicesEl = document.getElementById('services');
-  if (servicesEl) servicesEl.innerHTML = renderServicesGrid(servicesAll);
+    $$("[data-phone-link]").forEach((el) => {
+      if (!phone) return;
+      el.textContent = phone;
+      el.setAttribute("href", `tel:${phone.replace(/\s+/g, "")}`);
+    });
 
-  // ===== Home services preview
-  const servicesPreview = document.getElementById('servicesPreview');
-  if (servicesPreview) servicesPreview.innerHTML = renderServicesGrid(servicesAll.slice(0, 6));
+    $$("[data-email-link]").forEach((el) => {
+      if (!email) return;
+      el.textContent = email;
+      el.setAttribute("href", `mailto:${email}`);
+    });
+  }
 
-  // Services bullets
-  const bullets = document.getElementById('servicesBullets');
-  if (bullets) bullets.innerHTML = servicesAll.length
-    ? servicesAll.map(s => `<li>${escapeHtml(s.title || '')}</li>`).join('')
-    : `<li>Lisää palvelut admin-paneelissa: /admin</li>`;
+  function renderMenu(menuItems) {
+    const nav = $("#menu");
+    if (!nav) return;
 
-  // Documents page
-  const docsEl = document.getElementById('documents');
-  if (docsEl) {
-    if (!docsAll.length) {
-      docsEl.innerHTML = `<div class="card pad"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
-    } else {
-      const groups = groupBy(docsAll, it => it.category || 'Muut');
-      const order = ['Sertifikaatit', 'Hinnasto', 'Ohjeet', 'Muut'];
-      docsEl.innerHTML =
-        order.filter(cat => groups[cat]).map(cat => renderDocGroup(cat, groups[cat])).join('') +
-        Object.keys(groups).filter(cat => !order.includes(cat)).map(cat => renderDocGroup(cat, groups[cat])).join('');
+    const items = sortAndFilter(menuItems);
+    if (!items.length) return;
+
+    nav.innerHTML = items
+      .map((it) => {
+        const label = esc(it.label || "");
+        const href = esc(it.href || "#");
+        return `<a href="${href}">${label}</a>`;
+      })
+      .join("");
+  }
+
+  // ---------- Components ----------
+  function cardHTML({ title, text, icon, tag, href, img }) {
+    const t = esc(title || "");
+    const p = esc(text || "");
+    const i = esc(icon || "");
+    const g = esc(tag || "");
+    const link = href ? `href="${esc(href)}"` : "";
+    const clickable = href ? "a" : "div";
+
+    const imgHTML = img
+      ? `<div class="thumb"><img src="${esc(img)}" alt="${t}" loading="lazy"></div>`
+      : "";
+
+    return `
+      <${clickable} class="card pad hover" ${link}>
+        ${imgHTML}
+        <div class="meta">
+          <div class="h">
+            ${i ? `<span class="icon">${i}</span>` : ""}
+            <b>${t}</b>
+          </div>
+          ${g ? `<div class="small tag">${g}</div>` : ""}
+          ${p ? `<p class="small">${p}</p>` : ""}
+        </div>
+      </${clickable}>
+    `;
+  }
+
+  function ensureGridClass(el, fallbackClass = "grid three") {
+    if (!el) return;
+    // если уже есть классы — не трогаем
+    if (el.classList.length) return;
+    fallbackClass.split(/\s+/).forEach((c) => el.classList.add(c));
+  }
+
+  // ---------- Render: Services ----------
+  function renderServices(services) {
+    // full page container
+    const full = $("#servicesList");
+    // homepage preview container (мы делали раньше)
+    const preview = $("#servicesPreview");
+
+    const items = sortAndFilter(services);
+
+    if (preview) {
+      ensureGridClass(preview, "grid three");
+      preview.innerHTML = items.slice(0, 6).map((s) =>
+        cardHTML({
+          title: s.title,
+          text: s.text,
+          icon: s.icon,
+          tag: s.tag,
+          href: "/services.html",
+        })
+      ).join("");
+    }
+
+    if (full) {
+      ensureGridClass(full, "grid three");
+      full.innerHTML = items.map((s) =>
+        cardHTML({
+          title: s.title,
+          text: s.text,
+          icon: s.icon,
+          tag: s.tag,
+        })
+      ).join("");
     }
   }
 
-  // Home docs preview
-  const docsPreview = document.getElementById('documentsPreview');
-  if (docsPreview) docsPreview.innerHTML = renderDocsPreview(docsAll.slice(0, 3));
+  // ---------- Render: Gallery ----------
+  function renderGallery(gallery) {
+    const full = $("#galleryList");
+    const preview = $("#galleryPreview");
 
-  // Gallery page
-  const galleryEl = document.getElementById('gallery');
-  if (galleryEl) {
-    galleryEl.innerHTML = renderGalleryGrid(galleryAll);
-    attachLightbox(galleryEl);
+    const items = sortAndFilter(gallery).map((g) => ({
+      ...g,
+      imageUrl: firstAttachmentUrl(g.image),
+    }));
+
+    if (preview) {
+      ensureGridClass(preview, "grid three");
+      preview.innerHTML = items.slice(0, 6).map((g) =>
+        cardHTML({
+          title: g.title,
+          text: g.text || g.city || "",
+          icon: g.type ? "🖼️" : "",
+          tag: g.city || g.type || "",
+          href: "/gallery.html",
+          img: g.imageUrl,
+        })
+      ).join("");
+    }
+
+    if (full) {
+      ensureGridClass(full, "grid three");
+      full.innerHTML = items.map((g) =>
+        cardHTML({
+          title: g.title,
+          text: g.text,
+          icon: g.type ? "🧾" : "",
+          tag: [g.type, g.city].filter(Boolean).join(" • "),
+          img: g.imageUrl,
+        })
+      ).join("");
+    }
   }
 
-  // Home gallery preview
-  const galleryPreview = document.getElementById('galleryPreview');
-  if (galleryPreview) {
-    galleryPreview.innerHTML = renderGalleryGrid(galleryAll.slice(0, 6), true);
-    attachLightbox(galleryPreview);
+  // ---------- Render: Documents ----------
+  function renderDocuments(docs) {
+    const el = $("#documentsList");
+    if (!el) return;
+
+    const items = sortAndFilter(docs).map((d) => ({
+      ...d,
+      fileUrl: firstAttachmentUrl(d.file) || d.url || "",
+    }));
+
+    el.innerHTML = items
+      .map((d) => {
+        const title = esc(d.title || "PDF");
+        const cat = esc(d.category || "");
+        const url = esc(d.fileUrl || "#");
+        const chip = cat ? `<span class="pill">${cat}</span>` : "";
+        return `
+          <a class="card pad hover doc" href="${url}" target="_blank" rel="noopener">
+            <div class="h"><b>📄 ${title}</b>${chip}</div>
+            <div class="small">Avaa PDF</div>
+          </a>
+        `;
+      })
+      .join("");
+
+    // если страница пустая — покажем мягкое сообщение
+    if (!items.length) {
+      el.innerHTML = `<div class="card pad soft"><b>Ei dokumentteja vielä</b><div class="small">Lisää PDF Airtablesta.</div></div>`;
+    }
   }
 
-  // Gallery filters placeholder
-  makeGalleryFilters(galleryAll);
+  // ---------- Render: Reviews ----------
+  function renderReviews(reviews) {
+    const el = $("#reviewsList");
+    if (!el) return;
 
-  // Reviews/Trust on home
-  const reviewsEl = document.getElementById('reviews');
-  if (reviewsEl) {
-    const reviewsAll = (Array.isArray(d.reviews) ? d.reviews : defaultReviews()).filter(x => x?.enabled !== false);
-    reviewsEl.innerHTML = renderReviews(reviewsAll);
-  }
+    const items = sortAndFilter(reviews);
 
-  // FAQ on home
-  const faqEl = document.getElementById('faq');
-  if (faqEl) {
-    const faqAll = (Array.isArray(d.faq) ? d.faq : defaultFaq()).filter(x => x?.enabled !== false);
-    faqEl.innerHTML = renderFaq(faqAll);
-    bindFaq();
-  }
+    const stars = (n) => {
+      const k = Math.max(1, Math.min(5, Number(n) || 5));
+      return "★".repeat(k) + "☆".repeat(5 - k);
+    };
 
-  enableLazyImages();
-  ensureBottomBar(phone, email);
-}
-
-/* ===== Renderers ===== */
-
-function renderServicesGrid(items) {
-  if (!items.length) {
-    return `<div class="card pad"><p>Lisää palvelut admin-paneelissa: /admin</p></div>`;
-  }
-  return items.map(i => {
-    const icon = i.icon || pickIcon(i.title);
-    const tag = i.tag || '';
-    return `
-      <a class="serviceCard" href="/services.html" style="text-decoration:none">
-        <div class="inner">
-          <div class="serviceIcon">${escapeHtml(icon)}</div>
-          <h3>${escapeHtml(i.title || '')}</h3>
-          <p class="small">${escapeHtml(shortText(i.text || '', 90))}</p>
-          <div class="meta">
-            ${tag ? `<span class="pill">✨ ${escapeHtml(tag)}</span>` : ``}
-            <span class="pill">Uusimaa</span>
-            <span class="pill">Ota yhteyttä →</span>
+    ensureGridClass(el, "grid three");
+    el.innerHTML = items
+      .map((r) => {
+        const title = esc(r.title || "Palaute");
+        const text = esc(r.text || "");
+        const meta = [r.city, r.service].filter(Boolean).map(esc).join(" • ");
+        return `
+          <div class="card pad">
+            <div class="small">${esc(stars(r.stars))}</div>
+            <b>${title}</b>
+            ${meta ? `<div class="small">${meta}</div>` : ""}
+            ${text ? `<p class="small">${text}</p>` : ""}
           </div>
-        </div>
-      </a>
-    `;
-  }).join('');
-}
+        `;
+      })
+      .join("");
 
-function renderGalleryGrid(items, compact=false) {
-  if (!items.length) {
-    return `<div class="card pad"><p>Lisää kuvia admin-paneelissa: /admin</p></div>`;
+    if (!items.length) {
+      el.innerHTML = `<div class="card pad soft"><b>Ei arvioita vielä</b><div class="small">Lisää palautteet Airtablesta.</div></div>`;
+    }
   }
-  return items.map(i => `
-    <div class="card pad galleryCard" data-type="${escapeAttr(i.type || '')}" data-city="${escapeAttr(i.city || '')}">
-      ${i.image ? `<img class="clickable" src="${safeUrl(i.image)}" alt="" data-lightbox>` : ''}
-      <h3>${escapeHtml(i.title || '')}</h3>
-      <p class="small" style="margin:6px 0 0">
-        ${[i.type, i.city].filter(Boolean).map(escapeHtml).join(' • ')}
-      </p>
-      ${(!compact && i.text) ? `<p>${escapeHtml(shortText(i.text, 110))}</p>` : ``}
-    </div>
-  `).join('');
-}
 
-function renderDocsPreview(items) {
-  if (!items.length) return `<div class="card pad"><p>Lisää PDF:t admin-paneelissa: /admin</p></div>`;
-  return items.map(i => `
-    <div class="card pad">
-      <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
-      ${i.category ? `<p class="small">${escapeHtml(i.category)}</p>` : ``}
-      <p style="margin-top:10px">
-        <a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a>
-      </p>
-    </div>
-  `).join('');
-}
+  // ---------- Render: FAQ ----------
+  function renderFAQ(faq) {
+    const el = $("#faqList");
+    if (!el) return;
 
-function renderReviews(items) {
-  return `<div class="grid two">` + items.map(r => `
-    <div class="reviewCard">
-      <div class="reviewTop">
-        <div>
-          <b>${escapeHtml(r.title || 'Palaute')}</b>
-          <div class="small">${escapeHtml([r.city, r.service].filter(Boolean).join(' • '))}</div>
-        </div>
-        <div class="stars">${'★★★★★'.slice(0, clampStars(r.stars))}</div>
-      </div>
-      <div class="quote">“${escapeHtml(r.text || '')}”</div>
-    </div>
-  `).join('') + `</div>`;
-}
+    const items = sortAndFilter(faq);
 
-function renderFaq(items) {
-  return items.map((f, idx) => `
-    <div class="faqItem" data-faq>
-      <button class="faqQ" type="button">
-        <span>${escapeHtml(f.q || '')}</span>
-        <span class="faqChevron">⌄</span>
-      </button>
-      <div class="faqA">${escapeHtml(f.a || '')}</div>
-    </div>
-  `).join('');
-}
+    el.innerHTML = items
+      .map((f) => {
+        const q = esc(f.q || "");
+        const a = esc(f.a || "");
+        return `
+          <details class="card pad">
+            <summary><b>${q}</b></summary>
+            <div class="small" style="margin-top:10px">${a}</div>
+          </details>
+        `;
+      })
+      .join("");
 
-function renderDocGroup(title, items) {
-  const safeTitle = escapeHtml(title);
-  const cards = items.map(i => `
-    <div class="card pad">
-      <h3>${escapeHtml(i.title || 'Dokumentti')}</h3>
-      <p style="margin-top:10px">
-        <a class="btn" href="${safeUrl(i.url)}" target="_blank" rel="noopener">Avaa PDF</a>
-      </p>
-    </div>
-  `).join('');
-  return `
-    <section class="section" style="padding-top:10px">
-      <h2 style="margin:0 0 10px">${safeTitle}</h2>
-      <div class="grid">${cards}</div>
-    </section>
-  `;
-}
-
-/* ===== FAQ binding ===== */
-function bindFaq() {
-  document.querySelectorAll('[data-faq]').forEach(box => {
-    const btn = box.querySelector('.faqQ');
-    btn?.addEventListener('click', () => box.classList.toggle('open'));
-  });
-}
-
-/* ===== Lightbox ===== */
-function attachLightbox(container) {
-  const lb = document.getElementById('lightbox');
-  const lbImg = document.getElementById('lightbox-img');
-  const lbBg = document.getElementById('lightbox-bg');
-  const lbClose = document.getElementById('lightbox-close');
-  if (!lb || !lbImg || !lbBg || !lbClose) return;
-
-  container.querySelectorAll('img[data-lightbox]').forEach(img => {
-    img.addEventListener('click', () => {
-      lbImg.src = img.src;
-      lb.style.display = 'block';
-      document.body.style.overflow = 'hidden';
-    });
-  });
-
-  const closeLB = () => {
-    lb.style.display = 'none';
-    lbImg.src = '';
-    document.body.style.overflow = '';
-  };
-
-  if (!lb.dataset.bound) {
-    lbBg.addEventListener('click', closeLB);
-    lbClose.addEventListener('click', closeLB);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
-    lb.dataset.bound = '1';
+    if (!items.length) {
+      el.innerHTML = `<div class="card pad soft"><b>FAQ puuttuu</b><div class="small">Lisää kysymykset Airtablesta.</div></div>`;
+    }
   }
-}
 
-/* ===== Filters / perf / bottom bar ===== */
-function ensureBottomBar(phone, email) {
-  if (document.getElementById('bottomBar')) return;
-  if (window.matchMedia && window.matchMedia('(min-width: 980px)').matches) return;
+  // ---------- Boot ----------
+  async function main() {
+    // Покажем ошибку, если есть элемент #error
+    const errEl = $("#error");
+    const setErr = (msg) => {
+      if (errEl) errEl.textContent = msg;
+      console.warn(msg);
+    };
 
-  const tel = (phone || '').replace(/\s+/g, '');
-  const mail = email || '';
+    try {
+      // грузим всё параллельно
+      const [siteArr, menu, services, gallery, docs, reviews, faq] = await Promise.all([
+        fetchTable("Site"),
+        fetchTable("Menu"),
+        fetchTable("Services"),
+        fetchTable("Gallery"),
+        fetchTable("Documents"),
+        fetchTable("Reviews"),
+        fetchTable("FAQ"),
+      ]);
 
-  const bar = document.createElement('div');
-  bar.id = 'bottomBar';
-  bar.innerHTML = `
-    <div class="bb-wrap">
-      <a class="bb-btn bb-primary" href="tel:${escapeAttr(tel)}">📞 Soita</a>
-      <a class="bb-btn" href="/contact.html">💬 Lähetä</a>
-      <a class="bb-btn" href="mailto:${escapeAttr(mail)}">✉️ Email</a>
-    </div>
-  `;
-  document.body.appendChild(bar);
+      const site = siteArr?.[0] || {};
+      applySite(site);
+      renderMenu(menu);
 
-  let shown = false;
-  const onScroll = () => {
-    const y = window.scrollY || 0;
-    if (y > 180 && !shown) { bar.classList.add('show'); shown = true; }
-    if (y <= 180 && shown) { bar.classList.remove('show'); shown = false; }
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
-}
+      renderServices(services);
+      renderGallery(gallery);
+      renderDocuments(docs);
+      renderReviews(reviews);
+      renderFAQ(faq);
+    } catch (e) {
+      setErr(`Data error: ${e?.message || e}`);
+    }
+  }
 
-function makeGalleryFilters(items) {
-  const host = document.getElementById('galleryFilters');
-  if (!host) return;
-
-  const types = uniq(items.map(x => x.type).filter(Boolean));
-  const cities = uniq(items.map(x => x.city).filter(Boolean));
-
-  host.innerHTML = `
-    <div class="gf">
-      <select id="fType" aria-label="Työn tyyppi">
-        <option value="">Kaikki tyypit</option>
-        ${types.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('')}
-      </select>
-      <select id="fCity" aria-label="Kaupunki">
-        <option value="">Kaikki kaupungit</option>
-        ${cities.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('')}
-      </select>
-      <button class="gf-btn" id="fClear" type="button">Tyhjennä</button>
-    </div>
-  `;
-
-  const fType = document.getElementById('fType');
-  const fCity = document.getElementById('fCity');
-  const fClear = document.getElementById('fClear');
-
-  const apply = () => {
-    const t = fType.value;
-    const c = fCity.value;
-    document.querySelectorAll('#gallery .card').forEach(card => {
-      const ct = card.getAttribute('data-type') || '';
-      const cc = card.getAttribute('data-city') || '';
-      card.style.display = ((!t || ct === t) && (!c || cc === c)) ? '' : 'none';
-    });
-  };
-
-  fType.addEventListener('change', apply);
-  fCity.addEventListener('change', apply);
-  fClear.addEventListener('click', () => { fType.value=''; fCity.value=''; apply(); });
-}
-
-function enableLazyImages() {
-  document.querySelectorAll('img').forEach(img => {
-    if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
-    if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
-  });
-}
-
-/* ===== Defaults ===== */
-function defaultReviews() {
-  return [
-    { title: 'Nopea ja siisti työ', city: 'Järvenpää', service: 'Sähkökeskus', stars: 5, text: 'Kommunikointi oli selkeää ja työ tehtiin sovitusti.', enabled: true },
-    { title: 'Vika löytyi nopeasti', city: 'Helsinki', service: 'Vianhaku', stars: 5, text: 'Sulake laukesi jatkuvasti — korjaus onnistui saman käynnin aikana.', enabled: true }
-  ];
-}
-function defaultFaq() {
-  return [
-    { q: 'Teettekö pieniä töitä?', a: 'Kyllä. Myös pienet asennukset ja korjaukset onnistuvat.', enabled: true },
-    { q: 'Kuinka nopeasti pääsette paikalle?', a: 'Usein järjestyy aika nopeasti — soita ja sovitaan.', enabled: true },
-    { q: 'Voinko lähettää kuvan?', a: 'Kyllä. Kuva auttaa arvioinnissa ja nopeuttaa toteutusta.', enabled: true },
-    { q: 'Palveletteko taloyhtiöitä ja yrityksiä?', a: 'Kyllä. Sovitaan toteutus ja dokumentointi tarpeen mukaan.', enabled: true }
-  ];
-}
-
-/* ===== Utils ===== */
-function groupBy(arr, fn) {
-  return arr.reduce((acc, x) => { const k = fn(x); (acc[k] ||= []).push(x); return acc; }, {});
-}
-function uniq(a){ return Array.from(new Set(a)); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function escapeAttr(s){ return String(s).replace(/["&<>]/g, m => ({'"':'&quot;','&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-function safeUrl(u){ const s=String(u||'').trim(); if(!s) return '#'; if(s.startsWith('/')) return s; if(s.startsWith('http://')||s.startsWith('https://')) return s; return '#'; }
-function looksLikePlaceholder(t){ const s=String(t||'').trim(); return s===''||s.includes('…')||s.includes('+358')||s.includes('@'); }
-function shortText(s,n){ const t=String(s||''); return t.length>n ? t.slice(0,n-1).trim()+'…' : t; }
-function pickIcon(title){
-  const t = String(title||'').toLowerCase();
-  if (t.includes('vianh')) return '🧯';
-  if (t.includes('keskus')) return '🧰';
-  if (t.includes('äly') || t.includes('autom')) return '🤖';
-  if (t.includes('sauna') || t.includes('ulk')) return '💡';
-  return '🔌';
-}
-function clampStars(n){ const x = Number(n||5); return Math.max(1, Math.min(5, Math.round(x))); }
-
-loadSite().catch(err => {
-  console.error(err);
-  const el = document.getElementById('error');
-  if (el) el.textContent = 'Ошибка: ' + err.message;
-});
+  // Run
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", main);
+  } else {
+    main();
+  }
+})();
