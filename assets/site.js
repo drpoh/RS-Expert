@@ -44,7 +44,6 @@
   }
 
   function setHreflangAlternates(urlFi, urlRu) {
-    // remove old alternates
     document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((n) => n.remove());
 
     function add(hreflang, href) {
@@ -57,7 +56,6 @@
 
     add("fi", urlFi);
     add("ru", urlRu);
-    // x-default -> финский
     add("x-default", urlFi);
   }
 
@@ -112,19 +110,21 @@
       showAll: "Näytä kaikki →",
       seeGallery: "Katso galleria →",
       reviews: "Asiakaspalaute",
-      faq: "Usein kysyttyä",
       needElectrician: "Tarvitsetko sähkömiestä?",
       sendRequest: "Lähetä pyyntö — palaamme nopeasti.",
       whyUs: "Miksi valita meidät",
       documents: "Dokumentit",
       docsLead: "PDF-dokumentit ja ohjeet.",
-      servicesLeadFallback: "",
       galleryLead: "Työnäytteitä ja toteutuksia.",
       quoteTitle: "Tarjouspyyntö",
       quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
       phoneLabel: "Puhelin",
       contactTitle: "Yhteystiedot",
-      contactCTA: "Pyydä tarjous"
+      contactCTA: "Pyydä tarjous",
+      addressLabel: "Osoite",
+      ibanLabel: "Pankki",
+      yLabel: "Y-tunnus",
+      instagram: "Instagram"
     },
     ru: {
       call: "Позвонить",
@@ -136,19 +136,21 @@
       showAll: "Показать все →",
       seeGallery: "Смотреть галерею →",
       reviews: "Отзывы",
-      faq: "FAQ",
       needElectrician: "Нужен электрик?",
       sendRequest: "Отправьте заявку — быстро ответим.",
       whyUs: "Почему мы",
       documents: "Документы",
       docsLead: "PDF-документы и инструкции.",
-      servicesLeadFallback: "",
       galleryLead: "Примеры выполненных работ.",
       quoteTitle: "Заявка на расчёт",
       quoteLead: "Опишите объект и пожелания — быстро ответим.",
       phoneLabel: "Телефон",
       contactTitle: "Контакты",
-      contactCTA: "Оставить заявку"
+      contactCTA: "Оставить заявку",
+      addressLabel: "Адрес",
+      ibanLabel: "Банк",
+      yLabel: "Y-tunnus",
+      instagram: "Instagram"
     }
   };
 
@@ -167,7 +169,6 @@
 
     const title =
       t(pageSeo.title, lang) ||
-      t(data?.companyName, lang) ||
       data?.companyName ||
       "RS-Expert Oy";
 
@@ -180,7 +181,6 @@
     const pageUrlFi = absoluteUrl(baseUrl, path === "/index.html" ? "/" : path);
     const pageUrlRu = setLangInUrl("ru");
 
-    // canonical: для RU делаем canonical на FI (если включено)
     const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
     if (lang === "ru" && ruNoIndex) {
       setCanonical(pageUrlFi);
@@ -190,10 +190,7 @@
       setMeta("robots", "index,follow");
     }
 
-    // hreflang
-    const urlFi = pageUrlFi; // без ?lang
-    const urlRu = pageUrlRu; // с ?lang=ru
-    setHreflangAlternates(urlFi, urlRu);
+    setHreflangAlternates(pageUrlFi, pageUrlRu);
 
     const ogImage = absoluteUrl(
       baseUrl,
@@ -205,7 +202,6 @@
 
     setMeta("description", description);
 
-    // OG
     setMeta("og:type", "website", true);
     setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
     setMeta("og:title", title, true);
@@ -213,7 +209,6 @@
     setMeta("og:url", lang === "ru" ? setLangInUrl("ru") : pageUrlFi, true);
     if (ogImage) setMeta("og:image", ogImage, true);
 
-    // Twitter
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", title);
     setMeta("twitter:description", description);
@@ -223,6 +218,23 @@
   function applyLocalBusinessSchema(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     const b = data?.business || {};
+    const info = data?.businessInfo || {};
+    const addressText = t(info?.address, lang);
+
+    // Пытаемся аккуратно разобрать адрес "Street, ZIP City"
+    let street = "";
+    let postalCode = "";
+    let addressLocality = "";
+    if (typeof addressText === "string" && addressText.includes(",")) {
+      const parts = addressText.split(",").map((x) => x.trim());
+      street = parts[0] || "";
+      const rest = parts.slice(1).join(" ");
+      const m = rest.match(/(\d{5})\s+(.+)$/);
+      if (m) {
+        postalCode = m[1];
+        addressLocality = m[2];
+      }
+    }
 
     const schema = {
       "@context": "https://schema.org",
@@ -238,6 +250,28 @@
       openingHours: b.openingHours || [],
       inLanguage: lang
     };
+
+    if (info?.yTunnus) {
+      schema.identifier = {
+        "@type": "PropertyValue",
+        name: "Y-tunnus",
+        value: info.yTunnus
+      };
+    }
+
+    if (addressText) {
+      schema.address = {
+        "@type": "PostalAddress",
+        streetAddress: street || addressText,
+        postalCode: postalCode || undefined,
+        addressLocality: addressLocality || undefined,
+        addressCountry: "FI"
+      };
+      // clean undefined
+      Object.keys(schema.address).forEach((k) => {
+        if (schema.address[k] === undefined) delete schema.address[k];
+      });
+    }
 
     Object.keys(schema).forEach((k) => {
       const v = schema[k];
@@ -255,6 +289,13 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
+  function withLang(href, lang) {
+    if (!href) return "#";
+    if (lang !== "ru") return href;
+    // не добавляем второй ?
+    return href.includes("?") ? `${href}&lang=ru` : `${href}?lang=ru`;
+  }
+
   // ---------- UI render ----------
   function renderHeader(data, lang) {
     const header = $("#site-header");
@@ -264,11 +305,9 @@
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((m) => {
-        const href = escapeHtml(m.href || "#");
+        const href = escapeHtml(withLang(m.href || "#", lang));
         const label = escapeHtml(t(m.label, lang));
-        // сохраняем lang при переходах, но не добавляем к index в canonical
-        const withLang = lang === "ru" ? `${href}?lang=ru` : href;
-        return `<a class="nav__link" href="${withLang}">${label}</a>`;
+        return `<a class="nav__link" href="${href}">${label}</a>`;
       })
       .join("");
 
@@ -298,11 +337,11 @@
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="/index.html${lang === "ru" ? "?lang=ru" : ""}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
+          <a href="${escapeHtml(withLang("/index.html", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
         </div>
         <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
-          <a class="btn btn--primary" href="/tarjouspyynto.html${lang === "ru" ? "?lang=ru" : ""}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
         </div>
       </div>
     `;
@@ -313,6 +352,20 @@
     if (!footer) return;
 
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    const addr = t(info.address, lang);
+    const y = info.yTunnus || "";
+    const iban = info.iban || "";
+
+    const igHtml = ig
+      ? `<span class="dot">•</span><a href="${escapeHtml(ig)}" target="_blank" rel="noopener">${escapeHtml(ui(lang, "instagram"))}</a>`
+      : "";
+
+    const line2Parts = [];
+    if (addr) line2Parts.push(`${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`);
+    if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
+    if (iban) line2Parts.push(`${escapeHtml(ui(lang, "ibanLabel"))}: ${escapeHtml(iban)}`);
 
     footer.innerHTML = `
       <div class="footer__inner">
@@ -321,7 +374,13 @@
           <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
           <span class="dot">•</span>
           <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
+          ${igHtml}
         </div>
+        ${
+          line2Parts.length
+            ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>`
+            : ``
+        }
         <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
       </div>
     `;
@@ -376,7 +435,7 @@
       .map((g) => {
         const meta = [g.city, t(g.type, lang)].filter(Boolean).join(" • ");
         return `
-          <a class="work" href="/gallery.html${lang === "ru" ? "?lang=ru" : ""}" aria-label="${escapeHtml(t(g.title, lang) || ui(lang, "gallery"))}">
+          <a class="work" href="${escapeHtml(withLang("/gallery.html", lang))}" aria-label="${escapeHtml(t(g.title, lang) || ui(lang, "gallery"))}">
             <img class="work__img" src="${escapeHtml(g.image || "")}" alt="${escapeHtml(t(g.title, lang))}">
             <div class="work__meta">
               <div class="work__title">${escapeHtml(t(g.title, lang))}</div>
@@ -407,26 +466,13 @@
       })
       .join("");
 
-    const faqHtml = (data.faq || [])
-      .filter((x) => x && x.enabled !== false)
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((f) => {
-        return `
-          <details class="faq">
-            <summary class="faq__q">${escapeHtml(t(f.q, lang))}</summary>
-            <div class="faq__a">${escapeHtml(t(f.a, lang))}</div>
-          </details>
-        `;
-      })
-      .join("");
-
     el.innerHTML = `
       <section class="hero">
         <h1 class="hero__title">${escapeHtml(t(hero.title, lang))}</h1>
         <p class="hero__subtitle">${escapeHtml(t(hero.subtitle, lang))}</p>
         <div class="hero__badges">${badgesHtml}</div>
         <div class="hero__cta">
-          <a class="btn btn--primary" href="/tarjouspyynto.html${lang === "ru" ? "?lang=ru" : ""}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
         </div>
       </section>
@@ -435,7 +481,7 @@
         <h2>${escapeHtml(ui(lang, "services"))}</h2>
         <div class="grid grid--services">${servicesHtml}</div>
         <div class="section__more">
-          <a class="link" href="/services.html${lang === "ru" ? "?lang=ru" : ""}">${escapeHtml(ui(lang, "showAll"))}</a>
+          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
         </div>
       </section>
 
@@ -443,7 +489,7 @@
         <h2>${escapeHtml(ui(lang, "works"))}</h2>
         <div class="grid grid--works">${galleryHtml}</div>
         <div class="section__more">
-          <a class="link" href="/gallery.html${lang === "ru" ? "?lang=ru" : ""}">${escapeHtml(ui(lang, "seeGallery"))}</a>
+          <a class="link" href="${escapeHtml(withLang("/gallery.html", lang))}">${escapeHtml(ui(lang, "seeGallery"))}</a>
         </div>
       </section>
 
@@ -452,16 +498,11 @@
         <div class="grid grid--reviews">${reviewsHtml}</div>
       </section>
 
-      <section class="section">
-        <h2>${escapeHtml(ui(lang, "faq"))}</h2>
-        <div class="stack">${faqHtml}</div>
-      </section>
-
       <section class="section section--cta">
         <h2>${escapeHtml(ui(lang, "needElectrician"))}</h2>
         <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
         <div class="cta__buttons">
-          <a class="btn btn--primary" href="/tarjouspyynto.html${lang === "ru" ? "?lang=ru" : ""}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
         </div>
       </section>
@@ -603,6 +644,15 @@
 
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
+    const info = data.businessInfo || {};
+    const addr = t(info.address, lang);
+    const y = info.yTunnus || "";
+    const iban = info.iban || "";
+    const ig = info.instagram || "";
+
+    const igHtml = ig
+      ? `<div><strong>${escapeHtml(ui(lang, "instagram"))}:</strong> <a href="${escapeHtml(ig)}" target="_blank" rel="noopener">${escapeHtml(ig)}</a></div>`
+      : "";
 
     el.innerHTML = `
       <section class="section">
@@ -611,10 +661,17 @@
           <div class="stack">
             <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
             <div>${escapeHtml(regionCity)}</div>
-            <div><a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
-            <div><a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+
+            ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
+            ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
+            ${iban ? `<div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> ${escapeHtml(iban)}</div>` : ""}
+            ${igHtml}
+
             <div class="mt">
-              <a class="btn btn--primary" href="/tarjouspyynto.html${lang === "ru" ? "?lang=ru" : ""}">${escapeHtml(ui(lang, "contactCTA"))}</a>
+              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
             </div>
           </div>
         </div>
