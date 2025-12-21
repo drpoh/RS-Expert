@@ -154,6 +154,7 @@ p {
 .topbar__right {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .topbar__btn {
@@ -227,6 +228,33 @@ p {
   .nav__cta {
     justify-content: flex-end;
   }
+}
+
+/* ---------- language switcher ---------- */
+.lang {
+  display: inline-flex;
+  gap: 6px;
+  margin-right: 4px;
+}
+
+.lang__btn {
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.lang__btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lang__btn--active {
+  border-color: rgba(106, 228, 255, 0.55);
+  box-shadow: 0 0 0 2px rgba(106, 228, 255, 0.18) inset;
 }
 
 /* ---------- buttons ---------- */
@@ -355,26 +383,11 @@ p {
   gap: 12px;
 }
 
-.grid--services {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.grid--works {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.grid--highlights {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.grid--reviews {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.grid--gallery {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
+.grid--services,
+.grid--works,
+.grid--highlights,
+.grid--reviews,
+.grid--gallery,
 .grid--docs {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
