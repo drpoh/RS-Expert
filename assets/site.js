@@ -1,4 +1,5 @@
 (async function () {
+  // ---------- helpers ----------
   const $ = (sel) => document.querySelector(sel);
 
   function escapeHtml(str) {
@@ -58,6 +59,7 @@
     add("x-default", urlFi);
   }
 
+  // ---------- i18n ----------
   function t(value, lang) {
     if (value == null) return "";
     if (typeof value === "string") return value;
@@ -161,8 +163,8 @@
       whyUs: "Miksi valita meidät",
       documents: "Dokumentit",
       docsLead: "PDF-dokumentit ja ohjeet.",
-      galleryLead: "Työnäytteitä ja toteutuksia.",
-      referencesLead: "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
+      referencesLead:
+        "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
       quoteTitle: "Tarjouspyyntö",
       quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
       phoneLabel: "Puhelin",
@@ -176,7 +178,6 @@
       copied: "Kopioitu!",
       verkkolaskuLabel: "Verkkolaskuosoite",
       operaattoriLabel: "Operaattori",
-
       serviceAreaTitleFallback: "Palvelualue",
       serviceAreaNoteFallback: "Kysy myös muista kohteista Uudellamaalla."
     },
@@ -200,8 +201,8 @@
       whyUs: "Почему мы",
       documents: "Документы",
       docsLead: "PDF-документы и инструкции.",
-      galleryLead: "Примеры выполненных работ.",
-      referencesLead: "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
+      referencesLead:
+        "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
       quoteTitle: "Заявка на расчёт",
       quoteLead: "Опишите объект и пожелания — быстро ответим.",
       phoneLabel: "Телефон",
@@ -215,7 +216,6 @@
       copied: "Скопировано!",
       verkkolaskuLabel: "Verkkolaskuosoite",
       operaattoriLabel: "Оператор",
-
       serviceAreaTitleFallback: "Зона обслуживания",
       serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa."
     }
@@ -348,6 +348,7 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
+  // ---------- UI render ----------
   function renderHeader(data, lang) {
     const header = $("#site-header");
     if (!header) return;
@@ -573,7 +574,9 @@
       })
       .join("");
 
-    const galleryHtml = (data.gallery || [])
+    // NOTE: Home "Työnäytteet" section stays as 3 cards linking to gallery.
+    // Gallery page now is Instagram preview only (per request).
+    const galleryCardsHtml = (data.gallery || [])
       .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .slice(0, 3)
@@ -615,7 +618,6 @@
       ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
       : "";
 
-    const igPreview = renderInstagramPreviewBlock(data, lang, igFeed);
     const serviceAreaBlock = renderServiceAreaBlock(data, lang);
 
     el.innerHTML = `
@@ -642,13 +644,11 @@
 
       <section class="section">
         <h2>${escapeHtml(ui(lang, "works"))}</h2>
-        <div class="grid grid--works">${galleryHtml}</div>
+        <div class="grid grid--works">${galleryCardsHtml}</div>
         <div class="section__more">
           <a class="link" href="${escapeHtml(withLang("/gallery.html", lang))}">${escapeHtml(ui(lang, "seeGallery"))}</a>
         </div>
       </section>
-
-      ${igPreview}
 
       <section class="section">
         <h2>${escapeHtml(ui(lang, "reviews"))}</h2>
@@ -702,34 +702,18 @@
     `;
   }
 
-  function renderGalleryPage(data, lang) {
+  // ✅ GALLERY PAGE: ONLY INSTAGRAM PREVIEW (everything else removed)
+  function renderGalleryPage(data, lang, igFeed) {
     const el = $("#page-gallery");
     if (!el) return;
 
-    const itemsHtml = (data.gallery || [])
-      .filter((x) => x && x.enabled !== false)
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((g) => {
-        const meta = [g.city, t(g.type, lang)].filter(Boolean).join(" • ");
-        return `
-          <article class="workcard">
-            <img class="workcard__img" src="${escapeHtml(g.image || "")}" alt="${escapeHtml(t(g.title, lang))}">
-            <div class="workcard__body">
-              <div class="workcard__title">${escapeHtml(t(g.title, lang))}</div>
-              <div class="workcard__meta">${escapeHtml(meta)}</div>
-              <div class="workcard__text">${escapeHtml(t(g.text, lang))}</div>
-            </div>
-          </article>
-        `;
-      })
-      .join("");
+    const igPreview = renderInstagramPreviewBlock(data, lang, igFeed);
 
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
-        <p class="lead">${escapeHtml(ui(lang, "galleryLead"))}</p>
-        <div class="grid grid--gallery">${itemsHtml}</div>
       </section>
+      ${igPreview}
     `;
   }
 
@@ -845,8 +829,6 @@
          </div>`
       : "";
 
-    const igMini = ig ? renderInstagramPreviewBlock(data, lang, igFeed) : "";
-
     const billingHtml = `
       <div class="card card--pad">
         <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
@@ -891,8 +873,6 @@
 
         <div class="mt"></div>
         ${billingHtml}
-
-        ${igMini}
       </section>
     `;
   }
@@ -930,6 +910,7 @@
     });
   }
 
+  // ---------- boot ----------
   let data;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
@@ -954,7 +935,7 @@
 
   renderHome(data, lang, igFeed);
   renderServicesPage(data, lang);
-  renderGalleryPage(data, lang);
+  renderGalleryPage(data, lang, igFeed);
   renderReferencesPage(data, lang);
   renderDocumentsPage(data, lang);
   renderTarjousPage(data, lang);
