@@ -10,7 +10,7 @@
   "site": {
     "baseUrl": "https://rs-expert.pages.dev",
     "defaultDescription": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla.",
-    "defaultOgImage": "/assets/uploads/og-cover.jpg",
+    "defaultOgImage": "/assets/uploads/og-cover.svg",
     "language": "fi"
   },
 
@@ -51,7 +51,7 @@
     "email": "rs.expert.oy@gmail.com",
     "areaServed": ["Järvenpää", "Kerava", "Tuusula", "Helsinki", "Vantaa", "Espoo"],
     "openingHours": ["Mo-Fr 08:00-18:00"],
-    "image": "/assets/uploads/og-cover.jpg"
+    "image": "/assets/uploads/og-cover.svg"
   },
 
   "menu": [
