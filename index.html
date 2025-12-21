@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RS-Expert Oy — Sähköasennukset Uusimaa</title>
+  <title>RS-Expert Oy — Sähkötyöt Uusimaa</title>
   <meta name="description" content="RS-Expert Oy – sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla." />
   <link rel="stylesheet" href="/assets/styles.css" />
   <script async src="https://tally.so/widgets/embed.js"></script>
@@ -15,14 +15,13 @@
     <div class="row">
       <div class="badge">
         <span class="dot"></span>
-        <span>Nopea apu • Uusimaa</span>
+        <span>Nopea apu • <span id="regionTop">Uusimaa</span></span>
         <b><a data-phone-link href="tel:+358">+358…</a></b>
       </div>
       <div class="kv">
         <a href="/services.html">Palvelut</a>
         <a href="/gallery.html">Galleria</a>
-        <a href="/documents.html">Dokumentit</a>
-        <a href="/contact.html">Yhteydenotto</a>
+        <a href="/tarjouspyynto.html">Tarjouspyyntö</a>
       </div>
     </div>
   </div>
@@ -37,39 +36,16 @@
       </div>
       <nav id="menu"></nav>
     </div>
+    <div id="error"></div>
   </div>
 </header>
 
 <main class="wrap">
 
-  <section class="hero">
-    <div class="card pad glow">
-      <div class="pills">
-        <span class="pill">⚡ Sähkötyöt</span>
-        <span class="pill">🏠 Koti & yritys</span>
-        <span class="pill">📍 Uusimaa</span>
-      </div>
-
-      <h1 style="margin-top:14px">Luotettavat sähkötyöt<br>nopeasti ja siististi</h1>
-      <p class="lead">Asennukset, vianhaku ja sähkökeskukset. Ota yhteyttä — vastaamme nopeasti.</p>
-
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
-        <button class="btn primary"
-          data-tally-open="81z8Dk"
-          data-tally-width="420"
-          data-tally-overlay="1"
-          data-tally-emoji-text="👋"
-          data-tally-emoji-animation="wave"
-        >💬 Pyydä tarjous</button>
-
-        <a class="btn" data-phone-link href="tel:+358">📞 Soita</a>
-        <a class="btn" href="/services.html">🔌 Palvelut</a>
-      </div>
-    </div>
-  </section>
+  <section class="hero" id="hero"></section>
 
   <section class="section">
-    <div class="row" style="align-items:end;justify-content:space-between;gap:12px">
+    <div class="row" style="align-items:end">
       <h2 style="margin:0">Palvelut</h2>
       <a class="btn" href="/services.html">Näytä kaikki</a>
     </div>
@@ -77,7 +53,7 @@
   </section>
 
   <section class="section">
-    <div class="row" style="align-items:end;justify-content:space-between;gap:12px">
+    <div class="row" style="align-items:end">
       <h2 style="margin:0">Työnäytteet</h2>
       <a class="btn" href="/gallery.html">Katso galleria</a>
     </div>
@@ -85,20 +61,7 @@
   </section>
 
   <section class="section">
-    <div class="grid three">
-      <div class="card pad">
-        <b>✅ Selkeä hinnoittelu</b>
-        <p class="small">Sovitaan etukäteen — ei yllätyksiä.</p>
-      </div>
-      <div class="card pad">
-        <b>⚡ Nopea reagointi</b>
-        <p class="small">Usein aika järjestyy nopeasti.</p>
-      </div>
-      <div class="card pad">
-        <b>🧰 Ammattitaito</b>
-        <p class="small">Turvallinen ja siisti lopputulos.</p>
-      </div>
-    </div>
+    <div id="highlights" class="grid three"></div>
   </section>
 
   <section class="section">
@@ -109,7 +72,7 @@
       </div>
       <div>
         <h2>Usein kysyttyä</h2>
-        <div id="faqList" class="stack"></div>
+        <div id="faqList"></div>
       </div>
     </div>
   </section>
@@ -117,11 +80,11 @@
   <section class="section">
     <div class="card pad glow center">
       <h2>Tarvitsetko sähkömiestä?</h2>
-      <p class="small">Lähetä pyyntö tai soita — vastaamme nopeasti.</p>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px">
-        <button class="btn primary" data-tally-open="81z8Dk" data-tally-width="420" data-tally-overlay="1">💬 Lähetä pyyntö</button>
+      <p class="small">Lähetä pyyntö — palaamme nopeasti.</p>
+      <div class="cta" style="justify-content:center">
+        <button class="btn primary" data-tally-open="" data-tally-width="420" data-tally-overlay="1">💬 Pyydä tarjous</button>
         <a class="btn" data-phone-link href="tel:+358">📞 Soita</a>
-        <a class="btn" data-email-link href="mailto:info@">✉️ Email</a>
+        <a class="btn" href="/tarjouspyynto.html">🧾 Tarjouspyyntö</a>
       </div>
     </div>
   </section>
