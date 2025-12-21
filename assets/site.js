@@ -1,252 +1,335 @@
-(() => {
-  const DATA_URL = "/data/site.json";
-  const qs = (s, r = document) => r.querySelector(s);
-  const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
+(async function () {
+  // ---------- helpers ----------
+  const $ = (sel) => document.querySelector(sel);
 
-  const esc = (s) =>
-    String(s ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-
-  const asBool = (v, d = true) => (typeof v === "boolean" ? v : d);
-  const asNum = (v, d = 9999) => (Number.isFinite(Number(v)) ? Number(v) : d);
-
-  const sortEnabled = (arr) =>
-    (arr || [])
-      .filter((x) => asBool(x.enabled, true))
-      .sort((a, b) => asNum(a.order) - asNum(b.order));
-
-  function setText(sel, text) {
-    qsa(sel).forEach((el) => (el.textContent = text ?? ""));
-  }
-  function setAttr(sel, attr, value) {
-    qsa(sel).forEach((el) => el.setAttribute(attr, value));
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  function initTally(formId) {
-    // кнопки с data-tally-open в HTML уже есть, но мы продублируем ID на всякий случай
-    qsa("[data-tally-open]").forEach((btn) => {
-      if (!btn.getAttribute("data-tally-open")) btn.setAttribute("data-tally-open", formId);
+  function absoluteUrl(baseUrl, path) {
+    const base = (baseUrl || window.location.origin).replace(/\/$/, "");
+    if (!path) return base;
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    return base + (path.startsWith("/") ? path : "/" + path);
+  }
+
+  function setMeta(nameOrProp, value, isProperty = false) {
+    const selector = isProperty
+      ? `meta[property="${nameOrProp}"]`
+      : `meta[name="${nameOrProp}"]`;
+
+    let el = document.querySelector(selector);
+    if (!el) {
+      el = document.createElement("meta");
+      if (isProperty) el.setAttribute("property", nameOrProp);
+      else el.setAttribute("name", nameOrProp);
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", value);
+  }
+
+  function setCanonical(url) {
+    let link = document.querySelector('link[rel="canonical"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "canonical";
+      document.head.appendChild(link);
+    }
+    link.href = url;
+  }
+
+  function applySeo(data) {
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
+
+    const path = window.location.pathname.endsWith("/")
+      ? "/index.html"
+      : window.location.pathname;
+
+    const pageSeo = data?.seo?.pages?.[path] || {};
+    const title = pageSeo.title || data?.companyName || "RS-Expert Oy";
+    const description =
+      pageSeo.description ||
+      data?.site?.defaultDescription ||
+      data?.tagline ||
+      "";
+
+    const pageUrl = absoluteUrl(baseUrl, path === "/index.html" ? "/" : path);
+    const ogImage = absoluteUrl(
+      baseUrl,
+      pageSeo.ogImage || data?.site?.defaultOgImage || ""
+    );
+
+    document.documentElement.lang = data?.site?.language || "fi";
+    document.title = title;
+
+    setMeta("description", description);
+    setMeta("robots", "index,follow");
+
+    setCanonical(pageUrl);
+
+    // OG
+    setMeta("og:type", "website", true);
+    setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
+    setMeta("og:title", title, true);
+    setMeta("og:description", description, true);
+    setMeta("og:url", pageUrl, true);
+    if (ogImage) setMeta("og:image", ogImage, true);
+
+    // Twitter
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", title);
+    setMeta("twitter:description", description);
+    if (ogImage) setMeta("twitter:image", ogImage);
+  }
+
+  function applyLocalBusinessSchema(data) {
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
+    const b = data?.business || {};
+
+    // Минимально полезный LocalBusiness без адреса (адрес можно добавить позже)
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: b.legalName || data?.companyName || "RS-Expert Oy",
+      url: b.url || baseUrl,
+      telephone: b.telephone || data?.phone,
+      email: b.email || data?.email,
+      image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
+      areaServed: (b.areaServed || [])
+        .filter(Boolean)
+        .map((x) => ({ "@type": "City", name: x })),
+      openingHours: b.openingHours || []
+    };
+
+    // чистим пустые поля
+    Object.keys(schema).forEach((k) => {
+      const v = schema[k];
+      if (
+        v === undefined ||
+        v === null ||
+        v === "" ||
+        (Array.isArray(v) && v.length === 0)
+      ) {
+        delete schema[k];
+      }
     });
+
+    const el = document.getElementById("ld-json");
+    if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  function renderMenu(menu) {
-    const nav = qs("#menu");
-    if (!nav) return;
-    const items = sortEnabled(menu);
-    nav.innerHTML = items
-      .map((m) => `<a href="${esc(m.href)}">${esc(m.label)}</a>`)
+  // ---------- UI render (минимально, чтобы сайт не ломался) ----------
+  function renderHeader(data) {
+    const header = $("#site-header");
+    if (!header) return;
+
+    const menu = (data.menu || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(
+        (m) =>
+          `<a class="nav__link" href="${escapeHtml(m.href)}">${escapeHtml(
+            m.label
+          )}</a>`
+      )
       .join("");
-  }
 
-  function card({ title, text, icon, tag, href, image }) {
-    const img = image
-      ? `<div class="thumb"><img src="${esc(image)}" alt="${esc(title)}" loading="lazy"></div>`
-      : "";
-    const content = `
-      ${img}
-      <div class="meta">
-        <div class="h">
-          ${icon ? `<span class="icon">${esc(icon)}</span>` : ""}
-          <b>${esc(title)}</b>
+    header.innerHTML = `
+      <div class="topbar">
+        <div class="topbar__left">${escapeHtml(
+          `Nopea apu • ${data.region || ""} ${data.phone || ""}`.trim()
+        )}</div>
+        <div class="topbar__right">
+          <a class="topbar__btn" href="tel:${escapeHtml(
+            (data.phone || "").replaceAll(" ", "")
+          )}">Soita</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(
+            data.email || ""
+          )}">Email</a>
         </div>
-        ${tag ? `<div class="chip">${esc(tag)}</div>` : ""}
-        ${text ? `<p class="small">${esc(text)}</p>` : ""}
+      </div>
+      <div class="nav">
+        <div class="nav__brand">
+          <a href="/index.html" class="brand__link">${escapeHtml(
+            data.companyName || "RS-Expert Oy"
+          )}</a>
+        </div>
+        <nav class="nav__links">${menu}</nav>
+        <div class="nav__cta">
+          <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
+        </div>
       </div>
     `;
-    if (href) return `<a class="card pad hover" href="${esc(href)}">${content}</a>`;
-    return `<div class="card pad">${content}</div>`;
   }
 
-  function renderHero(hero) {
-    const el = qs("#hero");
-    if (!el || !hero) return;
+  function renderFooter(data) {
+    const footer = $("#site-footer");
+    if (!footer) return;
+    footer.innerHTML = `
+      <div class="footer__inner">
+        <div class="footer__brand">${escapeHtml(data.companyName || "")}</div>
+        <div class="footer__meta">
+          <a href="tel:${escapeHtml(
+            (data.phone || "").replaceAll(" ", "")
+          )}">${escapeHtml(data.phone || "")}</a>
+          <span class="dot">•</span>
+          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(
+            data.email || ""
+          )}</a>
+        </div>
+        <div class="footer__copy">© ${escapeHtml(
+          data.companyName || "RS-Expert Oy"
+        )}</div>
+      </div>
+    `;
+  }
 
+  function renderHome(data) {
+    const el = $("#page-home");
+    if (!el) return;
+
+    const hero = data.hero || {};
     const badges = (hero.badges || [])
+      .map((b) => `<span class="badge">${escapeHtml(b)}</span>`)
+      .join("");
+
+    const highlights = (data.highlights || [])
+      .filter((x) => x && x.enabled !== false)
+      .map(
+        (h) => `
+        <div class="card">
+          <div class="card__icon">${escapeHtml(h.icon || "")}</div>
+          <div class="card__title">${escapeHtml(h.title || "")}</div>
+          <div class="card__text">${escapeHtml(h.text || "")}</div>
+        </div>
+      `
+      )
+      .join("");
+
+    const services = (data.services || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
       .slice(0, 6)
-      .map((b) => `<span class="pill">${esc(b)}</span>`)
+      .map(
+        (s) => `
+        <div class="service">
+          <div class="service__top">
+            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
+            <div class="service__tag">${escapeHtml(s.tag || "")}</div>
+          </div>
+          <div class="service__title">${escapeHtml(s.title || "")}</div>
+          <div class="service__text">${escapeHtml(s.text || "")}</div>
+        </div>
+      `
+      )
+      .join("");
+
+    const gallery = (data.gallery || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .slice(0, 3)
+      .map(
+        (g) => `
+        <a class="work" href="/gallery.html" aria-label="${escapeHtml(
+          g.title || "Galleria"
+        )}">
+          <img class="work__img" src="${escapeHtml(g.image || "")}" alt="${escapeHtml(
+          g.title || ""
+        )}">
+          <div class="work__meta">
+            <div class="work__title">${escapeHtml(g.title || "")}</div>
+            <div class="work__sub">${escapeHtml(
+              [g.city, g.type].filter(Boolean).join(" • ")
+            )}</div>
+          </div>
+        </a>
+      `
+      )
+      .join("");
+
+    const reviews = (data.reviews || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((r) => {
+        const stars = "★".repeat(Number(r.stars || 0)).padEnd(5, "☆");
+        return `
+          <div class="review">
+            <div class="review__top">
+              <div class="review__title">${escapeHtml(r.title || "")}</div>
+              <div class="review__stars" aria-label="${escapeHtml(
+                String(r.stars || 0)
+              )} stars">${stars}</div>
+            </div>
+            <div class="review__meta">${escapeHtml(
+              [r.city, r.service].filter(Boolean).join(" • ")
+            )}</div>
+            <div class="review__text">${escapeHtml(r.text || "")}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    const faq = (data.faq || [])
+      .filter((x) => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(
+        (f) => `
+        <details class="faq">
+          <summary class="faq__q">${escapeHtml(f.q || "")}</summary>
+          <div class="faq__a">${escapeHtml(f.a || "")}</div>
+        </details>
+      `
+      )
       .join("");
 
     el.innerHTML = `
-      <div class="card pad glow">
-        <div class="pills">${badges}</div>
-        <h1>${esc(hero.title || "")}</h1>
-        <p class="lead">${esc(hero.subtitle || "")}</p>
-        <div class="cta">
-          <button class="btn primary"
-            data-tally-open=""
-            data-tally-width="420"
-            data-tally-overlay="1"
-            data-tally-emoji-text="👋"
-            data-tally-emoji-animation="wave"
-          >💬 Pyydä tarjous</button>
-          <a class="btn" data-phone-link href="tel:">📞 Soita</a>
-          <a class="btn" href="/services.html">🔌 Palvelut</a>
+      <section class="hero">
+        <h1 class="hero__title">${escapeHtml(hero.title || "")}</h1>
+        <p class="hero__subtitle">${escapeHtml(hero.subtitle || "")}</p>
+        <div class="hero__badges">${badges}</div>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(
+            (data.phone || "").replaceAll(" ", "")
+          )}">Soita</a>
         </div>
-      </div>
-    `;
-  }
+      </section>
 
-  function renderHighlights(items) {
-    const el = qs("#highlights");
-    if (!el) return;
-    const arr = sortEnabled(items).slice(0, 6);
-    el.innerHTML = arr
-      .map((x) =>
-        `<div class="card pad">
-          <b>${esc(x.icon || "✅")} ${esc(x.title || "")}</b>
-          <p class="small">${esc(x.text || "")}</p>
-        </div>`
-      )
-      .join("");
-  }
-
-  function renderServices(data) {
-    const preview = qs("#servicesPreview");
-    const full = qs("#servicesList");
-    const items = sortEnabled(data);
-
-    if (preview) {
-      preview.innerHTML = items.slice(0, 6).map((s) =>
-        card({ title: s.title, text: s.text, icon: s.icon, tag: s.tag, href: "/services.html" })
-      ).join("");
-    }
-    if (full) {
-      full.innerHTML = items.map((s) =>
-        card({ title: s.title, text: s.text, icon: s.icon, tag: s.tag })
-      ).join("");
-    }
-  }
-
-  function renderGallery(data) {
-    const preview = qs("#galleryPreview");
-    const full = qs("#galleryList");
-    const items = sortEnabled(data);
-
-    const mapItem = (g, href) =>
-      card({
-        title: g.title,
-        text: g.text || "",
-        icon: g.type ? "🖼️" : "",
-        tag: [g.type, g.city].filter(Boolean).join(" • "),
-        href,
-        image: g.image
-      });
-
-    if (preview) {
-      preview.innerHTML = items.slice(0, 6).map((g) => mapItem(g, "/gallery.html")).join("");
-    }
-    if (full) {
-      full.innerHTML = items.map((g) => mapItem(g, "")).join("");
-    }
-  }
-
-  function renderDocuments(data) {
-    const el = qs("#documentsList");
-    if (!el) return;
-    const items = sortEnabled(data);
-
-    el.innerHTML = items.map((d) => {
-      const chip = d.category ? `<span class="chip">${esc(d.category)}</span>` : "";
-      return `
-        <a class="card pad hover doc" href="${esc(d.url || "#")}" target="_blank" rel="noopener">
-          <div class="h"><b>📄 ${esc(d.title || "PDF")}</b>${chip}</div>
-          <div class="small">Avaa dokumentti</div>
-        </a>
-      `;
-    }).join("");
-
-    if (!items.length) {
-      el.innerHTML = `<div class="card pad soft"><b>Ei dokumentteja vielä</b><div class="small">Lisää PDF tiedostot /assets/uploads/ ja päivitä data/site.json.</div></div>`;
-    }
-  }
-
-  function renderReviews(data) {
-    const el = qs("#reviewsList");
-    if (!el) return;
-    const items = sortEnabled(data);
-
-    const stars = (n) => {
-      const k = Math.max(1, Math.min(5, Number(n) || 5));
-      return "★".repeat(k) + "☆".repeat(5 - k);
-    };
-
-    el.innerHTML = items.map((r) => {
-      const meta = [r.city, r.service].filter(Boolean).map(esc).join(" • ");
-      return `
-        <div class="card pad">
-          <div class="small stars">${esc(stars(r.stars))}</div>
-          <b>${esc(r.title || "Palaute")}</b>
-          ${meta ? `<div class="small">${meta}</div>` : ""}
-          ${r.text ? `<p class="small">${esc(r.text)}</p>` : ""}
+      <section class="section">
+        <h2>Palvelut</h2>
+        <div class="grid grid--services">${services}</div>
+        <div class="section__more">
+          <a class="link" href="/services.html">Näytä kaikki →</a>
         </div>
-      `;
-    }).join("");
+      </section>
 
-    if (!items.length) {
-      el.innerHTML = `<div class="card pad soft"><b>Ei arvioita vielä</b><div class="small">Lisää palautteet data/site.json.</div></div>`;
-    }
-  }
+      <section class="section">
+        <h2>Työnäytteet</h2>
+        <div class="grid grid--works">${gallery}</div>
+        <div class="section__more">
+          <a class="link" href="/gallery.html">Katso galleria →</a>
+        </div>
+      </section>
 
-  function renderFAQ(data) {
-    const el = qs("#faqList");
-    if (!el) return;
-    const items = sortEnabled(data);
+      <section class="section">
+        <h2>Asiakaspalaute</h2>
+        <div class="grid grid--reviews">${reviews}</div>
+      </section>
 
-    el.innerHTML = items.map((f) => `
-      <details class="card pad">
-        <summary><b>${esc(f.q || "")}</b></summary>
-        <div class="small" style="margin-top:10px">${esc(f.a || "")}</div>
-      </details>
-    `).join("");
+      <section class="section">
+        <h2>Usein kysyttyä</h2>
+        <div class="stack">${faq}</div>
+      </section>
 
-    if (!items.length) {
-      el.innerHTML = `<div class="card pad soft"><b>FAQ puuttuu</b><div class="small">Lisää kysymykset data/site.json.</div></div>`;
-    }
-  }
-
-  async function main() {
-    const err = qs("#error");
-    const setErr = (m) => {
-      if (err) err.textContent = m;
-      console.warn(m);
-    };
-
-    try {
-      const res = await fetch(`${DATA_URL}?v=${Date.now()}`);
-      if (!res.ok) throw new Error(`site.json load failed: ${res.status}`);
-      const site = await res.json();
-
-      // global
-      setText("[data-company]", site.companyName || "RS-Expert Oy");
-      setText("[data-tagline]", site.tagline || "");
-      setAttr("[data-phone-link]", "href", `tel:${String(site.phone || "").replace(/\s+/g, "")}`);
-      setText("[data-phone-link]", site.phone || "");
-      setAttr("[data-email-link]", "href", `mailto:${site.email || ""}`);
-      setText("[data-email-link]", site.email || "");
-
-      initTally(site.tallyFormId || "");
-      renderMenu(site.menu);
-
-      // pages
-      renderHero(site.hero);
-      renderHighlights(site.highlights);
-      renderServices(site.services);
-      renderGallery(site.gallery);
-      renderDocuments(site.documents);
-      renderReviews(site.reviews);
-      renderFAQ(site.faq);
-
-    } catch (e) {
-      setErr(`Error: ${e?.message || e}`);
-    }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", main);
-  } else {
-    main();
-  }
-})();
+      <section class="section section--cta">
+        <h2>Tarvitsetko sähkömiestä?</h2>
+        <p>Lähetä pyyntö — palaamme nopeasti.</p>
+        <div class="cta__buttons">
+          <a class="btn btn--primary" href="/tarjouspyynto.html">Pyydä tarjous</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(
+            (data.phone || "").r
