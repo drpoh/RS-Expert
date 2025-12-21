@@ -24,8 +24,12 @@
       "fi": "Siltakatu 73, 04400 Järvenpää",
       "ru": "Siltakatu 73, 04400 Järvenpää"
     },
-    "iban": "FI62 1544 3000 1406 11",
-    "instagram": "https://www.instagram.com/rs.expert/"
+    "instagram": "https://www.instagram.com/rs.expert/",
+    "billing": {
+      "iban": "FI62 1544 3000 1406 11",
+      "verkkolaskuosoite": "003730860335",
+      "operaattori": "Apix"
+    }
   },
 
   "tallyFormId": "81z8Dk",
@@ -72,6 +76,16 @@
           "ru": "Примеры работ: монтаж, освещение и электрощиты."
         }
       },
+      "/referenssit.html": {
+        "title": {
+          "fi": "Referenssit — RS-Expert Oy",
+          "ru": "Референсы — RS-Expert Oy"
+        },
+        "description": {
+          "fi": "Kohteita ja projekteja (päivittyy).",
+          "ru": "Проекты и выполненные работы (будет пополняться)."
+        }
+      },
       "/documents.html": {
         "title": {
           "fi": "Dokumentit — RS-Expert Oy",
@@ -98,8 +112,8 @@
           "ru": "Контакты — RS-Expert Oy"
         },
         "description": {
-          "fi": "Ota yhteyttä: puhelin, sähköposti ja tarjouspyyntö.",
-          "ru": "Связаться: телефон, email и заявка."
+          "fi": "Ota yhteyttä: puhelin, sähköposti ja tarjouspyyntö. Laskutustiedot saat myös täältä.",
+          "ru": "Контакты: телефон, email и заявка. Здесь же реквизиты для выставления счетов."
         }
       }
     }
@@ -120,9 +134,10 @@
     { "label": { "fi": "Etusivu", "ru": "Главная" }, "href": "/index.html", "order": 1, "enabled": true },
     { "label": { "fi": "Palvelut", "ru": "Услуги" }, "href": "/services.html", "order": 2, "enabled": true },
     { "label": { "fi": "Galleria", "ru": "Галерея" }, "href": "/gallery.html", "order": 3, "enabled": true },
-    { "label": { "fi": "Dokumentit", "ru": "Документы" }, "href": "/documents.html", "order": 4, "enabled": true },
-    { "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" }, "href": "/tarjouspyynto.html", "order": 5, "enabled": true },
-    { "label": { "fi": "Yhteys", "ru": "Контакты" }, "href": "/contact.html", "order": 6, "enabled": true }
+    { "label": { "fi": "Referenssit", "ru": "Референсы" }, "href": "/referenssit.html", "order": 4, "enabled": true },
+    { "label": { "fi": "Dokumentit", "ru": "Документы" }, "href": "/documents.html", "order": 5, "enabled": true },
+    { "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" }, "href": "/tarjouspyynto.html", "order": 6, "enabled": true },
+    { "label": { "fi": "Yhteystiedot", "ru": "Контакты" }, "href": "/contact.html", "order": 7, "enabled": true }
   ],
 
   "hero": {
