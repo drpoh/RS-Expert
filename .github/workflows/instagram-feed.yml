@@ -1,0 +1,101 @@
+name: Update Instagram previews
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *" # daily 03:17 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install instaloader
+
+      - name: Download latest posts (public)
+        env:
+          IG_PROFILE: rs.expert
+        run: |
+          mkdir -p assets/ig
+          # Download into a dedicated folder
+          instaloader \
+            --no-metadata-json \
+            --no-compress-json \
+            --dirname-pattern "assets/ig/${IG_PROFILE}" \
+            --filename-pattern "{date_utc}_UTC_{shortcode}" \
+            --post-filter "not video" \
+            --fast-update \
+            --quiet \
+            profile "${IG_PROFILE}" || true
+
+      - name: Build data/instagram.json
+        env:
+          IG_PROFILE: rs.expert
+          MAX_ITEMS: "9"
+        run: |
+          python - <<'PY'
+          import os, json, glob, datetime
+
+          profile = os.environ.get("IG_PROFILE", "rs.expert")
+          max_items = int(os.environ.get("MAX_ITEMS", "9"))
+
+          root = f"assets/ig/{profile}"
+          os.makedirs("data", exist_ok=True)
+
+          # Instaloader saves .jpg (and sometimes .png). We take newest by filename (starts with date)
+          files = []
+          for ext in ("jpg", "jpeg", "png", "webp"):
+            files.extend(glob.glob(os.path.join(root, f"*.{ext}")))
+          files = sorted(files, reverse=True)  # newest first
+
+          items = []
+          for f in files:
+            name = os.path.basename(f)
+            # filename pattern: 2025-12-21_12-00-00_UTC_XXXXXXXXXXX.jpg
+            shortcode = ""
+            if "_UTC_" in name:
+              shortcode = name.split("_UTC_")[-1].split(".")[0]
+            url = f"https://www.instagram.com/p/{shortcode}/" if shortcode else f"https://www.instagram.com/{profile}/"
+
+            items.append({
+              "url": url,
+              "image": "/" + f.replace("\\", "/"),
+              "alt": f"Instagram post {shortcode}" if shortcode else f"Instagram {profile}"
+            })
+
+            if len(items) >= max_items:
+              break
+
+          out = {
+            "updatedAt": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+            "profile": profile,
+            "items": items
+          }
+
+          with open("data/instagram.json", "w", encoding="utf-8") as fp:
+            json.dump(out, fp, ensure_ascii=False, indent=2)
+
+          print(f"Wrote {len(items)} items to data/instagram.json")
+          PY
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/instagram.json assets/ig || true
+          git commit -m "chore: update instagram previews" || exit 0
+          git push
