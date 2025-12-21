@@ -1,0 +1,54 @@
+name: Build uploads index
+
+on:
+  push:
+    paths:
+      - "assets/uploads/**"
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * *" # daily
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build uploads.json
+        run: |
+          set -e
+          mkdir -p data
+
+          echo '{ "items": [' > data/uploads.json
+
+          first=true
+          for f in assets/uploads/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}; do
+            [ -e "$f" ] || continue
+            name=$(basename "$f")
+            title=$(echo "$name" | sed 's/\.[^.]*$//' | tr '-' ' ')
+            if [ "$first" = false ]; then
+              echo ',' >> data/uploads.json
+            fi
+            first=false
+            echo "  { \"image\": \"/$f\", \"title\": \"${title}\" }" >> data/uploads.json
+          done
+
+          echo '] }' >> data/uploads.json
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/uploads.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "chore: update uploads gallery"
+          git pull --rebase origin main
+          git push origin main
