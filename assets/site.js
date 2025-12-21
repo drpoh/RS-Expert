@@ -1,14 +1,7 @@
-/* RS-Expert dynamic site.js
-   Data source: Cloudflare Worker proxy -> Airtable
-   Worker: https://rs-expert-data.robertsild.workers.dev
-*/
 (() => {
-  const API_BASE = "https://rs-expert-data.robertsild.workers.dev/api";
-  const DEFAULT_VIEW = "Grid view";
-
-  // ---------- Helpers ----------
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const DATA_URL = "/data/site.json";
+  const qs = (s, r = document) => r.querySelector(s);
+  const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
   const esc = (s) =>
     String(s ?? "")
@@ -17,309 +10,240 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
-  const asBool = (v, def = true) => (typeof v === "boolean" ? v : def);
-  const asNum = (v, def = 9999) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : def;
-  };
+  const asBool = (v, d = true) => (typeof v === "boolean" ? v : d);
+  const asNum = (v, d = 9999) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
-  // Airtable Attachment -> first file url
-  const firstAttachmentUrl = (att) => {
-    if (!att) return "";
-    if (typeof att === "string") return att;
-    if (Array.isArray(att) && att.length) return att[0]?.url || "";
-    return att?.url || "";
-  };
-
-  async function fetchTable(table, view = DEFAULT_VIEW) {
-    const url = `${API_BASE}/${encodeURIComponent(table)}?view=${encodeURIComponent(view)}&t=${Date.now()}`;
-    const res = await fetch(url, { method: "GET" });
-    if (!res.ok) {
-      throw new Error(`Failed to load ${table}: ${res.status}`);
-    }
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  }
-
-  function sortAndFilter(items) {
-    return (items || [])
+  const sortEnabled = (arr) =>
+    (arr || [])
       .filter((x) => asBool(x.enabled, true))
       .sort((a, b) => asNum(a.order) - asNum(b.order));
+
+  function setText(sel, text) {
+    qsa(sel).forEach((el) => (el.textContent = text ?? ""));
+  }
+  function setAttr(sel, attr, value) {
+    qsa(sel).forEach((el) => el.setAttribute(attr, value));
   }
 
-  // ---------- Global apply (header/footer) ----------
-  function applySite(site) {
-    const companyName = site?.companyName || "RS-Expert Oy";
-    const tagline = site?.tagline || "";
-    const phone = site?.phone || "";
-    const email = site?.email || "";
-
-    $$("[data-company]").forEach((el) => (el.textContent = companyName));
-    $$("[data-tagline]").forEach((el) => (el.textContent = tagline));
-
-    $$("[data-phone-link]").forEach((el) => {
-      if (!phone) return;
-      el.textContent = phone;
-      el.setAttribute("href", `tel:${phone.replace(/\s+/g, "")}`);
-    });
-
-    $$("[data-email-link]").forEach((el) => {
-      if (!email) return;
-      el.textContent = email;
-      el.setAttribute("href", `mailto:${email}`);
+  function initTally(formId) {
+    // кнопки с data-tally-open в HTML уже есть, но мы продублируем ID на всякий случай
+    qsa("[data-tally-open]").forEach((btn) => {
+      if (!btn.getAttribute("data-tally-open")) btn.setAttribute("data-tally-open", formId);
     });
   }
 
-  function renderMenu(menuItems) {
-    const nav = $("#menu");
+  function renderMenu(menu) {
+    const nav = qs("#menu");
     if (!nav) return;
-
-    const items = sortAndFilter(menuItems);
-    if (!items.length) return;
-
+    const items = sortEnabled(menu);
     nav.innerHTML = items
-      .map((it) => {
-        const label = esc(it.label || "");
-        const href = esc(it.href || "#");
-        return `<a href="${href}">${label}</a>`;
-      })
+      .map((m) => `<a href="${esc(m.href)}">${esc(m.label)}</a>`)
       .join("");
   }
 
-  // ---------- Components ----------
-  function cardHTML({ title, text, icon, tag, href, img }) {
-    const t = esc(title || "");
-    const p = esc(text || "");
-    const i = esc(icon || "");
-    const g = esc(tag || "");
-    const link = href ? `href="${esc(href)}"` : "";
-    const clickable = href ? "a" : "div";
-
-    const imgHTML = img
-      ? `<div class="thumb"><img src="${esc(img)}" alt="${t}" loading="lazy"></div>`
+  function card({ title, text, icon, tag, href, image }) {
+    const img = image
+      ? `<div class="thumb"><img src="${esc(image)}" alt="${esc(title)}" loading="lazy"></div>`
       : "";
-
-    return `
-      <${clickable} class="card pad hover" ${link}>
-        ${imgHTML}
-        <div class="meta">
-          <div class="h">
-            ${i ? `<span class="icon">${i}</span>` : ""}
-            <b>${t}</b>
-          </div>
-          ${g ? `<div class="small tag">${g}</div>` : ""}
-          ${p ? `<p class="small">${p}</p>` : ""}
+    const content = `
+      ${img}
+      <div class="meta">
+        <div class="h">
+          ${icon ? `<span class="icon">${esc(icon)}</span>` : ""}
+          <b>${esc(title)}</b>
         </div>
-      </${clickable}>
+        ${tag ? `<div class="chip">${esc(tag)}</div>` : ""}
+        ${text ? `<p class="small">${esc(text)}</p>` : ""}
+      </div>
+    `;
+    if (href) return `<a class="card pad hover" href="${esc(href)}">${content}</a>`;
+    return `<div class="card pad">${content}</div>`;
+  }
+
+  function renderHero(hero) {
+    const el = qs("#hero");
+    if (!el || !hero) return;
+
+    const badges = (hero.badges || [])
+      .slice(0, 6)
+      .map((b) => `<span class="pill">${esc(b)}</span>`)
+      .join("");
+
+    el.innerHTML = `
+      <div class="card pad glow">
+        <div class="pills">${badges}</div>
+        <h1>${esc(hero.title || "")}</h1>
+        <p class="lead">${esc(hero.subtitle || "")}</p>
+        <div class="cta">
+          <button class="btn primary"
+            data-tally-open=""
+            data-tally-width="420"
+            data-tally-overlay="1"
+            data-tally-emoji-text="👋"
+            data-tally-emoji-animation="wave"
+          >💬 Pyydä tarjous</button>
+          <a class="btn" data-phone-link href="tel:">📞 Soita</a>
+          <a class="btn" href="/services.html">🔌 Palvelut</a>
+        </div>
+      </div>
     `;
   }
 
-  function ensureGridClass(el, fallbackClass = "grid three") {
+  function renderHighlights(items) {
+    const el = qs("#highlights");
     if (!el) return;
-    // если уже есть классы — не трогаем
-    if (el.classList.length) return;
-    fallbackClass.split(/\s+/).forEach((c) => el.classList.add(c));
-  }
-
-  // ---------- Render: Services ----------
-  function renderServices(services) {
-    // full page container
-    const full = $("#servicesList");
-    // homepage preview container (мы делали раньше)
-    const preview = $("#servicesPreview");
-
-    const items = sortAndFilter(services);
-
-    if (preview) {
-      ensureGridClass(preview, "grid three");
-      preview.innerHTML = items.slice(0, 6).map((s) =>
-        cardHTML({
-          title: s.title,
-          text: s.text,
-          icon: s.icon,
-          tag: s.tag,
-          href: "/services.html",
-        })
-      ).join("");
-    }
-
-    if (full) {
-      ensureGridClass(full, "grid three");
-      full.innerHTML = items.map((s) =>
-        cardHTML({
-          title: s.title,
-          text: s.text,
-          icon: s.icon,
-          tag: s.tag,
-        })
-      ).join("");
-    }
-  }
-
-  // ---------- Render: Gallery ----------
-  function renderGallery(gallery) {
-    const full = $("#galleryList");
-    const preview = $("#galleryPreview");
-
-    const items = sortAndFilter(gallery).map((g) => ({
-      ...g,
-      imageUrl: firstAttachmentUrl(g.image),
-    }));
-
-    if (preview) {
-      ensureGridClass(preview, "grid three");
-      preview.innerHTML = items.slice(0, 6).map((g) =>
-        cardHTML({
-          title: g.title,
-          text: g.text || g.city || "",
-          icon: g.type ? "🖼️" : "",
-          tag: g.city || g.type || "",
-          href: "/gallery.html",
-          img: g.imageUrl,
-        })
-      ).join("");
-    }
-
-    if (full) {
-      ensureGridClass(full, "grid three");
-      full.innerHTML = items.map((g) =>
-        cardHTML({
-          title: g.title,
-          text: g.text,
-          icon: g.type ? "🧾" : "",
-          tag: [g.type, g.city].filter(Boolean).join(" • "),
-          img: g.imageUrl,
-        })
-      ).join("");
-    }
-  }
-
-  // ---------- Render: Documents ----------
-  function renderDocuments(docs) {
-    const el = $("#documentsList");
-    if (!el) return;
-
-    const items = sortAndFilter(docs).map((d) => ({
-      ...d,
-      fileUrl: firstAttachmentUrl(d.file) || d.url || "",
-    }));
-
-    el.innerHTML = items
-      .map((d) => {
-        const title = esc(d.title || "PDF");
-        const cat = esc(d.category || "");
-        const url = esc(d.fileUrl || "#");
-        const chip = cat ? `<span class="pill">${cat}</span>` : "";
-        return `
-          <a class="card pad hover doc" href="${url}" target="_blank" rel="noopener">
-            <div class="h"><b>📄 ${title}</b>${chip}</div>
-            <div class="small">Avaa PDF</div>
-          </a>
-        `;
-      })
+    const arr = sortEnabled(items).slice(0, 6);
+    el.innerHTML = arr
+      .map((x) =>
+        `<div class="card pad">
+          <b>${esc(x.icon || "✅")} ${esc(x.title || "")}</b>
+          <p class="small">${esc(x.text || "")}</p>
+        </div>`
+      )
       .join("");
+  }
 
-    // если страница пустая — покажем мягкое сообщение
-    if (!items.length) {
-      el.innerHTML = `<div class="card pad soft"><b>Ei dokumentteja vielä</b><div class="small">Lisää PDF Airtablesta.</div></div>`;
+  function renderServices(data) {
+    const preview = qs("#servicesPreview");
+    const full = qs("#servicesList");
+    const items = sortEnabled(data);
+
+    if (preview) {
+      preview.innerHTML = items.slice(0, 6).map((s) =>
+        card({ title: s.title, text: s.text, icon: s.icon, tag: s.tag, href: "/services.html" })
+      ).join("");
+    }
+    if (full) {
+      full.innerHTML = items.map((s) =>
+        card({ title: s.title, text: s.text, icon: s.icon, tag: s.tag })
+      ).join("");
     }
   }
 
-  // ---------- Render: Reviews ----------
-  function renderReviews(reviews) {
-    const el = $("#reviewsList");
-    if (!el) return;
+  function renderGallery(data) {
+    const preview = qs("#galleryPreview");
+    const full = qs("#galleryList");
+    const items = sortEnabled(data);
 
-    const items = sortAndFilter(reviews);
+    const mapItem = (g, href) =>
+      card({
+        title: g.title,
+        text: g.text || "",
+        icon: g.type ? "🖼️" : "",
+        tag: [g.type, g.city].filter(Boolean).join(" • "),
+        href,
+        image: g.image
+      });
+
+    if (preview) {
+      preview.innerHTML = items.slice(0, 6).map((g) => mapItem(g, "/gallery.html")).join("");
+    }
+    if (full) {
+      full.innerHTML = items.map((g) => mapItem(g, "")).join("");
+    }
+  }
+
+  function renderDocuments(data) {
+    const el = qs("#documentsList");
+    if (!el) return;
+    const items = sortEnabled(data);
+
+    el.innerHTML = items.map((d) => {
+      const chip = d.category ? `<span class="chip">${esc(d.category)}</span>` : "";
+      return `
+        <a class="card pad hover doc" href="${esc(d.url || "#")}" target="_blank" rel="noopener">
+          <div class="h"><b>📄 ${esc(d.title || "PDF")}</b>${chip}</div>
+          <div class="small">Avaa dokumentti</div>
+        </a>
+      `;
+    }).join("");
+
+    if (!items.length) {
+      el.innerHTML = `<div class="card pad soft"><b>Ei dokumentteja vielä</b><div class="small">Lisää PDF tiedostot /assets/uploads/ ja päivitä data/site.json.</div></div>`;
+    }
+  }
+
+  function renderReviews(data) {
+    const el = qs("#reviewsList");
+    if (!el) return;
+    const items = sortEnabled(data);
 
     const stars = (n) => {
       const k = Math.max(1, Math.min(5, Number(n) || 5));
       return "★".repeat(k) + "☆".repeat(5 - k);
     };
 
-    ensureGridClass(el, "grid three");
-    el.innerHTML = items
-      .map((r) => {
-        const title = esc(r.title || "Palaute");
-        const text = esc(r.text || "");
-        const meta = [r.city, r.service].filter(Boolean).map(esc).join(" • ");
-        return `
-          <div class="card pad">
-            <div class="small">${esc(stars(r.stars))}</div>
-            <b>${title}</b>
-            ${meta ? `<div class="small">${meta}</div>` : ""}
-            ${text ? `<p class="small">${text}</p>` : ""}
-          </div>
-        `;
-      })
-      .join("");
+    el.innerHTML = items.map((r) => {
+      const meta = [r.city, r.service].filter(Boolean).map(esc).join(" • ");
+      return `
+        <div class="card pad">
+          <div class="small stars">${esc(stars(r.stars))}</div>
+          <b>${esc(r.title || "Palaute")}</b>
+          ${meta ? `<div class="small">${meta}</div>` : ""}
+          ${r.text ? `<p class="small">${esc(r.text)}</p>` : ""}
+        </div>
+      `;
+    }).join("");
 
     if (!items.length) {
-      el.innerHTML = `<div class="card pad soft"><b>Ei arvioita vielä</b><div class="small">Lisää palautteet Airtablesta.</div></div>`;
+      el.innerHTML = `<div class="card pad soft"><b>Ei arvioita vielä</b><div class="small">Lisää palautteet data/site.json.</div></div>`;
     }
   }
 
-  // ---------- Render: FAQ ----------
-  function renderFAQ(faq) {
-    const el = $("#faqList");
+  function renderFAQ(data) {
+    const el = qs("#faqList");
     if (!el) return;
+    const items = sortEnabled(data);
 
-    const items = sortAndFilter(faq);
-
-    el.innerHTML = items
-      .map((f) => {
-        const q = esc(f.q || "");
-        const a = esc(f.a || "");
-        return `
-          <details class="card pad">
-            <summary><b>${q}</b></summary>
-            <div class="small" style="margin-top:10px">${a}</div>
-          </details>
-        `;
-      })
-      .join("");
+    el.innerHTML = items.map((f) => `
+      <details class="card pad">
+        <summary><b>${esc(f.q || "")}</b></summary>
+        <div class="small" style="margin-top:10px">${esc(f.a || "")}</div>
+      </details>
+    `).join("");
 
     if (!items.length) {
-      el.innerHTML = `<div class="card pad soft"><b>FAQ puuttuu</b><div class="small">Lisää kysymykset Airtablesta.</div></div>`;
+      el.innerHTML = `<div class="card pad soft"><b>FAQ puuttuu</b><div class="small">Lisää kysymykset data/site.json.</div></div>`;
     }
   }
 
-  // ---------- Boot ----------
   async function main() {
-    // Покажем ошибку, если есть элемент #error
-    const errEl = $("#error");
-    const setErr = (msg) => {
-      if (errEl) errEl.textContent = msg;
-      console.warn(msg);
+    const err = qs("#error");
+    const setErr = (m) => {
+      if (err) err.textContent = m;
+      console.warn(m);
     };
 
     try {
-      // грузим всё параллельно
-      const [siteArr, menu, services, gallery, docs, reviews, faq] = await Promise.all([
-        fetchTable("Site"),
-        fetchTable("Menu"),
-        fetchTable("Services"),
-        fetchTable("Gallery"),
-        fetchTable("Documents"),
-        fetchTable("Reviews"),
-        fetchTable("FAQ"),
-      ]);
+      const res = await fetch(`${DATA_URL}?v=${Date.now()}`);
+      if (!res.ok) throw new Error(`site.json load failed: ${res.status}`);
+      const site = await res.json();
 
-      const site = siteArr?.[0] || {};
-      applySite(site);
-      renderMenu(menu);
+      // global
+      setText("[data-company]", site.companyName || "RS-Expert Oy");
+      setText("[data-tagline]", site.tagline || "");
+      setAttr("[data-phone-link]", "href", `tel:${String(site.phone || "").replace(/\s+/g, "")}`);
+      setText("[data-phone-link]", site.phone || "");
+      setAttr("[data-email-link]", "href", `mailto:${site.email || ""}`);
+      setText("[data-email-link]", site.email || "");
 
-      renderServices(services);
-      renderGallery(gallery);
-      renderDocuments(docs);
-      renderReviews(reviews);
-      renderFAQ(faq);
+      initTally(site.tallyFormId || "");
+      renderMenu(site.menu);
+
+      // pages
+      renderHero(site.hero);
+      renderHighlights(site.highlights);
+      renderServices(site.services);
+      renderGallery(site.gallery);
+      renderDocuments(site.documents);
+      renderReviews(site.reviews);
+      renderFAQ(site.faq);
+
     } catch (e) {
-      setErr(`Data error: ${e?.message || e}`);
+      setErr(`Error: ${e?.message || e}`);
     }
   }
 
-  // Run
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", main);
   } else {
