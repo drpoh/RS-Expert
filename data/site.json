@@ -135,6 +135,22 @@
     "image": "/assets/uploads/og-cover.svg"
   },
 
+  "serviceArea": {
+    "title": {
+      "fi": "Palvelualue",
+      "ru": "Зона обслуживания"
+    },
+    "lead": {
+      "fi": "Sähköasentaja Järvenpäässä ja lähialueilla. Teemme sähkötyöt koteihin ja yrityksiin Uudellamaalla.",
+      "ru": "Электрик в Järvenpää и рядом. Работаем по Uusimaa — для дома и бизнеса."
+    },
+    "places": ["Järvenpää", "Kerava", "Tuusula", "Helsinki", "Vantaa", "Espoo"],
+    "note": {
+      "fi": "Kysy myös muista kohteista Uudellamaalla.",
+      "ru": "Можно договориться и о других городах Uusimaa."
+    }
+  },
+
   "menu": [
     { "label": { "fi": "Etusivu", "ru": "Главная" }, "href": "/index.html", "order": 1, "enabled": true },
     { "label": { "fi": "Palvelut", "ru": "Услуги" }, "href": "/services.html", "order": 2, "enabled": true },
