@@ -34,16 +34,28 @@ body {
 body {
   margin: 0;
   color: var(--text);
-  background:
-    radial-gradient(1200px 700px at 10% -10%, rgba(106, 228, 255, 0.18), transparent 60%),
-    radial-gradient(900px 600px at 110% 0%, rgba(139, 92, 255, 0.18), transparent 55%),
-    radial-gradient(800px 600px at 50% 120%, rgba(106, 228, 255, 0.10), transparent 60%),
-    var(--bg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-    "Segoe UI Emoji";
+  min-height: 100vh;
+
+  /* base background */
+  background-color: var(--bg);
+
+  /* aurora layers */
+  background-image:
+    radial-gradient(900px 500px at 15% -10%, rgba(106, 228, 255, 0.22), transparent 60%),
+    radial-gradient(800px 520px at 85% 0%, rgba(139, 92, 255, 0.22), transparent 60%),
+    radial-gradient(700px 500px at 50% 120%, rgba(106, 228, 255, 0.14), transparent 65%);
+
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  position: relative;
+  overflow-x: hidden;
 }
 
 img {
@@ -776,4 +788,41 @@ p {
   outline: 2px solid rgba(106, 228, 255, 0.55);
   outline-offset: 2px;
   border-radius: 12px;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  /* subtle noise */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.015),
+      rgba(255,255,255,0.015) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+}
+@keyframes auroraMove {
+  0% {
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+  }
+  50% {
+    background-position: 10% 10%, 90% 5%, 45% 95%;
+  }
+  100% {
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body {
+    animation: auroraMove 28s ease-in-out infinite;
+  }
 }
