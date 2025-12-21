@@ -3,31 +3,73 @@
   "tagline": "Sähköasennukset • vianhaku • sähkökeskukset",
   "region": "Uusimaa",
   "city": "Järvenpää",
-  "phone": "+358 XX XXX XXXX",
-  "email": "info@rs-expert.fi",
+  "phone": "+358 449723588",
+  "email": "rs.expert.oy@gmail.com",
   "tallyFormId": "81z8Dk",
-
   "menu": [
-    { "label": "Etusivu", "href": "/index.html", "order": 1, "enabled": true },
-    { "label": "Palvelut", "href": "/services.html", "order": 2, "enabled": true },
-    { "label": "Galleria", "href": "/gallery.html", "order": 3, "enabled": true },
-    { "label": "Dokumentit", "href": "/documents.html", "order": 4, "enabled": true },
-    { "label": "Tarjouspyyntö", "href": "/tarjouspyynto.html", "order": 5, "enabled": true },
-    { "label": "Yhteys", "href": "/contact.html", "order": 6, "enabled": true }
+    {
+      "label": "Etusivu",
+      "href": "/index.html",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "label": "Palvelut",
+      "href": "/services.html",
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "label": "Galleria",
+      "href": "/gallery.html",
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "label": "Dokumentit",
+      "href": "/documents.html",
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "label": "Tarjouspyyntö",
+      "href": "/tarjouspyynto.html",
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "label": "Yhteys",
+      "href": "/contact.html",
+      "order": 6,
+      "enabled": true
+    }
   ],
-
   "hero": {
     "title": "Sähkötyöt nopeasti ja siististi",
     "subtitle": "Asennukset, vianhaku ja keskukset koteihin ja yrityksiin Uudellamaalla.",
-    "badges": ["⚡ Sähkötyöt", "🛡️ Turvallisesti", "📍 Uusimaa"]
+    "badges": [
+      "⚡ Sähkötyöt",
+      "🛡️ Turvallisesti",
+      "📍 Uusimaa"
+    ]
   },
-
   "highlights": [
-    { "title": "Selkeä sopimus", "text": "Aikataulu ja työn sisältö sovitaan etukäteen.", "icon": "✅" },
-    { "title": "Nopea reagointi", "text": "Usein aika järjestyy nopeasti.", "icon": "⚡" },
-    { "title": "Siisti lopputulos", "text": "Työmaa jää siistiksi ja lopputulos on huolellinen.", "icon": "✨" }
+    {
+      "title": "Selkeä sopimus",
+      "text": "Aikataulu ja työn sisältö sovitaan etukäteen.",
+      "icon": "✅"
+    },
+    {
+      "title": "Nopea reagointi",
+      "text": "Usein aika järjestyy nopeasti.",
+      "icon": "⚡"
+    },
+    {
+      "title": "Siisti lopputulos",
+      "text": "Työmaa jää siistiksi ja lopputulos on huolellinen.",
+      "icon": "✨"
+    }
   ],
-
   "services": [
     {
       "title": "Sähköasennukset",
@@ -78,7 +120,6 @@
       "enabled": true
     }
   ],
-
   "gallery": [
     {
       "title": "Keittiön lisäpistorasiat",
@@ -108,7 +149,6 @@
       "enabled": true
     }
   ],
-
   "documents": [
     {
       "title": "Yleiset ehdot (PDF)",
@@ -125,7 +165,6 @@
       "enabled": true
     }
   ],
-
   "reviews": [
     {
       "title": "Nopea ja siisti työ",
@@ -146,7 +185,6 @@
       "enabled": true
     }
   ],
-
   "faq": [
     {
       "q": "Kuinka nopeasti pääsette paikalle?",
