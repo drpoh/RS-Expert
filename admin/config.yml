@@ -2,7 +2,7 @@ backend:
   name: github
   repo: drpoh/RS-Expert
   branch: main
-  auth_type: token
+  base_url: https://sveltia-cms-auth.robertsild.workers.dev
 
 media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
