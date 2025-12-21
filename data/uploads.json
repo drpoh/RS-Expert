@@ -1,3 +1,7 @@
-{
-  "items": []
-}
+{ "items": [
+  { "image": "/assets/uploads/001.jpg", "title": "001" }
+,
+  { "image": "/assets/uploads/002.jpg", "title": "002" }
+,
+  { "image": "/assets/uploads/og-cover.jpg", "title": "og cover" }
+] }
