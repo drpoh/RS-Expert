@@ -17,6 +17,17 @@
   "city": "Järvenpää",
   "phone": "+358 449723588",
   "email": "rs.expert.oy@gmail.com",
+
+  "businessInfo": {
+    "yTunnus": "3086033-5",
+    "address": {
+      "fi": "Siltakatu 73, 04400 Järvenpää",
+      "ru": "Siltakatu 73, 04400 Järvenpää"
+    },
+    "iban": "FI62 1544 3000 1406 11",
+    "instagram": "https://www.instagram.com/rs.expert/"
+  },
+
   "tallyFormId": "81z8Dk",
 
   "site": {
@@ -263,27 +274,6 @@
       "stars": 5,
       "text": { "fi": "Selkeä kommunikointi ja nopea korjaus.", "ru": "Понятно объяснили и быстро исправили." },
       "order": 2,
-      "enabled": true
-    }
-  ],
-
-  "faq": [
-    {
-      "q": { "fi": "Kuinka nopeasti pääsette paikalle?", "ru": "Как быстро вы можете приехать?" },
-      "a": { "fi": "Usein saamme ajan nopeasti. Kiireellisissä tapauksissa kannattaa soittaa heti.", "ru": "Часто можем приехать быстро. В срочных случаях лучше сразу позвонить." },
-      "order": 1,
-      "enabled": true
-    },
-    {
-      "q": { "fi": "Teettekö sähkötyöt myös yrityksille?", "ru": "Вы работаете с компаниями?" },
-      "a": { "fi": "Kyllä.\nTeemme asennuksia, muutostöitä ja huoltoja myös liiketiloihin.", "ru": "Да.\nДелаем монтаж, изменения и обслуживание также для коммерческих помещений." },
-      "order": 2,
-      "enabled": true
-    },
-    {
-      "q": { "fi": "Voiko työn hinnan arvioida etukäteen?", "ru": "Можно ли оценить стоимость заранее?" },
-      "a": { "fi": "Kyllä. Lähetä tarjouspyyntö, kerro kohde ja toiveet — palaamme arviolla.", "ru": "Да. Отправьте заявку, опишите объект и пожелания — ответим с оценкой." },
-      "order": 3,
       "enabled": true
     }
   ]
