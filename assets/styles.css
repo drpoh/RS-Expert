@@ -170,6 +170,12 @@ p {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.topbar__btn--ig {
+  border-color: rgba(106, 228, 255, 0.26);
+  background: linear-gradient(135deg, rgba(106, 228, 255, 0.12), rgba(139, 92, 255, 0.12));
+}
+
+/* ---------- nav ---------- */
 .nav {
   max-width: var(--maxw);
   margin: 0 auto;
@@ -296,6 +302,16 @@ p {
 
 .btn--ghost:hover {
   background: rgba(255, 255, 255, 0.09);
+}
+
+.btn--ig {
+  background: linear-gradient(135deg, rgba(106, 228, 255, 0.20), rgba(139, 92, 255, 0.20));
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text);
+}
+
+.btn--ig:hover {
+  background: linear-gradient(135deg, rgba(106, 228, 255, 0.26), rgba(139, 92, 255, 0.26));
 }
 
 /* ---------- sections ---------- */
@@ -502,7 +518,7 @@ p {
   font-size: 14px;
 }
 
-/* ---------- works (home preview) ---------- */
+/* ---------- works ---------- */
 .work {
   display: block;
   border-radius: var(--radius);
@@ -539,7 +555,7 @@ p {
   font-size: 13px;
 }
 
-/* ---------- gallery page cards ---------- */
+/* ---------- gallery cards ---------- */
 .workcard {
   border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -639,6 +655,63 @@ p {
   font-size: 14px;
 }
 
+/* ---------- contact extras ---------- */
+.igblock {
+  margin-top: 12px;
+}
+
+.igcard {
+  display: block;
+  border-radius: var(--radius-2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(106, 228, 255, 0.10), rgba(139, 92, 255, 0.10));
+  box-shadow: var(--shadow);
+  padding: 14px 14px;
+}
+
+.igcard__title {
+  font-weight: 850;
+  margin-bottom: 4px;
+}
+
+.igcard__sub {
+  color: rgba(255, 255, 255, 0.70);
+  font-size: 14px;
+}
+
+.rowline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.copybtn {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.copybtn:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.copystatus {
+  min-height: 18px;
+  font-size: 13px;
+  color: rgba(106, 228, 255, 0.95);
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+}
+
 /* ---------- small helpers ---------- */
 .mt {
   margin-top: 10px;
@@ -680,8 +753,8 @@ p {
   color: rgba(255, 255, 255, 0.58);
 }
 
-.footer__meta--small a {
-  color: rgba(106, 228, 255, 0.95);
+.footer__ig {
+  font-weight: 700;
 }
 
 .dot {
