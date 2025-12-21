@@ -1,5 +1,4 @@
 (async function () {
-  // ---------- helpers ----------
   const $ = (sel) => document.querySelector(sel);
 
   function escapeHtml(str) {
@@ -59,7 +58,6 @@
     add("x-default", urlFi);
   }
 
-  // ---------- i18n ----------
   function t(value, lang) {
     if (value == null) return "";
     if (typeof value === "string") return value;
@@ -116,7 +114,6 @@
       }
     } catch (e) {}
 
-    // fallback
     try {
       const ta = document.createElement("textarea");
       ta.value = value;
@@ -178,7 +175,10 @@
       copyIban: "Kopioi IBAN",
       copied: "Kopioitu!",
       verkkolaskuLabel: "Verkkolaskuosoite",
-      operaattoriLabel: "Operaattori"
+      operaattoriLabel: "Operaattori",
+
+      serviceAreaTitleFallback: "Palvelualue",
+      serviceAreaNoteFallback: "Kysy myös muista kohteista Uudellamaalla."
     },
     ru: {
       call: "Позвонить",
@@ -214,7 +214,10 @@
       copyIban: "Копировать IBAN",
       copied: "Скопировано!",
       verkkolaskuLabel: "Verkkolaskuosoite",
-      operaattoriLabel: "Оператор"
+      operaattoriLabel: "Оператор",
+
+      serviceAreaTitleFallback: "Зона обслуживания",
+      serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa."
     }
   };
 
@@ -345,7 +348,6 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  // ---------- UI render ----------
   function renderHeader(data, lang) {
     const header = $("#site-header");
     if (!header) return;
@@ -453,7 +455,6 @@
     const items = (igFeed?.items || []).slice(0, maxItems);
 
     if (!items.length) {
-      // fallback if feed not ready yet
       return `
         <section class="section">
           <div class="igpreview__head">
@@ -494,6 +495,35 @@
 
         <div class="section__more">
           <a class="link" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderServiceAreaBlock(data, lang) {
+    const sa = data.serviceArea || null;
+    if (!sa) return "";
+
+    const title = t(sa.title, lang) || ui(lang, "serviceAreaTitleFallback");
+    const lead = t(sa.lead, lang) || "";
+    const note = t(sa.note, lang) || ui(lang, "serviceAreaNoteFallback");
+
+    const places = (sa.places && sa.places.length ? sa.places : (data.business?.areaServed || []))
+      .filter(Boolean);
+
+    const chips = places
+      .map((p) => `<span class="badge">📍 ${escapeHtml(p)}</span>`)
+      .join("");
+
+    return `
+      <section class="section">
+        <h2>${escapeHtml(title)}</h2>
+        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
+        <div class="card card--pad">
+          <div class="hero__badges" style="margin:0;">
+            ${chips}
+          </div>
+          ${note ? `<p style="margin:12px 0 0;">${escapeHtml(note)}</p>` : ""}
         </div>
       </section>
     `;
@@ -586,6 +616,7 @@
       : "";
 
     const igPreview = renderInstagramPreviewBlock(data, lang, igFeed);
+    const serviceAreaBlock = renderServiceAreaBlock(data, lang);
 
     el.innerHTML = `
       <section class="hero">
@@ -606,6 +637,8 @@
           <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
         </div>
       </section>
+
+      ${serviceAreaBlock}
 
       <section class="section">
         <h2>${escapeHtml(ui(lang, "works"))}</h2>
@@ -897,7 +930,6 @@
     });
   }
 
-  // ---------- boot ----------
   let data;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
