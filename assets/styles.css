@@ -25,7 +25,6 @@
 
   --maxw: 1120px;
 
-  /* glass background */
   --glass: rgba(255, 255, 255, 0.055);
 }
 
@@ -318,6 +317,7 @@ p {
 
 .btn--ig:hover {
   background: linear-gradient(135deg, rgba(106, 228, 255, 0.26), rgba(139, 92, 255, 0.26));
+  transform: translateY(-1px) scale(1.02);
 }
 
 /* ---------- sections ---------- */
@@ -335,11 +335,7 @@ p {
   padding: 18px 16px;
   border-radius: var(--radius-2);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: linear-gradient(
-    135deg,
-    rgba(106, 228, 255, 0.10),
-    rgba(139, 92, 255, 0.10)
-  );
+  background: linear-gradient(135deg, rgba(106, 228, 255, 0.10), rgba(139, 92, 255, 0.10));
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -368,7 +364,6 @@ p {
   box-shadow: var(--shadow);
   overflow: hidden;
 
-  /* allow pseudo-element aurora */
   position: relative;
   isolation: isolate;
 }
@@ -423,33 +418,17 @@ p {
 }
 
 @media (min-width: 720px) {
-  .grid--services {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .grid--works {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .grid--highlights {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .grid--reviews {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .grid--gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .grid--docs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .grid--services { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid--works { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid--highlights { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid--reviews { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid--gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid--docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (min-width: 1020px) {
-  .grid--services {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .grid--gallery {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  .grid--services { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid--gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ---------- cards (glass++) ---------- */
@@ -459,7 +438,6 @@ p {
   background: var(--glass);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
   padding: 14px 14px;
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -491,7 +469,6 @@ p {
   padding: 14px 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
   transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -525,7 +502,6 @@ p {
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(255, 255, 255, 0.05);
   color: var(--muted);
-
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -541,7 +517,7 @@ p {
   font-size: 14px;
 }
 
-/* ---------- works (home preview) ---------- */
+/* ---------- works ---------- */
 .work {
   display: block;
   border-radius: var(--radius);
@@ -550,7 +526,6 @@ p {
   overflow: hidden;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
   transition: transform 0.12s ease, border-color 0.2s ease;
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -581,14 +556,13 @@ p {
   font-size: 13px;
 }
 
-/* ---------- gallery page cards ---------- */
+/* ---------- gallery cards ---------- */
 .workcard {
   border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: var(--glass);
   overflow: hidden;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -628,7 +602,6 @@ p {
   padding: 14px 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
   transition: transform 0.12s ease, border-color 0.2s ease, background 0.2s ease;
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -656,7 +629,6 @@ p {
   background: var(--glass);
   padding: 14px 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -690,6 +662,45 @@ p {
   font-size: 14px;
 }
 
+/* ---------- instagram preview grid ---------- */
+.igpreview__head {
+  margin-bottom: 10px;
+}
+
+.iggrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 720px) {
+  .iggrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.igthumb {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
+  transform: translateZ(0);
+  transition: transform 0.12s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.igthumb:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.igthumb__img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+
 /* ---------- contact extras ---------- */
 .igblock {
   margin-top: 12px;
@@ -702,7 +713,6 @@ p {
   background: linear-gradient(135deg, rgba(106, 228, 255, 0.10), rgba(139, 92, 255, 0.10));
   box-shadow: var(--shadow);
   padding: 14px 14px;
-
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -818,8 +828,6 @@ p {
 
 /* =========================================================
    MODERN BACKGROUND EXTRAS
-   1) Hero aurora only
-   2) Subtle star grid + ultra-soft drift (non-annoying)
    ========================================================= */
 
 /* --- HERO aurora (only hero) --- */
@@ -852,7 +860,7 @@ p {
   }
 }
 
-/* --- subtle star grid background --- */
+/* --- subtle star grid background with ultra-soft drift --- */
 body::after {
   content: "";
   position: fixed;
@@ -865,8 +873,6 @@ body::after {
     radial-gradient(1px 1px at 68% 22%, rgba(255,255,255,0.10) 0, transparent 60%),
     radial-gradient(1px 1px at 34% 74%, rgba(255,255,255,0.10) 0, transparent 60%),
     radial-gradient(1px 1px at 82% 78%, rgba(255,255,255,0.10) 0, transparent 60%),
-
-    /* micro grid (very soft) */
     radial-gradient(circle at 1px 1px, rgba(255,255,255,0.045) 1px, transparent 1.6px);
 
   background-size:
@@ -876,7 +882,6 @@ body::after {
     100% 100%,
     48px 48px;
 
-  /* start positions (also used by animation) */
   background-position:
     0% 0%,
     0% 0%,
@@ -890,7 +895,6 @@ body::after {
   transform: translateZ(0);
 }
 
-/* ultra-soft drift: tiny movement, very long duration */
 @keyframes starDrift {
   0% {
     background-position:
