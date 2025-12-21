@@ -32,13 +32,18 @@
     }
   },
 
+  "instagram": {
+    "profile": "rs.expert",
+    "maxItems": 9
+  },
+
   "tallyFormId": "81z8Dk",
 
   "site": {
     "baseUrl": "https://rs-expert.pages.dev",
     "defaultDescription": {
-      "fi": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla.",
-      "ru": "Электромонтаж, поиск неисправностей и электрощиты для дома и бизнеса в Уусимаа."
+      "fi": "Sähköasentaja Järvenpäässä ja Uudellamaalla. Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin.",
+      "ru": "Электрик в Järvenpää и Uusimaa: электромонтаж, диагностика неисправностей и электрощиты для дома и бизнеса."
     },
     "defaultOgImage": "/assets/uploads/og-cover.svg",
     "language": "fi"
@@ -48,42 +53,42 @@
     "pages": {
       "/index.html": {
         "title": {
-          "fi": "RS-Expert Oy — Sähkötyöt Uusimaa",
-          "ru": "RS-Expert Oy — Электромонтаж Уусимаа"
+          "fi": "RS-Expert Oy — Sähköasentaja Järvenpää | Sähkötyöt Uusimaa",
+          "ru": "RS-Expert Oy — Электрик Järvenpää | Электромонтаж Uusimaa"
         },
         "description": {
-          "fi": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla. Pyydä tarjous nopeasti.",
-          "ru": "Электромонтаж, поиск неисправностей и электрощиты для дома и бизнеса в Уусимаа. Быстрый расчёт стоимости."
+          "fi": "Sähköasentaja Järvenpää: sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla. Pyydä tarjous nopeasti.",
+          "ru": "Электрик Järvenpää: электромонтаж, диагностика и электрощиты для дома и бизнеса в Uusimaa. Быстрый расчёт стоимости."
         }
       },
       "/services.html": {
         "title": {
-          "fi": "Palvelut — RS-Expert Oy",
-          "ru": "Услуги — RS-Expert Oy"
+          "fi": "Palvelut — RS-Expert Oy | Sähköasentaja Järvenpää",
+          "ru": "Услуги — RS-Expert Oy | Электрик Järvenpää"
         },
         "description": {
-          "fi": "Sähköasennukset, vianhaku, valaistusratkaisut, sähkökeskukset ja remonttikohteet Uudellamaalla.",
-          "ru": "Электромонтаж, поиск неисправностей, освещение, электрощиты и работы при ремонте в Уусимаа."
+          "fi": "Sähköasentaja Järvenpää: sähköasennukset, vianhaku, valaistusratkaisut, sähkökeskukset ja remonttikohteet Uudellamaalla.",
+          "ru": "Электрик Järvenpää: электромонтаж, диагностика, освещение, электрощиты и работы при ремонте в Uusimaa."
         }
       },
       "/gallery.html": {
         "title": {
-          "fi": "Galleria — RS-Expert Oy",
-          "ru": "Галерея — RS-Expert Oy"
+          "fi": "Galleria — RS-Expert Oy | Työnäytteet",
+          "ru": "Галерея — RS-Expert Oy | Примеры работ"
         },
         "description": {
-          "fi": "Työnäytteitä ja toteutuksia: asennukset, valaistus ja keskukset.",
-          "ru": "Примеры работ: монтаж, освещение и электрощиты."
+          "fi": "Työnäytteitä ja toteutuksia: asennukset, valaistus ja keskukset (Järvenpää, Uusimaa).",
+          "ru": "Примеры работ: монтаж, освещение и электрощиты (Järvenpää, Uusimaa)."
         }
       },
       "/referenssit.html": {
         "title": {
-          "fi": "Referenssit — RS-Expert Oy",
-          "ru": "Референсы — RS-Expert Oy"
+          "fi": "Referenssit — RS-Expert Oy | Järvenpää",
+          "ru": "Референсы — RS-Expert Oy | Järvenpää"
         },
         "description": {
-          "fi": "Kohteita ja projekteja (päivittyy).",
-          "ru": "Проекты и выполненные работы (будет пополняться)."
+          "fi": "Referenssit ja projektit (päivittyy). Seuraa Instagramia uusista kohteista.",
+          "ru": "Референсы и проекты (будет пополняться). Следите за Instagram."
         }
       },
       "/documents.html": {
@@ -98,22 +103,22 @@
       },
       "/tarjouspyynto.html": {
         "title": {
-          "fi": "Tarjouspyyntö — RS-Expert Oy",
-          "ru": "Заявка на расчёт — RS-Expert Oy"
+          "fi": "Tarjouspyyntö — RS-Expert Oy | Sähköasentaja Järvenpää",
+          "ru": "Заявка на расчёт — RS-Expert Oy | Электрик Järvenpää"
         },
         "description": {
-          "fi": "Lähetä tarjouspyyntö. Kerro kohde ja toiveet — palaamme nopeasti.",
-          "ru": "Отправьте заявку. Опишите объект и пожелания — быстро ответим."
+          "fi": "Lähetä tarjouspyyntö sähkötyöstä. Kerro kohde ja toiveet — palaamme nopeasti (Järvenpää, Uusimaa).",
+          "ru": "Отправьте заявку на электромонтаж. Опишите объект — быстро ответим (Järvenpää, Uusimaa)."
         }
       },
       "/contact.html": {
         "title": {
-          "fi": "Yhteystiedot — RS-Expert Oy",
-          "ru": "Контакты — RS-Expert Oy"
+          "fi": "Yhteystiedot — RS-Expert Oy | Sähköasentaja Järvenpää",
+          "ru": "Контакты — RS-Expert Oy | Электрик Järvenpää"
         },
         "description": {
-          "fi": "Ota yhteyttä: puhelin, sähköposti ja tarjouspyyntö. Laskutustiedot saat myös täältä.",
-          "ru": "Контакты: телефон, email и заявка. Здесь же реквизиты для выставления счетов."
+          "fi": "Ota yhteyttä: puhelin, sähköposti ja tarjouspyyntö. Laskutustiedot ja verkkolaskuosoite löytyvät myös täältä.",
+          "ru": "Контакты: телефон, email и заявка. Здесь же реквизиты для счетов и e-invoice."
         }
       }
     }
@@ -146,13 +151,13 @@
       "ru": "Электромонтаж быстро и аккуратно"
     },
     "subtitle": {
-      "fi": "Asennukset, vianhaku ja keskukset koteihin ja yrityksiin Uudellamaalla.",
-      "ru": "Монтаж, поиск неисправностей и электрощиты для дома и бизнеса в Уусимаа."
+      "fi": "Sähköasentaja Järvenpäässä ja Uudellamaalla: asennukset, vianhaku ja keskukset koteihin ja yrityksiin.",
+      "ru": "Электрик в Järvenpää и Uusimaa: монтаж, диагностика и электрощиты для дома и бизнеса."
     },
     "badges": [
       { "fi": "⚡ Sähkötyöt", "ru": "⚡ Электромонтаж" },
       { "fi": "✅ Turvallisesti", "ru": "✅ Безопасно" },
-      { "fi": "📍 Uusimaa", "ru": "📍 Уусимаа" }
+      { "fi": "📍 Järvenpää • Uusimaa", "ru": "📍 Järvenpää • Uusimaa" }
     ]
   },
 
