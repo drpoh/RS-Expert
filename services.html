@@ -3,15 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Palvelut — RS-Expert</title>
+  <title>Palvelut — RS-Expert Oy</title>
+  <meta name="description" content="RS-Expert Oy palvelut: sähköasennukset, vianhaku, valaistus, sähkökeskukset." />
   <link rel="stylesheet" href="/assets/styles.css" />
+  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
+
 <header>
   <div class="wrap">
     <div class="top">
       <div class="brand">
-        <b data-company>RS-Expert Oy</b>
+        <a href="/index.html" style="text-decoration:none;color:inherit">
+          <b data-company>RS-Expert Oy</b>
+        </a>
         <span data-tagline></span>
       </div>
       <nav id="menu"></nav>
@@ -20,14 +25,34 @@
 </header>
 
 <main class="wrap">
-  <div class="hero">
-    <h1>Palvelut</h1>
-    <p id="error" class="err"></p>
-  </div>
 
-  <div id="services" class="grid"></div>
+  <section class="hero">
+    <div class="card pad glow">
+      <h1>Palvelut</h1>
+      <p class="lead">Valitse palvelu — tai lähetä pyyntö, niin ehdotamme parasta ratkaisua.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
+        <button class="btn primary" data-tally-open="81z8Dk" data-tally-width="420" data-tally-overlay="1">💬 Pyydä tarjous</button>
+        <a class="btn" data-phone-link href="tel:+358">📞 Soita</a>
+      </div>
+    </div>
+  </section>
 
-  <footer><div class="wrap" style="padding:0">© RS-Expert Oy</div></footer>
+  <section class="section">
+    <div id="servicesList" class="grid three"></div>
+  </section>
+
+  <section class="section">
+    <div class="card pad soft">
+      <b>Kiireellinen vika?</b>
+      <p class="small">Jos sulake laukeaa, haisee palaneelta tai pistorasia kuumenee — soita heti.</p>
+      <a class="btn primary" data-phone-link href="tel:+358">📞 Soita nyt</a>
+    </div>
+  </section>
+
+  <footer>
+    <div>© <span data-company>RS-Expert Oy</span></div>
+  </footer>
+
 </main>
 
 <script src="/assets/site.js"></script>
