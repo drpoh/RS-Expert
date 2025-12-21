@@ -1,10 +1,18 @@
-"i18n": {
-  "default": "fi",
-  "available": ["fi", "ru"]
-}
 {
   "companyName": "RS-Expert Oy",
-  "tagline": "Sähköasennukset • vianhaku • sähkökeskukset",
+
+  "i18n": {
+    "default": "fi",
+    "available": ["fi", "ru"],
+    "ruNoIndex": true,
+    "preferBrowserLanguage": true
+  },
+
+  "tagline": {
+    "fi": "Sähköasennukset • vianhaku • sähkökeskukset",
+    "ru": "Электромонтаж • поиск неисправностей • электрощиты"
+  },
+
   "region": "Uusimaa",
   "city": "Järvenpää",
   "phone": "+358 449723588",
@@ -13,7 +21,10 @@
 
   "site": {
     "baseUrl": "https://rs-expert.pages.dev",
-    "defaultDescription": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla.",
+    "defaultDescription": {
+      "fi": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla.",
+      "ru": "Электромонтаж, поиск неисправностей и электрощиты для дома и бизнеса в Уусимаа."
+    },
     "defaultOgImage": "/assets/uploads/og-cover.svg",
     "language": "fi"
   },
@@ -21,28 +32,64 @@
   "seo": {
     "pages": {
       "/index.html": {
-        "title": "RS-Expert Oy — Sähkötyöt Uusimaa",
-        "description": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla. Pyydä tarjous nopeasti."
+        "title": {
+          "fi": "RS-Expert Oy — Sähkötyöt Uusimaa",
+          "ru": "RS-Expert Oy — Электромонтаж Уусимаа"
+        },
+        "description": {
+          "fi": "Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla. Pyydä tarjous nopeasti.",
+          "ru": "Электромонтаж, поиск неисправностей и электрощиты для дома и бизнеса в Уусимаа. Быстрый расчёт стоимости."
+        }
       },
       "/services.html": {
-        "title": "Palvelut — RS-Expert Oy",
-        "description": "Sähköasennukset, vianhaku, valaistusratkaisut, sähkökeskukset ja remonttikohteet Uudellamaalla."
+        "title": {
+          "fi": "Palvelut — RS-Expert Oy",
+          "ru": "Услуги — RS-Expert Oy"
+        },
+        "description": {
+          "fi": "Sähköasennukset, vianhaku, valaistusratkaisut, sähkökeskukset ja remonttikohteet Uudellamaalla.",
+          "ru": "Электромонтаж, поиск неисправностей, освещение, электрощиты и работы при ремонте в Уусимаа."
+        }
       },
       "/gallery.html": {
-        "title": "Galleria — RS-Expert Oy",
-        "description": "Työnäytteitä ja toteutuksia: asennukset, valaistus ja keskukset."
+        "title": {
+          "fi": "Galleria — RS-Expert Oy",
+          "ru": "Галерея — RS-Expert Oy"
+        },
+        "description": {
+          "fi": "Työnäytteitä ja toteutuksia: asennukset, valaistus ja keskukset.",
+          "ru": "Примеры работ: монтаж, освещение и электрощиты."
+        }
       },
       "/documents.html": {
-        "title": "Dokumentit — RS-Expert Oy",
-        "description": "PDF-dokumentit: yleiset ehdot ja turvallisuusohjeet."
+        "title": {
+          "fi": "Dokumentit — RS-Expert Oy",
+          "ru": "Документы — RS-Expert Oy"
+        },
+        "description": {
+          "fi": "PDF-dokumentit: yleiset ehdot ja turvallisuusohjeet.",
+          "ru": "PDF: условия и инструкции по безопасности."
+        }
       },
       "/tarjouspyynto.html": {
-        "title": "Tarjouspyyntö — RS-Expert Oy",
-        "description": "Lähetä tarjouspyyntö. Kerro kohde ja toiveet — palaamme nopeasti."
+        "title": {
+          "fi": "Tarjouspyyntö — RS-Expert Oy",
+          "ru": "Заявка на расчёт — RS-Expert Oy"
+        },
+        "description": {
+          "fi": "Lähetä tarjouspyyntö. Kerro kohde ja toiveet — palaamme nopeasti.",
+          "ru": "Отправьте заявку. Опишите объект и пожелания — быстро ответим."
+        }
       },
       "/contact.html": {
-        "title": "Yhteystiedot — RS-Expert Oy",
-        "description": "Ota yhteyttä: puhelin, sähköposti ja tarjouspyyntö."
+        "title": {
+          "fi": "Yhteystiedot — RS-Expert Oy",
+          "ru": "Контакты — RS-Expert Oy"
+        },
+        "description": {
+          "fi": "Ota yhteyttä: puhelin, sähköposti ja tarjouspyyntö.",
+          "ru": "Связаться: телефон, email и заявка."
+        }
       }
     }
   },
@@ -59,54 +106,185 @@
   },
 
   "menu": [
-    { "label": "Etusivu", "href": "/index.html", "order": 1, "enabled": true },
-    { "label": "Palvelut", "href": "/services.html", "order": 2, "enabled": true },
-    { "label": "Galleria", "href": "/gallery.html", "order": 3, "enabled": true },
-    { "label": "Dokumentit", "href": "/documents.html", "order": 4, "enabled": true },
-    { "label": "Tarjouspyyntö", "href": "/tarjouspyynto.html", "order": 5, "enabled": true },
-    { "label": "Yhteys", "href": "/contact.html", "order": 6, "enabled": true }
+    { "label": { "fi": "Etusivu", "ru": "Главная" }, "href": "/index.html", "order": 1, "enabled": true },
+    { "label": { "fi": "Palvelut", "ru": "Услуги" }, "href": "/services.html", "order": 2, "enabled": true },
+    { "label": { "fi": "Galleria", "ru": "Галерея" }, "href": "/gallery.html", "order": 3, "enabled": true },
+    { "label": { "fi": "Dokumentit", "ru": "Документы" }, "href": "/documents.html", "order": 4, "enabled": true },
+    { "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" }, "href": "/tarjouspyynto.html", "order": 5, "enabled": true },
+    { "label": { "fi": "Yhteys", "ru": "Контакты" }, "href": "/contact.html", "order": 6, "enabled": true }
   ],
 
   "hero": {
-    "title": "Sähkötyöt nopeasti ja siististi",
-    "subtitle": "Asennukset, vianhaku ja keskukset koteihin ja yrityksiin Uudellamaalla.",
-    "badges": ["⚡ Sähkötyöt", "️ Turvallisesti", " Uusimaa"]
+    "title": {
+      "fi": "Sähkötyöt nopeasti ja siististi",
+      "ru": "Электромонтаж быстро и аккуратно"
+    },
+    "subtitle": {
+      "fi": "Asennukset, vianhaku ja keskukset koteihin ja yrityksiin Uudellamaalla.",
+      "ru": "Монтаж, поиск неисправностей и электрощиты для дома и бизнеса в Уусимаа."
+    },
+    "badges": [
+      { "fi": "⚡ Sähkötyöt", "ru": "⚡ Электромонтаж" },
+      { "fi": "✅ Turvallisesti", "ru": "✅ Безопасно" },
+      { "fi": "📍 Uusimaa", "ru": "📍 Уусимаа" }
+    ]
   },
 
   "highlights": [
-    { "title": "Selkeä sopimus", "text": "Aikataulu ja työn sisältö sovitaan etukäteen.", "icon": "✅" },
-    { "title": "Nopea reagointi", "text": "Usein aika järjestyy nopeasti.", "icon": "⚡" },
-    { "title": "Siisti lopputulos", "text": "Työmaa jää siistiksi ja lopputulos on huolellinen.", "icon": "✨" }
+    {
+      "title": { "fi": "Selkeä sopimus", "ru": "Понятные условия" },
+      "text": { "fi": "Aikataulu ja työn sisältö sovitaan etukäteen.", "ru": "Сроки и объём работ согласуем заранее." },
+      "icon": "✅"
+    },
+    {
+      "title": { "fi": "Nopea reagointi", "ru": "Быстрый отклик" },
+      "text": { "fi": "Usein aika järjestyy nopeasti.", "ru": "Часто можем приехать быстро." },
+      "icon": "⚡"
+    },
+    {
+      "title": { "fi": "Siisti lopputulos", "ru": "Аккуратный результат" },
+      "text": { "fi": "Työmaa jää siistiksi ja lopputulos on huolellinen.", "ru": "Оставляем порядок и делаем качественно." },
+      "icon": "✨"
+    }
   ],
 
   "services": [
-    { "title": "Sähköasennukset", "text": "Pistorasiat, valaistus, keittiöt ja remonttikohteet määräysten mukaisesti.", "icon": "⚡", "tag": "Asennus", "order": 1, "enabled": true },
-    { "title": "Vianhaku ja korjaukset", "text": "Sähkövikojen paikannus ja korjaus: sulakkeet, ryhmät, laitteet ja johdotukset.", "icon": "", "tag": "Vianhaku", "order": 2, "enabled": true },
-    { "title": "Valaistusratkaisut", "text": "LED, liiketunnistimet, ulkovalot — energiatehokas ja tyylikäs toteutus.", "icon": "", "tag": "Valaistus", "order": 3, "enabled": true },
-    { "title": "Sähkökeskukset", "text": "Keskusten vaihto ja päivitys nykymääräysten mukaisiksi.", "icon": "", "tag": "Keskukset", "order": 4, "enabled": true },
-    { "title": "Remonttikohteet", "text": "Sähkötyöt saneerauksissa ja remontissa — yhteistyö urakoitsijoiden kanssa sujuvasti.", "icon": "", "tag": "Remontti", "order": 5, "enabled": true },
-    { "title": "Yrityssähkötyöt", "text": "Liiketilojen asennukset, muutostyöt ja huollot yrityksille.", "icon": "", "tag": "Yritys", "order": 6, "enabled": true }
+    {
+      "title": { "fi": "Sähköasennukset", "ru": "Электромонтаж" },
+      "text": { "fi": "Pistorasiat, valaistus, keittiöt ja remonttikohteet määräysten mukaisesti.", "ru": "Розетки, освещение, кухня и электрика при ремонте — по нормам." },
+      "icon": "⚡",
+      "tag": { "fi": "Asennus", "ru": "Монтаж" },
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Vianhaku ja korjaukset", "ru": "Поиск неисправностей" },
+      "text": { "fi": "Sähkövikojen paikannus ja korjaus: sulakkeet, ryhmät, laitteet ja johdotukset.", "ru": "Диагностика и ремонт: автоматы, группы, устройства и проводка." },
+      "icon": "🧰",
+      "tag": { "fi": "Vianhaku", "ru": "Диагностика" },
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Valaistusratkaisut", "ru": "Освещение" },
+      "text": { "fi": "LED, liiketunnistimet, ulkovalot — energiatehokas ja tyylikäs toteutus.", "ru": "LED, датчики движения, уличный свет — экономично и красиво." },
+      "icon": "💡",
+      "tag": { "fi": "Valaistus", "ru": "Свет" },
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Sähkökeskukset", "ru": "Электрощиты" },
+      "text": { "fi": "Keskusten vaihto ja päivitys nykymääräysten mukaisiksi.", "ru": "Замена и модернизация щитов по современным требованиям." },
+      "icon": "🧩",
+      "tag": { "fi": "Keskukset", "ru": "Щиты" },
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Remonttikohteet", "ru": "Работы при ремонте" },
+      "text": { "fi": "Sähkötyöt saneerauksissa ja remontissa — yhteistyö urakoitsijoiden kanssa sujuvasti.", "ru": "Электрика в ремонте/санации — удобно работаем с подрядчиками." },
+      "icon": "🏠",
+      "tag": { "fi": "Remontti", "ru": "Ремонт" },
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Yrityssähkötyöt", "ru": "Для бизнеса" },
+      "text": { "fi": "Liiketilojen asennukset, muutostyöt ja huollot yrityksille.", "ru": "Монтаж, изменения и обслуживание электрики в коммерческих помещениях." },
+      "icon": "🏢",
+      "tag": { "fi": "Yritys", "ru": "Бизнес" },
+      "order": 6,
+      "enabled": true
+    }
   ],
 
   "gallery": [
-    { "title": "Keittiön lisäpistorasiat", "city": "Järvenpää", "type": "Asennus", "image": "/assets/uploads/example-1.jpg", "text": "Siisti toteutus ja selkeä ryhmittely.", "order": 1, "enabled": true },
-    { "title": "Ulkovalaistus + tunnistin", "city": "Kerava", "type": "Valaistus", "image": "/assets/uploads/example-2.jpg", "text": "Energiatehokas LED + liiketunnistin.", "order": 2, "enabled": true },
-    { "title": "Sähkökeskuksen päivitys", "city": "Tuusula", "type": "Keskus", "image": "/assets/uploads/example-3.jpg", "text": "Vanha keskus uusittu ja merkinnät selkeästi.", "order": 3, "enabled": true }
+    {
+      "title": { "fi": "Keittiön lisäpistorasiat", "ru": "Доп. розетки на кухне" },
+      "city": "Järvenpää",
+      "type": { "fi": "Asennus", "ru": "Монтаж" },
+      "image": "/assets/uploads/example-1.jpg",
+      "text": { "fi": "Siisti toteutus ja selkeä ryhmittely.", "ru": "Аккуратно выполнено, понятная группировка." },
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Ulkovalaistus + tunnistin", "ru": "Уличный свет + датчик" },
+      "city": "Kerava",
+      "type": { "fi": "Valaistus", "ru": "Освещение" },
+      "image": "/assets/uploads/example-2.jpg",
+      "text": { "fi": "Energiatehokas LED + liiketunnistin.", "ru": "Энергоэффективный LED + датчик движения." },
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Sähkökeskuksen päivitys", "ru": "Модернизация щита" },
+      "city": "Tuusula",
+      "type": { "fi": "Keskus", "ru": "Щит" },
+      "image": "/assets/uploads/example-3.jpg",
+      "text": { "fi": "Vanha keskus uusittu ja merkinnät selkeästi.", "ru": "Щит обновлён, маркировка сделана понятно." },
+      "order": 3,
+      "enabled": true
+    }
   ],
 
   "documents": [
-    { "title": "Yleiset ehdot (PDF)", "category": "Ehdot", "url": "/assets/uploads/terms.pdf", "order": 1, "enabled": true },
-    { "title": "Turvallisuusohje (PDF)", "category": "Ohjeet", "url": "/assets/uploads/safety.pdf", "order": 2, "enabled": true }
+    {
+      "title": { "fi": "Yleiset ehdot (PDF)", "ru": "Общие условия (PDF)" },
+      "category": { "fi": "Ehdot", "ru": "Условия" },
+      "url": "/assets/uploads/terms.pdf",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Turvallisuusohje (PDF)", "ru": "Инструкция по безопасности (PDF)" },
+      "category": { "fi": "Ohjeet", "ru": "Инструкции" },
+      "url": "/assets/uploads/safety.pdf",
+      "order": 2,
+      "enabled": true
+    }
   ],
 
   "reviews": [
-    { "title": "Nopea ja siisti työ", "city": "Järvenpää", "service": "Asennus", "stars": 5, "text": "Työ sujui sovitusti ja jälki oli siisti.\nSuosittelen.", "order": 1, "enabled": true },
-    { "title": "Vika löytyi nopeasti", "city": "Kerava", "service": "Vianhaku", "stars": 5, "text": "Selkeä kommunikointi ja nopea korjaus.", "order": 2, "enabled": true }
+    {
+      "title": { "fi": "Nopea ja siisti työ", "ru": "Быстро и аккуратно" },
+      "city": "Järvenpää",
+      "service": { "fi": "Asennus", "ru": "Монтаж" },
+      "stars": 5,
+      "text": { "fi": "Työ sujui sovitusti ja jälki oli siisti.\nSuosittelen.", "ru": "Сделали как договорились, всё аккуратно.\nРекомендую." },
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "title": { "fi": "Vika löytyi nopeasti", "ru": "Неисправность нашли быстро" },
+      "city": "Kerava",
+      "service": { "fi": "Vianhaku", "ru": "Диагностика" },
+      "stars": 5,
+      "text": { "fi": "Selkeä kommunikointi ja nopea korjaus.", "ru": "Понятно объяснили и быстро исправили." },
+      "order": 2,
+      "enabled": true
+    }
   ],
 
   "faq": [
-    { "q": "Kuinka nopeasti pääsette paikalle?", "a": "Usein saamme ajan nopeasti. Kiireellisissä tapauksissa kannattaa soittaa heti.", "order": 1, "enabled": true },
-    { "q": "Teettekö sähkötyöt myös yrityksille?", "a": "Kyllä.\nTeemme asennuksia, muutostöitä ja huoltoja myös liiketiloihin.", "order": 2, "enabled": true },
-    { "q": "Voiko työn hinnan arvioida etukäteen?", "a": "Kyllä. Lähetä tarjouspyyntö, kerro kohde ja toiveet — palaamme arviolla.", "order": 3, "enabled": true }
+    {
+      "q": { "fi": "Kuinka nopeasti pääsette paikalle?", "ru": "Как быстро вы можете приехать?" },
+      "a": { "fi": "Usein saamme ajan nopeasti. Kiireellisissä tapauksissa kannattaa soittaa heti.", "ru": "Часто можем приехать быстро. В срочных случаях лучше сразу позвонить." },
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "q": { "fi": "Teettekö sähkötyöt myös yrityksille?", "ru": "Вы работаете с компаниями?" },
+      "a": { "fi": "Kyllä.\nTeemme asennuksia, muutostöitä ja huoltoja myös liiketiloihin.", "ru": "Да.\nДелаем монтаж, изменения и обслуживание также для коммерческих помещений." },
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "q": { "fi": "Voiko työn hinnan arvioida etukäteen?", "ru": "Можно ли оценить стоимость заранее?" },
+      "a": { "fi": "Kyllä. Lähetä tarjouspyyntö, kerro kohde ja toiveet — palaamme arviolla.", "ru": "Да. Отправьте заявку, опишите объект и пожелания — ответим с оценкой." },
+      "order": 3,
+      "enabled": true
+    }
   ]
 }
