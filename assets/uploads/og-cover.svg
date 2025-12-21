@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RS-Expert Oy — Sähkötyöt Uusimaa">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="0" x2="1120" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0F1A"/>
+      <stop offset="1" stop-color="#0A0E19"/>
+    </linearGradient>
+
+    <radialGradient id="glow1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(240 80) rotate(25) scale(520 320)">
+      <stop stop-color="#6AE4FF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#6AE4FF" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glow2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 90) rotate(160) scale(520 320)">
+      <stop stop-color="#8B5CFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8B5CFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="accent" x1="340" y1="0" x2="860" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6AE4FF"/>
+      <stop offset="1" stop-color="#8B5CFF"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- subtle grid -->
+  <g opacity="0.12">
+    <path d="M0 120H1200" stroke="white" stroke-opacity="0.18"/>
+    <path d="M0 240H1200" stroke="white" stroke-opacity="0.12"/>
+    <path d="M0 360H1200" stroke="white" stroke-opacity="0.10"/>
+    <path d="M0 480H1200" stroke="white" stroke-opacity="0.08"/>
+    <path d="M150 0V630" stroke="white" stroke-opacity="0.08"/>
+    <path d="M300 0V630" stroke="white" stroke-opacity="0.06"/>
+    <path d="M450 0V630" stroke="white" stroke-opacity="0.05"/>
+    <path d="M600 0V630" stroke="white" stroke-opacity="0.05"/>
+    <path d="M750 0V630" stroke="white" stroke-opacity="0.05"/>
+    <path d="M900 0V630" stroke="white" stroke-opacity="0.06"/>
+    <path d="M1050 0V630" stroke="white" stroke-opacity="0.08"/>
+  </g>
+
+  <!-- card -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="92" width="1020" height="446" rx="28" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)"/>
+  </g>
+
+  <!-- accent line -->
+  <rect x="130" y="140" width="420" height="8" rx="4" fill="url(#accent)" opacity="0.95"/>
+
+  <!-- icon circle -->
+  <g>
+    <circle cx="1010" cy="160" r="52" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)"/>
+    <path d="M1006 126c-10 16-18 28-18 40 0 12 10 22 22 22 14 0 26-12 26-28 0-10-6-20-16-34-3-4-7-4-14 0z" fill="url(#accent)"/>
+    <path d="M972 210h76" stroke="rgba(255,255,255,0.26)" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- text -->
+  <g font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" fill="#FFFFFF">
+    <text x="130" y="220" font-size="54" font-weight="800" letter-spacing="-0.02em">RS-Expert Oy</text>
+    <text x="130" y="270" font-size="26" font-weight="500" fill="rgba(255,255,255,0.78)">
+      Sähköasennukset • vianhaku • sähkökeskukset
+    </text>
+
+    <g>
+      <rect x="130" y="318" width="160" height="44" rx="22" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)"/>
+      <text x="152" y="348" font-size="18" font-weight="650" fill="rgba(255,255,255,0.86)">⚡ Sähkötyöt</text>
+
+      <rect x="300" y="318" width="176" height="44" rx="22" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)"/>
+      <text x="322" y="348" font-size="18" font-weight="650" fill="rgba(255,255,255,0.86)">✅ Turvallisesti</text>
+
+      <rect x="486" y="318" width="140" height="44" rx="22" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)"/>
+      <text x="508" y="348" font-size="18" font-weight="650" fill="rgba(255,255,255,0.86)">📍 Uusimaa</text>
+    </g>
+
+    <text x="130" y="420" font-size="20" font-weight="500" fill="rgba(255,255,255,0.72)">
+      Pyydä tarjous: rs-expert.pages.dev/tarjouspyynto
+    </text>
+
+    <text x="130" y="466" font-size="18" font-weight="500" fill="rgba(255,255,255,0.62)">
+      Nopea reagointi • Siisti lopputulos • Selkeä sopimus
+    </text>
+  </g>
+
+  <!-- decorative blobs -->
+  <g opacity="0.55" filter="url(#soft)">
+    <circle cx="220" cy="520" r="90" fill="#6AE4FF"/>
+    <circle cx="970" cy="520" r="90" fill="#8B5CFF"/>
+  </g>
+</svg>
