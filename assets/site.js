@@ -133,12 +133,24 @@
     }
   }
 
+  async function loadInstagramFeed() {
+    try {
+      const res = await fetch("/data/instagram.json", { cache: "no-cache" });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
   const UI = {
     fi: {
       call: "Soita",
       email: "Email",
       instagram: "Instagram",
       instagramCTA: "Katso Instagram",
+      instagramPreviewTitle: "Uusimmat kuvat Instagramissa",
+      instagramPreviewLead: "Työnäytteet ja toteutukset — seuraa uusimmat kohteet.",
       requestQuote: "Pyydä tarjous",
       services: "Palvelut",
       works: "Työnäytteet",
@@ -153,7 +165,7 @@
       documents: "Dokumentit",
       docsLead: "PDF-dokumentit ja ohjeet.",
       galleryLead: "Työnäytteitä ja toteutuksia.",
-      referencesLead: "Päivittyy — lisäämme kohteita ja projekteja pian.",
+      referencesLead: "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
       quoteTitle: "Tarjouspyyntö",
       quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
       phoneLabel: "Puhelin",
@@ -173,6 +185,8 @@
       email: "Email",
       instagram: "Instagram",
       instagramCTA: "Смотреть Instagram",
+      instagramPreviewTitle: "Свежие фото из Instagram",
+      instagramPreviewLead: "Примеры работ и объекты — новые фото появляются там.",
       requestQuote: "Заявка",
       services: "Услуги",
       works: "Примеры работ",
@@ -187,7 +201,7 @@
       documents: "Документы",
       docsLead: "PDF-документы и инструкции.",
       galleryLead: "Примеры выполненных работ.",
-      referencesLead: "Страница будет пополняться — скоро добавим проекты.",
+      referencesLead: "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
       quoteTitle: "Заявка на расчёт",
       quoteLead: "Опишите объект и пожелания — быстро ответим.",
       phoneLabel: "Телефон",
@@ -430,7 +444,62 @@
     `;
   }
 
-  function renderHome(data, lang) {
+  function renderInstagramPreviewBlock(data, lang, igFeed) {
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    if (!ig) return "";
+
+    const maxItems = Number(data?.instagram?.maxItems || 9);
+    const items = (igFeed?.items || []).slice(0, maxItems);
+
+    if (!items.length) {
+      // fallback if feed not ready yet
+      return `
+        <section class="section">
+          <div class="igpreview__head">
+            <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
+            <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+          </div>
+          <a class="igcard" href="${escapeHtml(ig)}" target="_blank" rel="noopener">
+            <div class="igcard__title">📸 ${escapeHtml(ui(lang, "instagram"))}</div>
+            <div class="igcard__sub">${escapeHtml(lang === "ru" ? "Открыть профиль и смотреть фото" : "Avaa profiili ja katso kuvat")}</div>
+          </a>
+        </section>
+      `;
+    }
+
+    const grid = items
+      .map((it) => {
+        const url = escapeHtml(it.url || ig);
+        const img = escapeHtml(it.image || "");
+        const alt = escapeHtml(it.alt || "Instagram");
+        return `
+          <a class="igthumb" href="${url}" target="_blank" rel="noopener">
+            <img class="igthumb__img" src="${img}" alt="${alt}" loading="lazy">
+          </a>
+        `;
+      })
+      .join("");
+
+    return `
+      <section class="section">
+        <div class="igpreview__head">
+          <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
+          <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+        </div>
+
+        <div class="iggrid">
+          ${grid}
+        </div>
+
+        <div class="section__more">
+          <a class="link" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
     if (!el) return;
 
@@ -516,6 +585,8 @@
       ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
       : "";
 
+    const igPreview = renderInstagramPreviewBlock(data, lang, igFeed);
+
     el.innerHTML = `
       <section class="hero">
         <h1 class="hero__title">${escapeHtml(t(hero.title, lang))}</h1>
@@ -543,6 +614,8 @@
           <a class="link" href="${escapeHtml(withLang("/gallery.html", lang))}">${escapeHtml(ui(lang, "seeGallery"))}</a>
         </div>
       </section>
+
+      ${igPreview}
 
       <section class="section">
         <h2>${escapeHtml(ui(lang, "reviews"))}</h2>
@@ -627,16 +700,26 @@
     `;
   }
 
-  function renderReferencesPage(_data, lang) {
+  function renderReferencesPage(data, lang) {
     const el = $("#page-referenssit");
     if (!el) return;
+
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+
+    const igCta = ig
+      ? `<div class="mt">
+           <a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
+         </div>`
+      : "";
 
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "references"))}</h1>
         <p class="lead">${escapeHtml(ui(lang, "referencesLead"))}</p>
         <div class="card card--pad">
-          <p style="margin:0;">${escapeHtml(lang === "ru" ? "Пока пусто." : "Toistaiseksi tyhjä.")}</p>
+          <p style="margin:0;">${escapeHtml(ui(lang, "referencesLead"))}</p>
+          ${igCta}
         </div>
       </section>
     `;
@@ -705,7 +788,7 @@
     `;
   }
 
-  function renderContactPage(data, lang) {
+  function renderContactPage(data, lang, igFeed) {
     const el = $("#page-contact");
     if (!el) return;
 
@@ -728,6 +811,8 @@
            </a>
          </div>`
       : "";
+
+    const igMini = ig ? renderInstagramPreviewBlock(data, lang, igFeed) : "";
 
     const billingHtml = `
       <div class="card card--pad">
@@ -773,6 +858,8 @@
 
         <div class="mt"></div>
         ${billingHtml}
+
+        ${igMini}
       </section>
     `;
   }
@@ -828,14 +915,16 @@
   bindLanguageSwitcher(data);
   bindCopyButtons(lang);
 
+  const igFeed = await loadInstagramFeed();
+
   renderHeader(data, lang);
   renderFooter(data, lang);
 
-  renderHome(data, lang);
+  renderHome(data, lang, igFeed);
   renderServicesPage(data, lang);
   renderGalleryPage(data, lang);
   renderReferencesPage(data, lang);
   renderDocumentsPage(data, lang);
   renderTarjousPage(data, lang);
-  renderContactPage(data, lang);
+  renderContactPage(data, lang, igFeed);
 })();
