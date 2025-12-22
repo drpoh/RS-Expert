@@ -1,4 +1,3 @@
-
 (async function () {
   const $ = (sel) => document.querySelector(sel);
 
@@ -44,7 +43,9 @@
   }
 
   function setHreflangAlternates(urlFi, urlRu) {
-    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((n) => n.remove());
+    document
+      .querySelectorAll('link[rel="alternate"][hreflang]')
+      .forEach((n) => n.remove());
 
     function add(hreflang, href) {
       const l = document.createElement("link");
@@ -162,7 +163,7 @@
       instagramPreviewLead: "Työnäytteet ja toteutukset — seuraa uusimmat kohteet.",
       requestQuote: "Pyydä tarjous",
       services: "Palvelut",
-      works: "Työnäytteet", // (не используется на главной)
+      works: "Työnäytteet",
       gallery: "Galleria",
       references: "Referenssit",
       showAll: "Näytä kaikki →",
@@ -457,8 +458,7 @@
       line2Parts.push(
         `${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`
       );
-    if (y)
-      line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
+    if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
 
     footer.innerHTML = `
       <div class="footer__inner">
@@ -467,13 +467,9 @@
         )}</div>
 
         <div class="footer__meta">
-          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
-      data.phone || ""
-    )}</a>
+          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
           <span class="dot">•</span>
-          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(
-      data.email || ""
-    )}</a>
+          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
           ${igHtml}
         </div>
 
@@ -485,9 +481,7 @@
             : ``
         }
 
-        <div class="footer__copy">© ${escapeHtml(
-          data.companyName || "RS-Expert Oy"
-        )}</div>
+        <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
       </div>
     `;
   }
@@ -583,7 +577,6 @@
     `;
   }
 
-  // Home: Työnäytteet already removed earlier; keep everything else
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
     if (!el) return;
@@ -665,9 +658,7 @@
           <a class="btn btn--primary" href="${escapeHtml(
             withLang("/tarjouspyynto.html", lang)
           )}">${escapeHtml(ui(lang, "requestQuote"))}</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
-      ui(lang, "call")
-    )}</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
       </section>
@@ -676,9 +667,7 @@
         <h2>${escapeHtml(ui(lang, "services"))}</h2>
         <div class="grid grid--services">${servicesHtml}</div>
         <div class="section__more">
-          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(
-      ui(lang, "showAll")
-    )}</a>
+          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
         </div>
       </section>
 
@@ -696,9 +685,7 @@
           <a class="btn btn--primary" href="${escapeHtml(
             withLang("/tarjouspyynto.html", lang)
           )}">${escapeHtml(ui(lang, "requestQuote"))}</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
-      ui(lang, "call")
-    )}</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
       </section>
@@ -710,6 +697,7 @@
     `;
   }
 
+  // ✅ UPDATED: add internal linking block
   function renderServicesPage(data, lang) {
     const el = $("#page-services");
     if (!el) return;
@@ -731,16 +719,29 @@
       })
       .join("");
 
+    const internalLinks = `
+      <div class="card card--pad mt">
+        <p class="lead" style="margin:0;">
+          ${
+            lang === "ru"
+              ? `Посмотрите <a href="${escapeHtml(withLang("/gallery.html", lang))}">примеры наших работ</a> или <a href="${escapeHtml(withLang("/contact.html", lang))}">свяжитесь с нами</a> для расчёта стоимости.`
+              : `Katso <a href="${escapeHtml(withLang("/gallery.html", lang))}">työnäytteet</a> tai <a href="${escapeHtml(withLang("/contact.html", lang))}">ota yhteyttä</a> ja pyydä tarjous.`
+          }
+        </p>
+      </div>
+    `;
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "services"))}</h1>
         <p class="lead">${escapeHtml(t(data.tagline, lang))}</p>
         <div class="grid grid--services">${servicesHtml}</div>
+        ${internalLinks}
       </section>
     `;
   }
 
-  // ✅ Gallery: uploads FIRST, then Instagram
+  // ✅ UPDATED: add internal linking block
   function renderGalleryPage(data, lang, igFeed, uploads) {
     const el = $("#page-gallery");
     if (!el) return;
@@ -762,6 +763,20 @@
 
     const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
 
+    const internalLinks = `
+      <section class="section">
+        <div class="card card--pad">
+          <p class="lead" style="margin:0;">
+            ${
+              lang === "ru"
+                ? `Нужны похожие работы? Посмотрите <a href="${escapeHtml(withLang("/services.html", lang))}">наши услуги</a> или <a href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">оставьте заявку</a>.`
+                : `Tarvitsetko vastaavaa toteutusta? Katso <a href="${escapeHtml(withLang("/services.html", lang))}">palvelut</a> tai <a href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">lähetä tarjouspyyntö</a>.`
+            }
+          </p>
+        </div>
+      </section>
+    `;
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
@@ -777,6 +792,7 @@
       }
 
       ${igBlock}
+      ${internalLinks}
     `;
   }
 
@@ -874,6 +890,7 @@
     `;
   }
 
+  // ✅ UPDATED: add internal linking block
   function renderContactPage(data, lang, igFeed) {
     const el = $("#page-contact");
     if (!el) return;
@@ -901,6 +918,18 @@
       : "";
 
     const igMini = ig ? renderInstagramPreviewBlock(data, lang, igFeed) : "";
+
+    const internalLinks = `
+      <div class="card card--pad mt">
+        <p class="lead" style="margin:0;">
+          ${
+            lang === "ru"
+              ? `Посмотрите наши <a href="${escapeHtml(withLang("/services.html", lang))}">услуги электрика</a> и <a href="${escapeHtml(withLang("/gallery.html", lang))}">примеры работ</a> — затем оставьте заявку.`
+              : `Tutustu <a href="${escapeHtml(withLang("/services.html", lang))}">palveluihin</a> ja <a href="${escapeHtml(withLang("/gallery.html", lang))}">työnäytteisiin</a> — ja pyydä tarjous.`
+          }
+        </p>
+      </div>
+    `;
 
     const billingHtml = `
       <div class="card card--pad">
@@ -938,6 +967,8 @@
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
+
+        ${internalLinks}
 
         ${igHtml}
 
@@ -1024,14 +1055,14 @@
   bindCopyButtons(lang);
 
   const igFeed = await loadInstagramFeed();
-  const uploads = await loadUploads(); // ✅ NEW
+  const uploads = await loadUploads();
 
   renderHeader(data, lang);
   renderFooter(data, lang);
 
   renderHome(data, lang, igFeed);
   renderServicesPage(data, lang);
-  renderGalleryPage(data, lang, igFeed, uploads); // ✅ CHANGED
+  renderGalleryPage(data, lang, igFeed, uploads);
   renderReferencesPage(data, lang);
   renderDocumentsPage(data, lang);
   renderTarjousPage(data, lang);
