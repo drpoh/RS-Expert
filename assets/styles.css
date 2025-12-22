@@ -557,6 +557,11 @@ p { margin: 0 0 12px; color: var(--muted); }
 .table { width: 100%; border-collapse: collapse; }
 .table th, .table td { padding: 10px; text-align: left; border: 1px solid var(--border-light); }
 .table thead { background: rgba(255,255,255,0.05); }
+.mono { font-family: monospace; }
+.stack > div { margin-bottom: 12px; }
+.mt { margin-top: 12px; }
+.list { list-style: disc; padding-left: 20px; }
+.list li { margin-bottom: 8px; }
 
 /* ========== background extras ========== */
 body::after {
