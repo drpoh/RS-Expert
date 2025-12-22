@@ -4,12 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Base SEO (будет переопределено site.js из data/site.json) -->
-  <title>RS-Expert Oy — Sähköasentaja Järvenpää | Sähkötyöt Uusimaa</title>
-  <meta
-    name="description"
-    content="Sähköasentaja Järvenpää: sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla."
-  />
+  <!-- Тема для адресной строки браузера -->
+  <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)" />
+  <meta name="msapplication-TileColor" content="#0b0f1a" />
+
+  <!-- SEO (будет переопределено site.js из data/site.json) -->
+  <title>RS-Expert Oy — Sähköasentaja Uusimaa | Sähkötyöt Järvenpää</title>
+  <meta name="description" content="Sähköasentaja Uudellamaalla: sähköasennukset, vianhaku, sähkökeskukset, valaistus ja ryhmäjohtosuojaukset koteihin ja yrityksiin. Toiminta-alue: Järvenpää, Kerava, Tuusula ja koko Uusimaa." />
   <meta name="robots" content="index,follow" />
 
   <!-- Canonical -->
@@ -18,35 +20,43 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="RS-Expert Oy" />
-  <meta property="og:title" content="RS-Expert Oy — Sähköasentaja Järvenpää" />
-  <meta
-    property="og:description"
-    content="Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla."
-  />
-  <meta
-    property="og:image"
-    content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg"
-  />
+  <meta property="og:title" content="RS-Expert Oy — Sähköasentaja Uusimaa" />
+  <meta property="og:description" content="Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla. Ammattitaitoinen sähköasentaja Järvenpäästä." />
+  <meta property="og:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:url" content="https://www.rs-expert.fi/" />
 
-  <!-- Twitter -->
+  <!-- Twitter Cards -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta
-    name="twitter:image"
-    content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg"
-  />
+  <meta name="twitter:title" content="RS-Expert Oy — Sähköasentaja Uusimaa" />
+  <meta name="twitter:description" content="Sähköasennukset ja sähkötyöt Uudellamaalla." />
+  <meta name="twitter:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg" />
 
   <!-- Icons -->
   <link rel="icon" href="/assets/uploads/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/uploads/apple-touch-icon.png" />
+
+  <!-- Preload критического JS -->
+  <link rel="preload" href="/assets/site.js" as="script" />
 
   <!-- LocalBusiness JSON-LD (заполняется site.js) -->
   <script id="ld-json" type="application/ld+json">{}</script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="/assets/styles.css" />
-</head>
 
+  <!-- Fallback для отключенного JavaScript -->
+  <noscript>
+    <style>
+      body { background: #0b0f1a; color: #fff; font-family: system-ui, sans-serif; text-align: center; padding: 100px 20px; }
+      h1 { margin-bottom: 20px; }
+      p { max-width: 600px; margin: 0 auto 20px; color: #ccc; }
+    </style>
+    <h1>JavaScript on pois käytöstä</h1>
+    <p>Sivusto vaatii JavaScriptin toimiakseen oikein. Ota se käyttöön selaimen asetuksista tai kokeile toista selainta.</p>
+  </noscript>
+</head>
 <body>
   <!-- HEADER (рендерится site.js) -->
   <header id="site-header"></header>
