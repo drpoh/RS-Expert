@@ -338,5 +338,70 @@
       "order": 2,
       "enabled": true
     }
-  ]
+  ],
+
+  "pricing": {
+    "effectiveFrom": "2026-01-01",
+    "vat": {
+      "rate": 0.255,
+      "labelFi": "ALV 25,5 %",
+      "labelRu": "НДС 25,5%"
+    },
+    "intro": {
+      "fi": [
+        "Hinnastossa esitetään hinnat sekä ALV 0 % että ALV 25,5 %.",
+        "Veloituskäytäntö: alkava tunti ja tarvikkeet veloitetaan menekin mukaan.",
+        "Yritysasiakkaiden hinnoittelu tapauskohtaisesti."
+      ],
+      "ru": [
+        "В прайсе указаны цены без НДС и с НДС 25,5%.",
+        "Правило расчёта: начатый час и материалы по фактическому расходу.",
+        "Для бизнес-клиентов цена рассчитывается индивидуально."
+      ]
+    },
+    "tables": [
+      {
+        "title": {
+          "fi": "Työ ja matkakulut",
+          "ru": "Работа и выезд"
+        },
+        "columns": {
+          "fi": ["Tuote", "Hinta (ALV 0 %)", "Hinta (ALV 25,5 %)"],
+          "ru": ["Услуга", "Цена (без НДС)", "Цена (с НДС 25,5%)"]
+        },
+        "rows": [
+          {
+            "name": { "fi": "Sähköasentajan tuntiveloitus", "ru": "Почасовая работа электрика" },
+            "price0": "60,00 € / h",
+            "priceVat": "75,30 € / h"
+          },
+          {
+            "name": { "fi": "Kahden asentajan työ (per asentaja)", "ru": "Два электрика (за одного)" },
+            "price0": "60,00 € / h",
+            "priceVat": "75,30 € / h"
+          },
+          {
+            "name": { "fi": "Kilometriveloitus", "ru": "Километраж" },
+            "price0": "0,99 € / km",
+            "priceVat": "1,24 € / km"
+          },
+          {
+            "name": { "fi": "Pientarvikelisä", "ru": "Доплата за мелкие расходники" },
+            "price0": "15,94 €",
+            "priceVat": "20,00 €"
+          }
+        ]
+      }
+    ],
+    "notes": {
+      "fi": [
+        "Pidätämme oikeuden hinnan muutoksiin.",
+        "Hinnat voimassa 1.1.2026 lähtien."
+      ],
+      "ru": [
+        "Оставляем за собой право изменять цены.",
+        "Цены действуют с 1.1.2026."
+      ]
+    }
+  }
 }
