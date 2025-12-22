@@ -43,7 +43,9 @@
   }
 
   function setHreflangAlternates(urlFi, urlRu) {
-    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((n) => n.remove());
+    document
+      .querySelectorAll('link[rel="alternate"][hreflang]')
+      .forEach((n) => n.remove());
 
     function add(hreflang, href) {
       const l = document.createElement("link");
@@ -191,7 +193,15 @@
       serviceAreaTitleFallback: "Palvelualue",
       serviceAreaNoteFallback: "Kysy myös muista kohteista Uudellamaalla.",
       // ✅ NEW
-      mapTitle: "SIJAINTIMME KARTALLA"
+      mapTitle: "SIJAINTIMME KARTALLA",
+
+      // ✅ NEW: Hinnasto UI
+      pricingTitle: "Hinnasto",
+      pricingLead: "Hinnat ALV 0 % ja ALV 25,5 %.",
+      pricingEffectiveFrom: "Voimassa alkaen",
+      pricingTableProduct: "Tuote",
+      pricingTableVat0: "Hinta (ALV 0 %)",
+      pricingTableVat: "Hinta (ALV 25,5 %)"
     },
     ru: {
       call: "Позвонить",
@@ -232,7 +242,15 @@
       serviceAreaTitleFallback: "Зона обслуживания",
       serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa.",
       // ✅ NEW
-      mapTitle: "МЫ НА КАРТЕ"
+      mapTitle: "МЫ НА КАРТЕ",
+
+      // ✅ NEW: Hinnasto UI
+      pricingTitle: "Цены",
+      pricingLead: "Цены без НДС и с НДС 25,5%.",
+      pricingEffectiveFrom: "Действует с",
+      pricingTableProduct: "Услуга",
+      pricingTableVat0: "Цена (без НДС)",
+      pricingTableVat: "Цена (с НДС 25,5%)"
     }
   };
 
@@ -876,6 +894,137 @@
     `;
   }
 
+  // ✅ NEW: Hinnasto page renderer (uses data.pricing)
+  function renderHinnastoPage(data, lang) {
+    const el = $("#page-hinnasto");
+    if (!el) return;
+
+    const p = data.pricing || null;
+    if (!p) {
+      el.innerHTML = `
+        <section class="section">
+          <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
+          <div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div>
+        </section>
+      `;
+      return;
+    }
+
+    const effective = p.effectiveFrom || "";
+    const lead =
+      t(p.lead, lang) ||
+      ui(lang, "pricingLead");
+
+    const introLines = (t(p.intro, lang) && Array.isArray(p.intro?.[lang]) ? p.intro[lang] : null) ||
+      (Array.isArray(p.intro?.fi) ? p.intro.fi : []);
+
+    const introHtml = (introLines || [])
+      .filter(Boolean)
+      .map((x) => `<li>${escapeHtml(String(x))}</li>`)
+      .join("");
+
+    const tables = Array.isArray(p.tables) ? p.tables : [];
+
+    const tablesHtml = tables
+      .map((tbl) => {
+        const title = escapeHtml(t(tbl.title, lang));
+        const cols =
+          tbl.columns?.[lang] ||
+          tbl.columns?.fi || [
+            ui(lang, "pricingTableProduct"),
+            ui(lang, "pricingTableVat0"),
+            ui(lang, "pricingTableVat")
+          ];
+
+        const colA = escapeHtml(cols[0] || ui(lang, "pricingTableProduct"));
+        const colB = escapeHtml(cols[1] || ui(lang, "pricingTableVat0"));
+        const colC = escapeHtml(cols[2] || ui(lang, "pricingTableVat"));
+
+        const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
+        const rowsHtml = rows
+          .map((r) => {
+            const name = escapeHtml(t(r.name, lang));
+            const p0 = escapeHtml(r.price0 || "");
+            const pv = escapeHtml(r.priceVat || "");
+            return `
+              <tr>
+                <td>${name}</td>
+                <td class="mono">${p0}</td>
+                <td class="mono">${pv}</td>
+              </tr>
+            `;
+          })
+          .join("");
+
+        return `
+          <section class="section">
+            <h2>${title}</h2>
+            <div class="card card--pad">
+              <div style="overflow:auto;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>${colA}</th>
+                      <th>${colB}</th>
+                      <th>${colC}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        `;
+      })
+      .join("");
+
+    const notesLines = (t(p.notes, lang) && Array.isArray(p.notes?.[lang]) ? p.notes[lang] : null) ||
+      (Array.isArray(p.notes?.fi) ? p.notes.fi : []);
+
+    const notesHtml = (notesLines || [])
+      .filter(Boolean)
+      .map((x) => `<li>${escapeHtml(String(x))}</li>`)
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
+        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
+
+        ${
+          effective
+            ? `<div class="card card--pad" style="margin-top:12px;">
+                 <strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong>
+                 <span class="mono">${escapeHtml(effective)}</span>
+               </div>`
+            : ""
+        }
+
+        ${
+          introHtml
+            ? `<div class="card card--pad" style="margin-top:12px;">
+                 <ul class="list">${introHtml}</ul>
+               </div>`
+            : ""
+        }
+      </section>
+
+      ${tablesHtml}
+
+      ${
+        notesHtml
+          ? `<section class="section">
+               <div class="card card--pad">
+                 <ul class="list">${notesHtml}</ul>
+               </div>
+             </section>`
+          : ""
+      }
+    `;
+  }
+
   // ✅ UPDATED: Contact page
   // - Removed Instagram/photo blocks from Yhteystiedot
   // - Added "SIJAINTIMME KARTALLA" + Google map at the end
@@ -926,7 +1075,7 @@
       </div>
     `;
 
-    // ✅ Google map embed (address: Siltakatu 73, 04400 Järvenpää)
+    // Google map embed (address: Siltakatu 73, 04400 Järvenpää)
     const mapQuery = encodeURIComponent("Siltakatu 73, 04400 Järvenpää, Finland");
     const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
 
@@ -1045,6 +1194,9 @@
   renderDocumentsPage(data, lang);
   renderTarjousPage(data, lang);
 
-  // ✅ updated call (igFeed no longer needed on contact)
+  // ✅ NEW
+  renderHinnastoPage(data, lang);
+
+  // updated call (igFeed no longer needed on contact)
   renderContactPage(data, lang, igFeed);
 })();
