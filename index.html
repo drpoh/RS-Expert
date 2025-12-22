@@ -4,45 +4,63 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SEO -->
+  <!-- Base SEO (будет переопределено site.js из data/site.json) -->
   <title>RS-Expert Oy — Sähköasentaja Järvenpää | Sähkötyöt Uusimaa</title>
-  <meta name="description" content="Sähköasentaja Järvenpää: sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla." />
+  <meta
+    name="description"
+    content="Sähköasentaja Järvenpää: sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla."
+  />
   <meta name="robots" content="index,follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://www.rs-expert.fi/" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="RS-Expert Oy" />
   <meta property="og:title" content="RS-Expert Oy — Sähköasentaja Järvenpää" />
-  <meta property="og:description" content="Sähkötyöt, vianhaku ja sähkökeskukset Järvenpäässä ja Uudellamaalla." />
+  <meta
+    property="og:description"
+    content="Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla."
+  />
+  <meta
+    property="og:image"
+    content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg"
+  />
   <meta property="og:url" content="https://www.rs-expert.fi/" />
-  <meta property="og:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg" />
-
-  <!-- Canonical -->
-  <link rel="canonical" href="https://www.rs-expert.fi/" />
+  <meta
+    name="twitter:image"
+    content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg"
+  />
 
   <!-- Icons -->
   <link rel="icon" href="/assets/uploads/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/uploads/apple-touch-icon.png" />
 
-  <!-- Schema placeholder (заполнит site.js) -->
+  <!-- LocalBusiness JSON-LD (заполняется site.js) -->
   <script id="ld-json" type="application/ld+json">{}</script>
 
+  <!-- Styles -->
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body>
 
+<body>
+  <!-- HEADER (рендерится site.js) -->
   <header id="site-header"></header>
 
+  <!-- MAIN -->
   <main class="container">
+    <!-- HOME PAGE CONTENT (рендерится site.js) -->
     <div id="page-home"></div>
   </main>
 
+  <!-- FOOTER (рендерится site.js) -->
   <footer id="site-footer"></footer>
 
+  <!-- Main script -->
   <script src="/assets/site.js" defer></script>
 </body>
 </html>
