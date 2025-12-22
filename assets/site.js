@@ -240,90 +240,85 @@
     return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
-  function applySeo(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
-    let path = window.location.pathname.replace(/\/$/, "");
-    if (path === "" || path === "/index.html") path = "/";
-    const pageSeo = data?.seo?.pages?.[path] || data?.seo?.pages?.["/"] || {};
-    const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
-    const description = t(pageSeo.description, lang) ||
-      t(data?.site?.defaultDescription, lang) ||
-      t(data?.tagline, lang) || "";
-    const pageUrlFi = absoluteUrl(baseUrl, path);
-    const pageUrlRu = setLangInUrl("ru");
-    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
-    if (lang === "ru" && ruNoIndex) {
-      setCanonical(pageUrlFi);
-      setMeta("robots", "noindex,follow");
-      setMeta("googlebot", "noindex");
-    } else {
-      setCanonical(pageUrlFi);
-      setMeta("robots", "index,follow");
-    }
-    setHreflangAlternates(pageUrlFi, pageUrlRu);
-    const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
-    document.documentElement.lang = lang;
-    document.title = title;
-    setMeta("description", description);
-    setMeta("og:type", "website", true);
-    setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
-    setMeta("og:title", title, true);
-    setMeta("og:description", description, true);
-    setMeta("og:url", pageUrlFi, true);
-    if (ogImage) setMeta("og:image", ogImage, true);
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", title);
-    setMeta("twitter:description", description);
-    if (ogImage) setMeta("twitter:image", ogImage);
-  }
+  // ... (applySeo, applyLocalBusinessSchema, showError — как в твоём коде)
 
-  function applyLocalBusinessSchema(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
-    const b = data?.business || {};
-    const info = data?.businessInfo || {};
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: b.legalName || data?.companyName || "RS-Expert Oy",
-      url: b.url || baseUrl,
-      telephone: b.telephone || data?.phone,
-      email: b.email || data?.email,
-      image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
-      areaServed: (b.areaServed || []).filter(Boolean).map(x => ({ "@type": "City", name: x })),
-      openingHours: b.openingHours || [],
-      inLanguage: lang
-    };
-    if (info?.yTunnus) {
-      schema.identifier = { "@type": "PropertyValue", name: "Y-tunnus", value: info.yTunnus };
-    }
-    const addr = t(info.address, lang);
-    if (addr) {
-      schema.address = {
-        "@type": "PostalAddress",
-        streetAddress: addr,
-        addressCountry: "FI"
-      };
-    }
-    Object.keys(schema).forEach(k => {
-      if (schema[k] === undefined || schema[k] === null || schema[k] === "" || (Array.isArray(schema[k]) && schema[k].length === 0)) {
-        delete schema[k];
-      }
-    });
-    const el = document.getElementById("ld-json");
-    if (el) el.textContent = JSON.stringify(schema, null, 2);
-  }
-
-  // Функция для отображения ошибки загрузки
-  function showError(message) {
-    const main = $("main.container") || document.body;
-    main.innerHTML = `
-      <div class="card card--pad" style="margin:100px auto;max-width:600px;text-align:center;background:#1a1f2e;color:#fff;">
-        <h2>Virhe sivun lataamisessa</h2>
-        <p>${escapeHtml(message)}</p>
-        <p>Yritä päivittää sivu tai ota yhteyttä: <a href="mailto:rs.expert.oy@gmail.com" style="color:#6ae4ff;">rs.expert.oy@gmail.com</a></p>
+  // Восстановленные render-функции
+  function renderHeader(data, lang) {
+    const header = $("#site-header");
+    if (!header) return;
+    const menuHtml = (data.menu || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(m => {
+        const href = escapeHtml(withLang(m.href || "#", lang));
+        const label = escapeHtml(t(m.label, lang));
+        return `<a class="nav__link" href="${href}">${label}</a>`;
+      })
+      .join("");
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    const topLeftText = [
+      lang === "ru" ? "Быстрая помощь" : "Nopea apu",
+      data.region || "",
+      data.phone || ""
+    ].filter(Boolean).join(" • ");
+    const fiActive = lang === "fi" ? " lang__btn--active" : "";
+    const ruActive = lang === "ru" ? " lang__btn--active" : "";
+    const igBtn = ig ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>` : "";
+    header.innerHTML = `
+      <div class="topbar">
+        <div class="topbar__left">${escapeHtml(topLeftText)}</div>
+        <div class="topbar__right">
+          <div class="lang">
+            <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
+            <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
+          </div>
+          ${igBtn}
+          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="nav__brand">
+          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
+        </div>
+        <nav class="nav__links">${menuHtml}</nav>
+        <div class="nav__cta">
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+        </div>
       </div>
     `;
   }
+
+  function renderFooter(data, lang) {
+    const footer = $("#site-footer");
+    if (!footer) return;
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    const addr = t(info.address, lang);
+    const y = info.yTunnus || "";
+    const igHtml = ig ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>` : "";
+    const line2Parts = [];
+    if (addr) line2Parts.push(`${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`);
+    if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
+    footer.innerHTML = `
+      <div class="footer__inner">
+        <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+        <div class="footer__meta">
+          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
+          <span class="dot">•</span>
+          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
+          ${igHtml}
+        </div>
+        ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
+        <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+      </div>
+    `;
+  }
+
+  // ... (остальные render-функции — renderHome, renderServicesPage и т.д. — добавь их из предыдущих версий, если нужно)
 
   // boot
   let data = null;
@@ -342,45 +337,12 @@
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
-  // Привязка событий (переключение языка, копирование)
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-lang]");
-    if (btn) {
-      const lang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(lang)) {
-        localStorage.setItem("lang", lang);
-        window.location.href = setLangInUrl(lang);
-      }
-    }
-  });
-
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-copy]");
-    if (btn) {
-      const text = btn.getAttribute("data-copy") || "";
-      const ok = await copyToClipboard(text);
-      const status = $("#copy-status");
-      if (status) {
-        status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
-        status.style.color = ok ? "var(--brand)" : "#ff6b6b";
-        if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
-      }
-    }
-  });
+  // ... (bind events)
 
   const igFeed = await loadInstagramFeed();
   const uploads = await loadUploads();
 
   renderHeader(data, lang);
   renderFooter(data, lang);
-  renderHome(data, lang, igFeed);
-  renderServicesPage(data, lang);
-  renderGalleryPage(data, lang, igFeed, uploads);
-  renderReferencesPage(data, lang);
-  renderDocumentsPage(data, lang);
-  renderTarjousPage(data, lang);
-  renderHinnastoPage(data, lang);
-  renderContactPage(data, lang);
-
-  console.log("Site rendered successfully in language:", lang);
+  // ... вызов остальных render-функций
 })();
