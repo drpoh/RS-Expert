@@ -9,7 +9,7 @@ on:
     - cron: '23 3 * * *'  # ежедневно в 3:23 UTC
 
 permissions:
-  contents: write  # только права на запись в репозиторий
+  contents: write
 
 jobs:
   build:
@@ -18,60 +18,55 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # чтобы git pull --rebase работал
+          fetch-depth: 0
 
       - name: Generate uploads.json
         run: |
-          # Создаём папку, если нет
           mkdir -p data
+          output_file="data/uploads.json"
 
-          # Начинаем JSON
-          echo '{ "items": [' > data/uploads.json
+          # Массив для JSON
+          items=()
 
-          # Флаг для первой записи (чтобы не ставить лишнюю запятую)
-          first=true
-
-          # Ищем все изображения (расширения без учёта регистра)
+          # Собираем файлы
           for f in assets/uploads/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}; do
-            # Если файл не существует — пропускаем
             [ -e "$f" ] || continue
 
-            # Имя файла без пути
+            # Пропускаем миниатюры или временные файлы
+            [[ "$f" =~ (thumbnail|_original|temp)\. ]] && continue
+
             name=$(basename "$f")
-            # Заголовок: убираем расширение, заменяем - на пробелы, делаем читаемо
+            # title: убираем расширение, заменяем -/_ на пробелы, capitalize слова
             title=$(echo "$name" | sed 's/\.[^.]*$//' | tr '-' ' ' | tr '_' ' ')
+            title=$(echo "$title" | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2)); print $0}')
 
-            # Добавляем запятую перед всеми записями, кроме первой
-            if [ "$first" = false ]; then
-              echo ',' >> data/uploads.json
-            fi
-            first=false
+            # Экранируем кавычки и специальные символы в title
+            title_escaped=$(echo "$title" | sed 's/"/\\"/g')
 
-            # Записываем объект
-            echo "  {\"image\": \"/${f}\", \"title\": \"${title}\"}" >> data/uploads.json
+            items+=("{ \"image\": \"/${f}\", \"title\": \"${title_escaped}\" }")
           done
 
-          # Закрываем массив
-          echo ' ] }' >> data/uploads.json
+          # Формируем JSON
+          if [ ${#items[@]} -eq 0 ]; then
+            echo '{ "items": [] }' > "$output_file"
+          else
+            printf '{\n  "items": [\n    %s\n  ]\n}' "$(IFS=$',\n'; echo "${items[*]}")" > "$output_file"
+          fi
+
+          # Вывод для логов
+          echo "Generated $output_file with ${#items[@]} items"
 
       - name: Commit and push changes (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add data/uploads.json
 
-          # Проверяем, есть ли изменения
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          # Коммитим
-          git commit -m "chore: update uploads gallery index"
-
-          # Пуллим с rebase (на случай, если кто-то другой запушил)
+          git commit -m "chore: update uploads gallery index (${#items[@]} items)"
           git pull --rebase origin main
-
-          # Пушим
           git push origin main
