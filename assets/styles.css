@@ -554,6 +554,10 @@ p { margin: 0 0 12px; color: var(--muted); }
   border-radius: 12px;
 }
 
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 10px; text-align: left; border: 1px solid var(--border-light); }
+.table thead { background: rgba(255,255,255,0.05); }
+
 /* ========== background extras ========== */
 body::after {
   content: "";
