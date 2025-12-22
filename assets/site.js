@@ -127,6 +127,7 @@
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
+      console.warn("Instagram feed not loaded:", e);
       return null;
     }
   }
@@ -137,6 +138,7 @@
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
+      console.warn("Uploads not loaded:", e);
       return null;
     }
   }
@@ -215,7 +217,7 @@
       contactTitle: "Контакты",
       contactCTA: "Оставить заявку",
       addressLabel: "Адрес",
-      yLabel: "Y-тunnus",
+      yLabel: "Y-tunnus",
       billingTitle: "Реквизиты для счета",
       ibanLabel: "IBAN",
       copyIban: "Копировать IBAN",
@@ -242,7 +244,7 @@
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     let path = window.location.pathname.replace(/\/$/, "");
     if (path === "" || path === "/index.html") path = "/";
-    const pageSeo = data?.seo?.pages?.[path] || {};
+    const pageSeo = data?.seo?.pages?.[path] || data?.seo?.pages?.["/"] || {};
     const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
     const description = t(pageSeo.description, lang) ||
       t(data?.site?.defaultDescription, lang) ||
@@ -311,90 +313,60 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  // ... (остальные render-функции остаются как в предыдущей версии, но с учётом новых полей)
-
-  // Пример: renderHinnastoPage (полная версия с responsive table)
-  function renderHinnastoPage(data, lang) {
-    const el = $("#page-hinnasto");
-    if (!el) return;
-    const p = data.pricing || null;
-    if (!p) {
-      el.innerHTML = `<section class="section"><h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1><div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div></section>`;
-      return;
-    }
-    const effective = p.effectiveFrom || "";
-    const lead = t(p.lead, lang) || ui(lang, "pricingLead");
-    const introLines = Array.isArray(t(p.intro, lang)) ? t(p.intro, lang) : [];
-    const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
-    const tables = Array.isArray(p.tables) ? p.tables : [];
-    const tablesHtml = tables.map(tbl => {
-      const title = escapeHtml(t(tbl.title, lang));
-      const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
-        ui(lang, "pricingTableProduct"),
-        ui(lang, "pricingTableVat0"),
-        ui(lang, "pricingTableVat")
-      ];
-      const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
-      const rowsHtml = rows.map(r => {
-        const name = escapeHtml(t(r.name, lang));
-        const p0 = escapeHtml(r.price0 || "");
-        const pv = escapeHtml(r.priceVat || "");
-        return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
-      }).join("");
-      return `
-        <section class="section">
-          <h2>${title}</h2>
-          <div class="card card--pad">
-            <div style="overflow-x:auto;">
-              <table style="width:100%;border-collapse:collapse;min-width:600px;">
-                <thead style="background:rgba(255,255,255,0.05);">
-                  <tr><th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
-                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
-                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th></tr>
-                </thead>
-                <tbody>
-                  ${rowsHtml}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>`;
-    }).join("");
-    const notesLines = Array.isArray(t(p.notes, lang)) ? t(p.notes, lang) : [];
-    const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
-    el.innerHTML = `
-      <section class="section">
-        <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
-        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
-        ${effective ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(effective)}</span></div>` : ""}
-        ${introHtml ? `<div class="card card--pad mt"><ul>${introHtml}</ul></div>` : ""}
-      </section>
-      ${tablesHtml}
-      ${notesHtml ? `<section class="section"><div class="card card--pad"><ul>${notesHtml}</ul></div></section>` : ""}
+  // Функция для отображения ошибки загрузки
+  function showError(message) {
+    const main = $("main.container") || document.body;
+    main.innerHTML = `
+      <div class="card card--pad" style="margin:100px auto;max-width:600px;text-align:center;background:#1a1f2e;color:#fff;">
+        <h2>Virhe sivun lataamisessa</h2>
+        <p>${escapeHtml(message)}</p>
+        <p>Yritä päivittää sivu tai ota yhteyttä: <a href="mailto:rs.expert.oy@gmail.com" style="color:#6ae4ff;">rs.expert.oy@gmail.com</a></p>
+      </div>
     `;
   }
 
   // boot
-  let data;
+  let data = null;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
-    if (!res.ok) throw new Error(`site.json not found: ${res.status}`);
+    if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
     data = await res.json();
+    console.log("site.json loaded successfully");
   } catch (e) {
-    console.error("Failed to load /data/site.json", e);
-    document.body.innerHTML = `
-      <div style="text-align:center;padding:100px 20px;color:#fff;background:#0b0f1a;font-family:system-ui;">
-        <h1>Virhe tietojen lataamisessa</h1>
-        <p>Sivusto ei voi ladata tietoja tällä hetkellä. Kokeile myöhemmin tai ota yhteyttä: <a href="mailto:${data?.email || 'rs.expert.oy@gmail.com'}" style="color:#6ae4ff;">${data?.email || 'rs.expert.oy@gmail.com'}</a></p>
-      </div>`;
+    console.error("Failed to load /data/site.json:", e);
+    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
     return;
   }
 
   const lang = getLang(data);
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
-  bindLanguageSwitcher(data);
-  bindCopyButtons(lang);
+
+  // Привязка событий (переключение языка, копирование)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-lang]");
+    if (btn) {
+      const lang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(lang)) {
+        localStorage.setItem("lang", lang);
+        window.location.href = setLangInUrl(lang);
+      }
+    }
+  });
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (btn) {
+      const text = btn.getAttribute("data-copy") || "";
+      const ok = await copyToClipboard(text);
+      const status = $("#copy-status");
+      if (status) {
+        status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
+        status.style.color = ok ? "var(--brand)" : "#ff6b6b";
+        if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
+      }
+    }
+  });
 
   const igFeed = await loadInstagramFeed();
   const uploads = await loadUploads();
@@ -409,4 +381,6 @@
   renderTarjousPage(data, lang);
   renderHinnastoPage(data, lang);
   renderContactPage(data, lang);
+
+  console.log("Site rendered successfully in language:", lang);
 })();
