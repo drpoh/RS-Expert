@@ -1,4 +1,3 @@
-/* assets/site.js */
 (async function () {
   const $ = (sel) => document.querySelector(sel);
 
@@ -44,9 +43,7 @@
   }
 
   function setHreflangAlternates(urlFi, urlRu) {
-    document
-      .querySelectorAll('link[rel="alternate"][hreflang]')
-      .forEach((n) => n.remove());
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((n) => n.remove());
 
     function add(hreflang, href) {
       const l = document.createElement("link");
@@ -193,7 +190,8 @@
       operaattoriLabel: "Operaattori",
       serviceAreaTitleFallback: "Palvelualue",
       serviceAreaNoteFallback: "Kysy myös muista kohteista Uudellamaalla.",
-      hinnasto: "Hinnasto"
+      // ✅ NEW
+      mapTitle: "SIJAINTIMME KARTALLA"
     },
     ru: {
       call: "Позвонить",
@@ -233,7 +231,8 @@
       operaattoriLabel: "Оператор",
       serviceAreaTitleFallback: "Зона обслуживания",
       serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa.",
-      hinnasto: "Цены"
+      // ✅ NEW
+      mapTitle: "МЫ НА КАРТЕ"
     }
   };
 
@@ -266,7 +265,7 @@
       setMeta("robots", "noindex,follow");
     } else {
       setCanonical(lang === "ru" ? setLangInUrl("ru") : pageUrlFi);
-      setMeta("robots", "index,follow,max-image-preview:large");
+      setMeta("robots", "index,follow");
     }
 
     setHreflangAlternates(pageUrlFi, pageUrlRu);
@@ -398,7 +397,9 @@
     const igBtn = ig
       ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(
           ig
-        )}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+        )}" target="_blank" rel="noopener">📸 ${escapeHtml(
+          ui(lang, "instagram")
+        )}</a>`
       : "";
 
     header.innerHTML = `
@@ -410,21 +411,27 @@
             <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
           </div>
           ${igBtn}
-          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
+          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
+      ui(lang, "call")
+    )}</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(
+            data.email || ""
+          )}">${escapeHtml(ui(lang, "email"))}</a>
         </div>
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/index.html", lang))}" class="brand__link">${escapeHtml(
+          <a href="${escapeHtml(
+            withLang("/index.html", lang)
+          )}" class="brand__link">${escapeHtml(
       data.companyName || "RS-Expert Oy"
     )}</a>
         </div>
         <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-      ui(lang, "requestQuote")
-    )}</a>
+          <a class="btn btn--primary" href="${escapeHtml(
+            withLang("/tarjouspyynto.html", lang)
+          )}">${escapeHtml(ui(lang, "requestQuote"))}</a>
         </div>
       </div>
     `;
@@ -443,7 +450,9 @@
     const igHtml = ig
       ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(
           ig
-        )}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+        )}" target="_blank" rel="noopener">📸 ${escapeHtml(
+          ui(lang, "instagram")
+        )}</a>`
       : "";
 
     const line2Parts = [];
@@ -451,16 +460,23 @@
       line2Parts.push(
         `${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`
       );
-    if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
+    if (y)
+      line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
 
     footer.innerHTML = `
       <div class="footer__inner">
-        <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+        <div class="footer__brand">${escapeHtml(
+          data.companyName || "RS-Expert Oy"
+        )}</div>
 
         <div class="footer__meta">
-          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
+          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
+      data.phone || ""
+    )}</a>
           <span class="dot">•</span>
-          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
+          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(
+      data.email || ""
+    )}</a>
           ${igHtml}
         </div>
 
@@ -472,7 +488,9 @@
             : ``
         }
 
-        <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+        <div class="footer__copy">© ${escapeHtml(
+          data.companyName || "RS-Expert Oy"
+        )}</div>
       </div>
     `;
   }
@@ -545,8 +563,10 @@
     const lead = t(sa.lead, lang) || "";
     const note = t(sa.note, lang) || ui(lang, "serviceAreaNoteFallback");
 
-    const places = (sa.places && sa.places.length ? sa.places : data.business?.areaServed || [])
-      .filter(Boolean);
+    const places = (sa.places && sa.places.length
+      ? sa.places
+      : data.business?.areaServed || []
+    ).filter(Boolean);
 
     const chips = places
       .map((p) => `<span class="badge">📍 ${escapeHtml(p)}</span>`)
@@ -566,7 +586,6 @@
     `;
   }
 
-  // Home
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
     if (!el) return;
@@ -645,10 +664,12 @@
         <p class="hero__subtitle">${escapeHtml(t(hero.subtitle, lang))}</p>
         <div class="hero__badges">${badgesHtml}</div>
         <div class="hero__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-      ui(lang, "requestQuote")
+          <a class="btn btn--primary" href="${escapeHtml(
+            withLang("/tarjouspyynto.html", lang)
+          )}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
+      ui(lang, "call")
     )}</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
       </section>
@@ -657,7 +678,9 @@
         <h2>${escapeHtml(ui(lang, "services"))}</h2>
         <div class="grid grid--services">${servicesHtml}</div>
         <div class="section__more">
-          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
+          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(
+      ui(lang, "showAll")
+    )}</a>
         </div>
       </section>
 
@@ -672,10 +695,12 @@
         <h2>${escapeHtml(ui(lang, "needElectrician"))}</h2>
         <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
         <div class="cta__buttons">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-      ui(lang, "requestQuote")
+          <a class="btn btn--primary" href="${escapeHtml(
+            withLang("/tarjouspyynto.html", lang)
+          )}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
+      ui(lang, "call")
     )}</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
       </section>
@@ -717,7 +742,7 @@
     `;
   }
 
-  // Gallery (uploads first, then Instagram)
+  // Gallery: uploads FIRST, then Instagram
   function renderGalleryPage(data, lang, igFeed, uploads) {
     const el = $("#page-gallery");
     if (!el) return;
@@ -851,7 +876,10 @@
     `;
   }
 
-  function renderContactPage(data, lang, igFeed) {
+  // ✅ UPDATED: Contact page
+  // - Removed Instagram/photo blocks from Yhteystiedot
+  // - Added "SIJAINTIMME KARTALLA" + Google map at the end
+  function renderContactPage(data, lang /*, igFeed */) {
     const el = $("#page-contact");
     if (!el) return;
 
@@ -860,24 +888,10 @@
     const info = data.businessInfo || {};
     const addr = t(info.address, lang);
     const y = info.yTunnus || "";
-    const ig = info.instagram || "";
     const bill = info.billing || {};
     const iban = bill.iban || "";
     const eaddr = bill.verkkolaskuosoite || "";
     const op = bill.operaattori || "";
-
-    const igHtml = ig
-      ? `<div class="igblock">
-           <a class="igcard" href="${escapeHtml(ig)}" target="_blank" rel="noopener">
-             <div class="igcard__title">📸 ${escapeHtml(ui(lang, "instagram"))}</div>
-             <div class="igcard__sub">${escapeHtml(
-               lang === "ru" ? "Основные фото и работы здесь" : "Tärkeimmät kuvat ja työt täällä"
-             )}</div>
-           </a>
-         </div>`
-      : "";
-
-    const igMini = ig ? renderInstagramPreviewBlock(data, lang, igFeed) : "";
 
     const billingHtml = `
       <div class="card card--pad">
@@ -912,11 +926,29 @@
       </div>
     `;
 
+    // ✅ Google map embed (address: Siltakatu 73, 04400 Järvenpää)
+    const mapQuery = encodeURIComponent("Siltakatu 73, 04400 Järvenpää, Finland");
+    const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+
+    const mapBlock = `
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "mapTitle"))}</h2>
+        <div class="card card--pad">
+          <iframe
+            title="${escapeHtml(ui(lang, "mapTitle"))}"
+            src="${mapSrc}"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            style="width:100%;height:420px;border:0;border-radius:16px;"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+    `;
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
-
-        ${igHtml}
 
         <div class="card card--pad">
           <div class="stack">
@@ -934,143 +966,18 @@
             ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
 
             <div class="mt">
-              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-      ui(lang, "contactCTA")
-    )}</a>
+              <a class="btn btn--primary" href="${escapeHtml(
+                withLang("/tarjouspyynto.html", lang)
+              )}">${escapeHtml(ui(lang, "contactCTA"))}</a>
             </div>
           </div>
         </div>
 
         <div class="mt"></div>
         ${billingHtml}
-
-        ${igMini}
-      </section>
-    `;
-  }
-
-  // NEW: Hinnasto page
-  function renderHinnastoPage(data, lang) {
-    const el = $("#page-hinnasto");
-    if (!el) return;
-
-    // Calculations:
-    // 60.00 * 1.255 = 75.30
-    // 0.99 * 1.255 = 1.24245 -> 1.24
-    // "Pientarvikelisä" given as 20.00 incl VAT, so excl = 20 / 1.255 = 15.936... -> 15.94
-    const title = lang === "ru" ? "Цены" : "Hinnasto";
-    const lead =
-      lang === "ru"
-        ? "Понятные цены. Указаны суммы без НДС и с НДС 25,5%."
-        : "Selkeä hinnoittelu. Hinnat ALV 0 % ja ALV 25,5 %.";
-
-    const note1 =
-      lang === "ru"
-        ? "Минимальная оплата: 2 часа."
-        : "Minimiveloitus: 2 h.";
-
-    const note2 =
-      lang === "ru"
-        ? "Правило расчёта: начатый час и материалы — по фактическому расходу."
-        : "Veloituskäytäntö: alkava tunti ja tarvikkeet veloitetaan menekin mukaan.";
-
-    const note3 =
-      lang === "ru"
-        ? "Для компаний — цена договорная."
-        : "Yritysasiakkaiden hinnoittelu tapauskohtaisesti.";
-
-    const validFrom =
-      lang === "ru" ? "Цены действуют с 1.1.2026." : "Hinnat voimassa 1.1.2026 alkaen.";
-
-    el.innerHTML = `
-      <section class="section">
-        <h1>${escapeHtml(title)}</h1>
-        <p class="lead">${escapeHtml(lead)}</p>
       </section>
 
-      <section class="section">
-        <h2>${escapeHtml(lang === "ru" ? "Почасовая ставка" : "Tuntiveloitus")}</h2>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>${escapeHtml(lang === "ru" ? "Услуга" : "Palvelu")}</th>
-                <th>${escapeHtml(lang === "ru" ? "Цена (без НДС)" : "Hinta (ALV 0 %)")}</th>
-                <th>${escapeHtml(lang === "ru" ? "Цена (НДС 25,5%)" : "Hinta (ALV 25,5 %)")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${escapeHtml(lang === "ru" ? "Электрик — почасовая работа" : "Sähköasentajan tuntiveloitus")}</td>
-                <td>60,00 € / h</td>
-                <td>75,30 € / h</td>
-              </tr>
-              <tr>
-                <td>${escapeHtml(lang === "ru" ? "Работа двух электриков (за каждого)" : "Kahden asentajan työ (per asentaja)")}</td>
-                <td>60,00 € / h</td>
-                <td>75,30 € / h</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p>${escapeHtml(note1)}<br>${escapeHtml(note2)}</p>
-      </section>
-
-      <section class="section">
-        <h2>${escapeHtml(lang === "ru" ? "Дорога" : "Matkakulut")}</h2>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>${escapeHtml(lang === "ru" ? "Услуга" : "Palvelu")}</th>
-                <th>${escapeHtml(lang === "ru" ? "Цена (без НДС)" : "Hinta (ALV 0 %)")}</th>
-                <th>${escapeHtml(lang === "ru" ? "Цена (НДС 25,5%)" : "Hinta (ALV 25,5 %)")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${escapeHtml(lang === "ru" ? "Километраж" : "Kilometriveloitus")}</td>
-                <td>0,99 € / km</td>
-                <td>1,24 € / km</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>${escapeHtml(lang === "ru" ? "Материалы и доплаты" : "Tarvikkeet ja lisät")}</h2>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>${escapeHtml(lang === "ru" ? "Доплата" : "Lisä")}</th>
-                <th>${escapeHtml(lang === "ru" ? "Цена (без НДС)" : "Hinta (ALV 0 %)")}</th>
-                <th>${escapeHtml(lang === "ru" ? "Цена (НДС 25,5%)" : "Hinta (ALV 25,5 %)")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${escapeHtml(lang === "ru" ? "Мелкие расходники" : "Pientarvikelisä")}</td>
-                <td>15,94 €</td>
-                <td>20,00 €</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p class="small">${escapeHtml(note3)}<br>${escapeHtml(validFrom)}</p>
-
-        <div class="mt">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">
-            ${escapeHtml(ui(lang, "requestQuote"))}
-          </a>
-        </div>
-      </section>
+      ${mapBlock}
     `;
   }
 
@@ -1137,6 +1044,7 @@
   renderReferencesPage(data, lang);
   renderDocumentsPage(data, lang);
   renderTarjousPage(data, lang);
+
+  // ✅ updated call (igFeed no longer needed on contact)
   renderContactPage(data, lang, igFeed);
-  renderHinnastoPage(data, lang);
 })();
