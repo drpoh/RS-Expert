@@ -3,52 +3,75 @@ name: Build uploads index
 on:
   push:
     paths:
-      - "assets/uploads/**"
-  workflow_dispatch:
+      - 'assets/uploads/**'
+  workflow_dispatch:  # ручной запуск
   schedule:
-    - cron: "23 3 * * *" # daily
+    - cron: '23 3 * * *'  # ежедневно в 3:23 UTC
 
 permissions:
-  contents: write
+  contents: write  # только права на запись в репозиторий
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # чтобы git pull --rebase работал
 
-      - name: Build uploads.json
+      - name: Generate uploads.json
         run: |
-          set -e
+          # Создаём папку, если нет
           mkdir -p data
 
+          # Начинаем JSON
           echo '{ "items": [' > data/uploads.json
 
+          # Флаг для первой записи (чтобы не ставить лишнюю запятую)
           first=true
+
+          # Ищем все изображения (расширения без учёта регистра)
           for f in assets/uploads/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}; do
+            # Если файл не существует — пропускаем
             [ -e "$f" ] || continue
+
+            # Имя файла без пути
             name=$(basename "$f")
-            title=$(echo "$name" | sed 's/\.[^.]*$//' | tr '-' ' ')
+            # Заголовок: убираем расширение, заменяем - на пробелы, делаем читаемо
+            title=$(echo "$name" | sed 's/\.[^.]*$//' | tr '-' ' ' | tr '_' ' ')
+
+            # Добавляем запятую перед всеми записями, кроме первой
             if [ "$first" = false ]; then
               echo ',' >> data/uploads.json
             fi
             first=false
-            echo "  { \"image\": \"/$f\", \"title\": \"${title}\" }" >> data/uploads.json
+
+            # Записываем объект
+            echo "  {\"image\": \"/${f}\", \"title\": \"${title}\"}" >> data/uploads.json
           done
 
-          echo '] }' >> data/uploads.json
+          # Закрываем массив
+          echo ' ] }' >> data/uploads.json
 
-      - name: Commit & push
+      - name: Commit and push changes (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add data/uploads.json
+
+          # Проверяем, есть ли изменения
           if git diff --cached --quiet; then
-            echo "No changes"
+            echo "No changes to commit"
             exit 0
           fi
-          git commit -m "chore: update uploads gallery"
+
+          # Коммитим
+          git commit -m "chore: update uploads gallery index"
+
+          # Пуллим с rebase (на случай, если кто-то другой запушил)
           git pull --rebase origin main
+
+          # Пушим
           git push origin main
