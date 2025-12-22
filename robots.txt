@@ -1,9 +1,8 @@
 User-Agent: *
 Allow: /
-
-# content signal (Cloudflare style)
 Content-signal: search=yes,ai-train=no
 
+# Block AI / scraping bots
 User-agent: Amazonbot
 Disallow: /
 
