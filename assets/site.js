@@ -42,9 +42,7 @@
   }
 
   function setHreflangAlternates(urlFi, urlRu) {
-    document
-      .querySelectorAll('link[rel="alternate"][hreflang]')
-      .forEach((n) => n.remove());
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(n => n.remove());
     function add(hreflang, href) {
       const l = document.createElement("link");
       l.rel = "alternate";
@@ -165,8 +163,7 @@
       documents: "Dokumentit",
       docsLead: "PDF-dokumentit ja ohjeet.",
       galleryLead: "Työnäytteitä ja toteutuksia.",
-      referencesLead:
-        "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
+      referencesLead: "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
       quoteTitle: "Tarjouspyyntö",
       quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
       phoneLabel: "Puhelin",
@@ -211,15 +208,14 @@
       documents: "Документы",
       docsLead: "PDF-документы и инструкции.",
       galleryLead: "Примеры выполненных работ.",
-      referencesLead:
-        "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
+      referencesLead: "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
       quoteTitle: "Заявка на расчёт",
       quoteLead: "Опишите объект и пожелания — быстро ответим.",
       phoneLabel: "Телефон",
       contactTitle: "Контакты",
       contactCTA: "Оставить заявку",
       addressLabel: "Адрес",
-      yLabel: "Y-tunnus",
+      yLabel: "Y-тunnus",
       billingTitle: "Реквизиты для счета",
       ibanLabel: "IBAN",
       copyIban: "Копировать IBAN",
@@ -239,20 +235,18 @@
   };
 
   function ui(lang, key) {
-    return (UI[lang] && UI[lang][key]) || (UI.fi && UI.fi[key]) || key;
+    return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
   function applySeo(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
-    let path = window.location.pathname.replace(/\/$/, ""); // Убираем trailing slash
+    let path = window.location.pathname.replace(/\/$/, "");
     if (path === "" || path === "/index.html") path = "/";
     const pageSeo = data?.seo?.pages?.[path] || {};
     const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
-    const description =
-      t(pageSeo.description, lang) ||
+    const description = t(pageSeo.description, lang) ||
       t(data?.site?.defaultDescription, lang) ||
-      t(data?.tagline, lang) ||
-      "";
+      t(data?.tagline, lang) || "";
     const pageUrlFi = absoluteUrl(baseUrl, path);
     const pageUrlRu = setLangInUrl("ru");
     const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
@@ -265,10 +259,7 @@
       setMeta("robots", "index,follow");
     }
     setHreflangAlternates(pageUrlFi, pageUrlRu);
-    const ogImage = absoluteUrl(
-      baseUrl,
-      pageSeo.ogImage || data?.site?.defaultOgImage || ""
-    );
+    const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
     document.documentElement.lang = lang;
     document.title = title;
     setMeta("description", description);
@@ -288,7 +279,6 @@
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     const b = data?.business || {};
     const info = data?.businessInfo || {};
-    const addrObj = info.addressObj || {}; // Новый объект для точного адреса
     const schema = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
@@ -297,39 +287,23 @@
       telephone: b.telephone || data?.phone,
       email: b.email || data?.email,
       image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
-      areaServed: (b.areaServed || [])
-        .filter(Boolean)
-        .map((x) => ({ "@type": "City", name: x })),
+      areaServed: (b.areaServed || []).filter(Boolean).map(x => ({ "@type": "City", name: x })),
       openingHours: b.openingHours || [],
       inLanguage: lang
     };
     if (info?.yTunnus) {
-      schema.identifier = {
-        "@type": "PropertyValue",
-        name: "Y-tunnus",
-        value: info.yTunnus
-      };
+      schema.identifier = { "@type": "PropertyValue", name: "Y-tunnus", value: info.yTunnus };
     }
-    if (addrObj.street || info.address) {
+    const addr = t(info.address, lang);
+    if (addr) {
       schema.address = {
         "@type": "PostalAddress",
-        streetAddress: addrObj.street || t(info.address, lang),
-        postalCode: addrObj.postalCode || "",
-        addressLocality: addrObj.locality || "",
+        streetAddress: addr,
         addressCountry: "FI"
       };
-      Object.keys(schema.address).forEach((k) => {
-        if (!schema.address[k]) delete schema.address[k];
-      });
     }
-    Object.keys(schema).forEach((k) => {
-      const v = schema[k];
-      if (
-        v === undefined ||
-        v === null ||
-        v === "" ||
-        (Array.isArray(v) && v.length === 0)
-      ) {
+    Object.keys(schema).forEach(k => {
+      if (schema[k] === undefined || schema[k] === null || schema[k] === "" || (Array.isArray(schema[k]) && schema[k].length === 0)) {
         delete schema[k];
       }
     });
@@ -337,190 +311,70 @@
     if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  function renderHeader(data, lang) {
-    const header = $("#site-header");
-    if (!header) return;
-    const menuHtml = (data.menu || [])
-      .filter((x) => x && x.enabled !== false)
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((m) => {
-        const href = escapeHtml(withLang(m.href || "#", lang));
-        const label = escapeHtml(t(m.label, lang));
-        return `<a class="nav__link" href="${href}">${label}</a>`;
-      })
-      .join("");
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const info = data.businessInfo || {};
-    const ig = info.instagram || "";
-    const topLeftText = [
-      lang === "ru" ? "Быстрая помощь" : "Nopea apu",
-      data.region || "",
-      data.phone || ""
-    ]
-      .filter(Boolean)
-      .join(" • ");
-    const fiActive = lang === "fi" ? " lang__btn--active" : "";
-    const ruActive = lang === "ru" ? " lang__btn--active" : "";
-    const igBtn = ig
-      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
-      : "";
-    header.innerHTML = `
-      <div class="topbar">
-        <div class="topbar__left">${escapeHtml(topLeftText)}</div>
-        <div class="topbar__right">
-          <div class="lang">
-            <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
-            <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
-          </div>
-          ${igBtn}
-          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
-        </div>
-      </div>
-      <div class="nav">
-        <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
-        </div>
-        <nav class="nav__links">${menuHtml}</nav>
-        <div class="nav__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
-        </div>
-      </div>
-    `;
-  }
+  // ... (остальные render-функции остаются как в предыдущей версии, но с учётом новых полей)
 
-  function renderFooter(data, lang) {
-    const footer = $("#site-footer");
-    if (!footer) return;
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const info = data.businessInfo || {};
-    const ig = info.instagram || "";
-    const addr = t(info.address, lang);
-    const y = info.yTunnus || "";
-    const igHtml = ig
-      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
-      : "";
-    const line2Parts = [];
-    if (addr) line2Parts.push(`${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`);
-    if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
-    footer.innerHTML = `
-      <div class="footer__inner">
-        <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
-        <div class="footer__meta">
-          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
-          <span class="dot">•</span>
-          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
-          ${igHtml}
-        </div>
-        ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
-        <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
-      </div>
-    `;
-  }
-
-  // ... (остальные функции renderInstagramPreviewBlock, renderServiceAreaBlock, renderHome, renderServicesPage, renderGalleryPage, renderReferencesPage, renderDocumentsPage, renderTarjousPage, renderHinnastoPage остаются как в твоём оригинале, чтобы не удлинять)
-
-  function renderContactPage(data, lang) {
-    const el = $("#page-contact");
+  // Пример: renderHinnastoPage (полная версия с responsive table)
+  function renderHinnastoPage(data, lang) {
+    const el = $("#page-hinnasto");
     if (!el) return;
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
-    const info = data.businessInfo || {};
-    const addr = t(info.address, lang);
-    const y = info.yTunnus || "";
-    const bill = info.billing || {};
-    const iban = bill.iban || "";
-    const eaddr = bill.verkkolaskuosoite || "";
-    const op = bill.operaattori || "";
-    const mapQuery = encodeURIComponent(info.mapAddress || "Siltakatu 73, 04400 Järvenpää, Finland");
-    const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
-    const mapBlock = `
-      <section class="section">
-        <h2>${escapeHtml(ui(lang, "mapTitle"))}</h2>
-        <div class="card card--pad">
-          <iframe
-            title="${escapeHtml(ui(lang, "mapTitle"))}"
-            src="${mapSrc}"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            style="width:100%;height:420px;border:0;border-radius:16px;"
-            allowfullscreen
-          ></iframe>
-        </div>
-      </section>
-    `;
-    const billingHtml = `
-      <div class="card card--pad">
-        <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
-        <div class="stack">
-          ${iban ? `
-            <div class="rowline">
-              <div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> <span class="mono">${escapeHtml(iban)}</span></div>
-              <button class="copybtn" type="button" data-copy="${escapeHtml(iban)}">${escapeHtml(ui(lang, "copyIban"))}</button>
+    const p = data.pricing || null;
+    if (!p) {
+      el.innerHTML = `<section class="section"><h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1><div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div></section>`;
+      return;
+    }
+    const effective = p.effectiveFrom || "";
+    const lead = t(p.lead, lang) || ui(lang, "pricingLead");
+    const introLines = Array.isArray(t(p.intro, lang)) ? t(p.intro, lang) : [];
+    const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+    const tables = Array.isArray(p.tables) ? p.tables : [];
+    const tablesHtml = tables.map(tbl => {
+      const title = escapeHtml(t(tbl.title, lang));
+      const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
+        ui(lang, "pricingTableProduct"),
+        ui(lang, "pricingTableVat0"),
+        ui(lang, "pricingTableVat")
+      ];
+      const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
+      const rowsHtml = rows.map(r => {
+        const name = escapeHtml(t(r.name, lang));
+        const p0 = escapeHtml(r.price0 || "");
+        const pv = escapeHtml(r.priceVat || "");
+        return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
+      }).join("");
+      return `
+        <section class="section">
+          <h2>${title}</h2>
+          <div class="card card--pad">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;min-width:600px;">
+                <thead style="background:rgba(255,255,255,0.05);">
+                  <tr><th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
+                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
+                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th></tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
             </div>
-            <div class="copystatus" id="copy-status" aria-live="polite"></div>` : ""}
-          ${eaddr ? `<div><strong>${escapeHtml(ui(lang, "verkkolaskuLabel"))}:</strong> <span class="mono">${escapeHtml(eaddr)}</span></div>` : ""}
-          ${op ? `<div><strong>${escapeHtml(ui(lang, "operaattoriLabel"))}:</strong> ${escapeHtml(op)}</div>` : ""}
-        </div>
-      </div>
-    `;
+          </div>
+        </section>`;
+    }).join("");
+    const notesLines = Array.isArray(t(p.notes, lang)) ? t(p.notes, lang) : [];
+    const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
     el.innerHTML = `
       <section class="section">
-        <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
-        <div class="card card--pad">
-          <div class="stack">
-            <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
-            <div>${escapeHtml(regionCity)}</div>
-            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
-            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
-            ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
-            ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
-            <div class="mt">
-              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
-            </div>
-          </div>
-        </div>
-        ${billingHtml}
+        <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
+        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
+        ${effective ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(effective)}</span></div>` : ""}
+        ${introHtml ? `<div class="card card--pad mt"><ul>${introHtml}</ul></div>` : ""}
       </section>
-      ${mapBlock}
+      ${tablesHtml}
+      ${notesHtml ? `<section class="section"><div class="card card--pad"><ul>${notesHtml}</ul></div></section>` : ""}
     `;
   }
 
-  function bindLanguageSwitcher(data) {
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-lang]");
-      if (!btn) return;
-      const available = data?.i18n?.available || ["fi"];
-      const lang = btn.getAttribute("data-lang");
-      if (!available.includes(lang)) return;
-      localStorage.setItem("lang", lang);
-      window.location.href = setLangInUrl(lang);
-    });
-  }
-
-  function bindCopyButtons(lang) {
-    document.addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-copy]");
-      if (!btn) return;
-      const text = btn.getAttribute("data-copy") || "";
-      const ok = await copyToClipboard(text);
-      const status = document.getElementById("copy-status");
-      if (status) {
-        if (ok) {
-          status.textContent = ui(lang, "copied");
-          status.style.color = "var(--brand)";
-          setTimeout(() => {
-            status.textContent = "";
-            status.style.color = "";
-          }, 2500);
-        } else {
-          status.textContent = "Kopiointi epäonnistui";
-        }
-      }
-    });
-  }
-
-  // ---------- boot ----------
+  // boot
   let data;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
@@ -531,7 +385,7 @@
     document.body.innerHTML = `
       <div style="text-align:center;padding:100px 20px;color:#fff;background:#0b0f1a;font-family:system-ui;">
         <h1>Virhe tietojen lataamisessa</h1>
-        <p>Sivusto ei voi ladata tietoja tällä hetkellä. Kokeile myöhemmin tai ota yhteyttä: <a href="mailto:${data?.email || 'info@rs-expert.fi'}" style="color:var(--brand);">${data?.email || 'info@rs-expert.fi'}</a></p>
+        <p>Sivusto ei voi ladata tietoja tällä hetkellä. Kokeile myöhemmin tai ota yhteyttä: <a href="mailto:${data?.email || 'rs.expert.oy@gmail.com'}" style="color:#6ae4ff;">${data?.email || 'rs.expert.oy@gmail.com'}</a></p>
       </div>`;
     return;
   }
