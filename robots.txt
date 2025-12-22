@@ -26,3 +26,5 @@ Disallow: /
 
 User-agent: meta-externalagent
 Disallow: /
+
+Sitemap: https://www.rs-expert.fi/sitemap.xml
