@@ -71,6 +71,16 @@
           "ru": "Электрик Järvenpää: электромонтаж, диагностика, освещение, электрощиты и работы при ремонте в Uusimaa."
         }
       },
+      "/hinnasto.html": {
+        "title": {
+          "fi": "Hinnasto — RS-Expert Oy | Selkeä hinnoittelu",
+          "ru": "Цены — RS-Expert Oy | Прайс"
+        },
+        "description": {
+          "fi": "Selkeä ja läpinäkyvä hinnasto: tuntiveloitus, huoltoauto, kilometriveloitus ja lisäveloitukset. Hinnat ALV 0 % ja ALV 25,5 %.",
+          "ru": "Понятные цены: почасовая работа, выезд, километраж и доплаты. Цены ALV 0 % и ALV 25,5 %."
+        }
+      },
       "/gallery.html": {
         "title": {
           "fi": "Galleria — RS-Expert Oy | Työnäytteet",
@@ -154,11 +164,12 @@
   "menu": [
     { "label": { "fi": "Etusivu", "ru": "Главная" }, "href": "/index.html", "order": 1, "enabled": true },
     { "label": { "fi": "Palvelut", "ru": "Услуги" }, "href": "/services.html", "order": 2, "enabled": true },
-    { "label": { "fi": "Galleria", "ru": "Галерея" }, "href": "/gallery.html", "order": 3, "enabled": true },
-    { "label": { "fi": "Referenssit", "ru": "Референсы" }, "href": "/referenssit.html", "order": 4, "enabled": true },
-    { "label": { "fi": "Dokumentit", "ru": "Документы" }, "href": "/documents.html", "order": 5, "enabled": true },
-    { "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" }, "href": "/tarjouspyynto.html", "order": 6, "enabled": true },
-    { "label": { "fi": "Yhteystiedot", "ru": "Контакты" }, "href": "/contact.html", "order": 7, "enabled": true }
+    { "label": { "fi": "Hinnasto", "ru": "Цены" }, "href": "/hinnasto.html", "order": 3, "enabled": true },
+    { "label": { "fi": "Galleria", "ru": "Галерея" }, "href": "/gallery.html", "order": 4, "enabled": true },
+    { "label": { "fi": "Referenssit", "ru": "Референсы" }, "href": "/referenssit.html", "order": 5, "enabled": true },
+    { "label": { "fi": "Dokumentit", "ru": "Документы" }, "href": "/documents.html", "order": 6, "enabled": true },
+    { "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" }, "href": "/tarjouspyynto.html", "order": 7, "enabled": true },
+    { "label": { "fi": "Yhteystiedot", "ru": "Контакты" }, "href": "/contact.html", "order": 8, "enabled": true }
   ],
 
   "hero": {
@@ -245,6 +256,78 @@
       "enabled": true
     }
   ],
+
+  "pricing": {
+    "effectiveFrom": "1.1.2026",
+    "note": {
+      "fi": "Pidätämme oikeuden hinnan muutoksiin. Hinnat voimassa 1.1.2026 alkaen.",
+      "ru": "Оставляем за собой право изменения цен. Цены действуют с 1.1.2026."
+    },
+    "lead": {
+      "fi": "Selkeä ja läpinäkyvä hinnoittelu. Hinnat sisältävät ALV 25,5 %, ellei toisin mainita.",
+      "ru": "Понятные и прозрачные цены. Цены включают ALV 25,5 %, если не указано иначе."
+    },
+    "hourly": {
+      "title": { "fi": "Tuntiveloitus", "ru": "Почасовая оплата" },
+      "minHours": 2,
+      "items": [
+        { "label": { "fi": "Tuntihinta sähköasentaja", "ru": "Час работы электрика" }, "vat0": "49,00 €/h", "vat255": "61,50 €/h" },
+        { "label": { "fi": "Huoltoautokäyntiveloitus", "ru": "Выезд (сервисный автомобиль)" }, "vat0": "27,89 €", "vat255": "35,00 €" },
+        { "label": { "fi": "Kilometriveloitus", "ru": "Километраж" }, "vat0": "1,31 €/km", "vat255": "1,65 €/km" },
+        { "label": { "fi": "Pientarvikkeet (menekin mukaan)", "ru": "Расходники (по факту)" }, "vat0": "6,00–11,95 €", "vat255": "7,50–15,00 €" }
+      ],
+      "practice": {
+        "fi": "Veloituskäytäntö: alkava tunti ja tarvikkeet veloitetaan menekin mukaan.",
+        "ru": "Правило: начатый час и материалы считаются по фактическому расходу."
+      }
+    },
+    "twoInstallers": {
+      "title": { "fi": "Kahden asentajan työt", "ru": "Работа двух мастеров" },
+      "text": {
+        "fi": "Mikäli työ vaatii kaksi sähköasentajaa, tuntiveloitus on 73 €/h per asentaja. Minimiveloitus 2 h.",
+        "ru": "Если требуется два электрика: 73 €/ч за каждого. Минимальный счёт 2 часа."
+      }
+    },
+    "minCharge": {
+      "title": { "fi": "Mitä 2 tunnin minimiveloitus kattaa?", "ru": "Что входит в минимум 2 часа?" },
+      "items": {
+        "fi": [
+          "Asentajan matka-ajan",
+          "Työkalujen valmistelun ja loppusiivouksen",
+          "Varsinaisen sähkötyön suorittamisen",
+          "Työn testauksen ja dokumentoinnin"
+        ],
+        "ru": [
+          "Время на дорогу",
+          "Подготовку инструмента и уборку",
+          "Выполнение работ",
+          "Тестирование и документацию"
+        ]
+      }
+    },
+    "extra": {
+      "title": { "fi": "Lisäveloitukset", "ru": "Доплаты" },
+      "items": [
+        { "label": { "fi": "Pientarvikelisä", "ru": "Доплата за мелкие материалы" }, "vat0": "15,94 €", "vat255": "20,00 €" },
+        { "label": { "fi": "Toimistomaksu", "ru": "Офисный сбор" }, "vat0": "6,00 €", "vat255": "7,53 €" }
+      ]
+    },
+    "examples": {
+      "title": { "fi": "Esimerkkihintoja", "ru": "Примеры цен" },
+      "items": [
+        { "work": { "fi": "Pistorasian vaihto", "ru": "Замена розетки" }, "price": "100–150 €" },
+        { "work": { "fi": "Valokatkaisijan vaihto", "ru": "Замена выключателя" }, "price": "100–150 €" },
+        { "work": { "fi": "Useamman huoneen pistorasioiden vaihto", "ru": "Замена розеток в нескольких комнатах" }, "price": "150–250 €" },
+        { "work": { "fi": "Sähkökeskuksen päivitys", "ru": "Обновление электрощита" }, "price": "200–350 €" },
+        { "work": { "fi": "Huoneen sähköjen uusiminen", "ru": "Полная замена электрики в комнате" }, "price": "300–450 €" },
+        { "work": { "fi": "Sähkösaneeraus", "ru": "Электросанация" }, "price": { "fi": "Sopimuksen mukaan", "ru": "По договоренности" } }
+      ]
+    },
+    "b2b": {
+      "fi": "Yritysasiakkaiden hinnoittelu tapauskohtaisesti.",
+      "ru": "Для компаний — цены рассчитываются индивидуально."
+    }
+  },
 
   "gallery": [
     {
