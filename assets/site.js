@@ -1,4 +1,4 @@
-// RS-Expert site.js — ПОЛНАЯ ВЕРСИЯ с render-функциями (2025-12-23)
+// RS-Expert site.js — ПОЛНАЯ ВЕРСИЯ с render-функциями и SEO (2025-12-23)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -242,6 +242,7 @@
     return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
+  // SEO и schema (определены до вызова)
   function applySeo(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     let path = window.location.pathname.replace(/\/$/, "");
@@ -491,7 +492,312 @@
     `;
   }
 
-  // ... (остальные render-функции — renderServicesPage, renderGalleryPage и т.д. — добавь их аналогично из предыдущих сообщений или скажи, я пришлю полную версию)
+  function renderServicesPage(data, lang) {
+    const el = $("#page-services");
+    if (!el) return;
+    const servicesHtml = (data.services || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(s => `
+        <div class="service service--big">
+          <div class="service__top">
+            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
+            <div class="service__tag">${escapeHtml(t(s.tag, lang))}</div>
+          </div>
+          <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
+          <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
+        </div>
+      `).join("");
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "services"))}</h1>
+        <p class="lead">${escapeHtml(t(data.tagline, lang))}</p>
+        <div class="grid grid--services">${servicesHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderGalleryPage(data, lang, igFeed, uploads) {
+    const el = $("#page-gallery");
+    if (!el) return;
+    const uploadItems = (uploads?.items || []).filter(x => x && x.image);
+    const hasUploads = uploadItems.length > 0;
+    const uploadsHtml = uploadItems
+      .map(it => {
+        const img = escapeHtml(it.image);
+        const title = escapeHtml(it.title || "");
+        return `
+          <a class="igthumb" href="${img}" target="_blank" rel="noopener">
+            <img class="igthumb__img" src="${img}" alt="${title}" loading="lazy">
+          </a>
+        `;
+      })
+      .join("");
+    const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
+      </section>
+      ${
+        hasUploads
+          ? `<section class="section">
+               <h2>${escapeHtml(lang === "ru" ? "Проекты" : "Projektit")}</h2>
+               <div class="iggrid">${uploadsHtml}</div>
+             </section>`
+          : ""
+      }
+      ${igBlock}
+    `;
+  }
+
+  function renderInstagramPreviewBlock(data, lang, igFeed) {
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    if (!ig) return "";
+    const maxItems = Number(data?.instagram?.maxItems || 24);
+    const items = (igFeed?.items || []).slice(0, maxItems);
+    if (!items.length) {
+      return `
+        <section class="section">
+          <div class="igpreview__head">
+            <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
+            <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+          </div>
+          <a class="igcard" href="${escapeHtml(ig)}" target="_blank" rel="noopener">
+            <div class="igcard__title">📸 ${escapeHtml(ui(lang, "instagram"))}</div>
+            <div class="igcard__sub">${escapeHtml(lang === "ru" ? "Открыть профиль и смотреть фото" : "Avaa profiili ja katso kuvat")}</div>
+          </a>
+        </section>
+      `;
+    }
+    const grid = items
+      .map(it => {
+        const url = escapeHtml(it.url || ig);
+        const img = escapeHtml(it.image || "");
+        const alt = escapeHtml(it.alt || "Instagram");
+        return `
+          <a class="igthumb" href="${url}" target="_blank" rel="noopener">
+            <img class="igthumb__img" src="${img}" alt="${alt}" loading="lazy">
+          </a>
+        `;
+      })
+      .join("");
+    return `
+      <section class="section">
+        <div class="igpreview__head">
+          <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
+          <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+        </div>
+        <div class="iggrid">
+          ${grid}
+        </div>
+        <div class="section__more">
+          <a class="link" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderReferencesPage(data, lang) {
+    const el = $("#page-referenssit");
+    if (!el) return;
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    const igCta = ig ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>` : "";
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "references"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "referencesLead"))}</p>
+        <div class="card card--pad">
+          <p style="margin:0;">${escapeHtml(ui(lang, "referencesLead"))}</p>
+          ${igCta}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderDocumentsPage(data, lang) {
+    const el = $("#page-documents");
+    if (!el) return;
+    const docsHtml = (data.documents || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(d => {
+        const url = escapeHtml(d.url || "#");
+        return `
+          <a class="doc" href="${url}" target="_blank" rel="noopener">
+            <div class="doc__title">${escapeHtml(t(d.title, lang))}</div>
+            <div class="doc__meta">${escapeHtml(t(d.category, lang) || "PDF")}</div>
+          </a>
+        `;
+      })
+      .join("");
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "documents"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "docsLead"))}</p>
+        <div class="grid grid--docs">${docsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderTarjousPage(data, lang) {
+    const el = $("#page-tarjous");
+    if (!el) return;
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const formId = data.tallyFormId || "";
+    const iframeSrc = formId ? `https://tally.so/r/${encodeURIComponent(formId)}` : "";
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "quoteTitle"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "quoteLead"))}</p>
+        <div class="card card--pad">
+          <div class="stack">
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+          </div>
+        </div>
+        ${
+          iframeSrc
+            ? `<div class="tally">
+                 <iframe
+                   title="${escapeHtml(ui(lang, "quoteTitle"))}"
+                   src="${iframeSrc}"
+                   loading="lazy"
+                   style="width:100%;height:900px;border:0;border-radius:16px;"
+                 ></iframe>
+               </div>`
+            : `<div class="card card--pad">Lisää tallyFormId data/site.json tiedostoon.</div>`
+        }
+      </section>
+    `;
+  }
+
+  function renderHinnastoPage(data, lang) {
+    const el = $("#page-hinnasto");
+    if (!el) return;
+    const p = data.pricing || null;
+    if (!p) {
+      el.innerHTML = `<section class="section"><h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1><div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div></section>`;
+      return;
+    }
+    const effective = p.effectiveFrom || "";
+    const lead = t(p.lead, lang) || ui(lang, "pricingLead");
+    const introLines = Array.isArray(t(p.intro, lang)) ? t(p.intro, lang) : [];
+    const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+    const tables = Array.isArray(p.tables) ? p.tables : [];
+    const tablesHtml = tables.map(tbl => {
+      const title = escapeHtml(t(tbl.title, lang));
+      const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
+        ui(lang, "pricingTableProduct"),
+        ui(lang, "pricingTableVat0"),
+        ui(lang, "pricingTableVat")
+      ];
+      const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
+      const rowsHtml = rows.map(r => {
+        const name = escapeHtml(t(r.name, lang));
+        const p0 = escapeHtml(r.price0 || "");
+        const pv = escapeHtml(r.priceVat || "");
+        return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
+      }).join("");
+      return `
+        <section class="section">
+          <h2>${title}</h2>
+          <div class="card card--pad">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;min-width:600px;">
+                <thead style="background:rgba(255,255,255,0.05);">
+                  <tr><th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
+                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
+                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th></tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>`;
+    }).join("");
+    const notesLines = Array.isArray(t(p.notes, lang)) ? t(p.notes, lang) : [];
+    const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
+        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
+        ${effective ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(effective)}</span></div>` : ""}
+        ${introHtml ? `<div class="card card--pad mt"><ul>${introHtml}</ul></div>` : ""}
+      </section>
+      ${tablesHtml}
+      ${notesHtml ? `<section class="section"><div class="card card--pad"><ul>${notesHtml}</ul></div></section>` : ""}
+    `;
+  }
+
+  function renderContactPage(data, lang) {
+    const el = $("#page-contact");
+    if (!el) return;
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
+    const info = data.businessInfo || {};
+    const addr = t(info.address, lang);
+    const y = info.yTunnus || "";
+    const bill = info.billing || {};
+    const iban = bill.iban || "";
+    const eaddr = bill.verkkolaskuosoite || "";
+    const op = bill.operaattori || "";
+    const mapQuery = encodeURIComponent(info.mapAddress || "Siltakatu 73, 04400 Järvenpää, Finland");
+    const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+    const mapBlock = `
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "mapTitle"))}</h2>
+        <div class="card card--pad">
+          <iframe
+            title="${escapeHtml(ui(lang, "mapTitle"))}"
+            src="${mapSrc}"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            style="width:100%;height:420px;border:0;border-radius:16px;"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+    `;
+    const billingHtml = `
+      <div class="card card--pad">
+        <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
+        <div class="stack">
+          ${iban ? `
+            <div class="rowline">
+              <div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> <span class="mono">${escapeHtml(iban)}</span></div>
+              <button class="copybtn" type="button" data-copy="${escapeHtml(iban)}">${escapeHtml(ui(lang, "copyIban"))}</button>
+            </div>
+            <div class="copystatus" id="copy-status" aria-live="polite"></div>` : ""}
+          ${eaddr ? `<div><strong>${escapeHtml(ui(lang, "verkkolaskuLabel"))}:</strong> <span class="mono">${escapeHtml(eaddr)}</span></div>` : ""}
+          ${op ? `<div><strong>${escapeHtml(ui(lang, "operaattoriLabel"))}:</strong> ${escapeHtml(op)}</div>` : ""}
+        </div>
+      </div>
+    `;
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
+        <div class="card card--pad">
+          <div class="stack">
+            <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
+            <div>${escapeHtml(regionCity)}</div>
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+            ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
+            ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
+            <div class="mt">
+              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
+            </div>
+          </div>
+        </div>
+        ${billingHtml}
+      </section>
+      ${mapBlock}
+    `;
+  }
 
   // boot
   let data = null;
@@ -542,7 +848,13 @@
   renderHeader(data, lang);
   renderFooter(data, lang);
   renderHome(data, lang, igFeed);
-  // ... вызов остальных render-функций
+  renderServicesPage(data, lang);
+  renderGalleryPage(data, lang, igFeed, uploads);
+  renderReferencesPage(data, lang);
+  renderDocumentsPage(data, lang);
+  renderTarjousPage(data, lang);
+  renderHinnastoPage(data, lang);
+  renderContactPage(data, lang);
 
   console.log("Site rendered successfully in language:", lang);
 })();
