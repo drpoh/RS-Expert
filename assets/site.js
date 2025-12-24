@@ -800,15 +800,12 @@
   }
 
   // boot
-  // ---------- boot ----------
-  const DEBUG = false;
-
-  let data;
+  let data = null;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
     if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
     data = await res.json();
-    if (DEBUG) console.log("site.json loaded");
+    console.log("site.json loaded successfully");
   } catch (e) {
     console.error("Failed to load /data/site.json:", e);
     showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
@@ -816,71 +813,48 @@
   }
 
   const lang = getLang(data);
-
-  // page detect
-  const rawPath = window.location.pathname || "/";
-  const page = rawPath === "/" ? "index.html" : (rawPath.split("/").pop() || "index.html");
-
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
-  // bind language switcher
+  // Bind events
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
-    if (!btn) return;
-    const next = btn.getAttribute("data-lang");
-    if (data?.i18n?.available?.includes(next)) {
-      localStorage.setItem("lang", next);
-      window.location.href = setLangInUrl(next);
+    if (btn) {
+      const lang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(lang)) {
+        localStorage.setItem("lang", lang);
+        window.location.href = setLangInUrl(lang);
+      }
     }
   });
 
-  // bind copy buttons
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-copy]");
-    if (!btn) return;
-
-    const text = btn.getAttribute("data-copy") || "";
-    const ok = await copyToClipboard(text);
-    const status = $("#copy-status");
-    if (status) {
-      status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
-      status.style.color = ok ? "var(--brand)" : "#ff6b6b";
-      if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
+    if (btn) {
+      const text = btn.getAttribute("data-copy") || "";
+      const ok = await copyToClipboard(text);
+      const status = $("#copy-status");
+      if (status) {
+        status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
+        status.style.color = ok ? "var(--brand)" : "#ff6b6b";
+        if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
+      }
     }
   });
 
-  // load only when needed
-  const needsInstagram = (page === "index.html" || page === "gallery.html");
-  const needsUploads = (page === "gallery.html");
-
-  const igFeed = needsInstagram ? await loadInstagramFeed() : null;
-  const uploads = needsUploads ? await loadUploads() : null;
+  const igFeed = await loadInstagramFeed();
+  const uploads = await loadUploads();
 
   renderHeader(data, lang);
   renderFooter(data, lang);
+  renderHome(data, lang, igFeed);
+  renderServicesPage(data, lang);
+  renderGalleryPage(data, lang, igFeed, uploads);
+  renderReferencesPage(data, lang);
+  renderDocumentsPage(data, lang);
+  renderTarjousPage(data, lang);
+  renderHinnastoPage(data, lang);
+  renderContactPage(data, lang);
 
-  if (page === "index.html") {
-    renderHome(data, lang, igFeed);
-  } else if (page === "services.html") {
-    renderServicesPage(data, lang);
-  } else if (page === "gallery.html") {
-    renderGalleryPage(data, lang, igFeed, uploads);
-  } else if (page === "referenssit.html") {
-    renderReferencesPage(data, lang);
-  } else if (page === "documents.html") {
-    renderDocumentsPage(data, lang);
-  } else if (page === "tarjouspyynto.html") {
-    renderTarjousPage(data, lang);
-  } else if (page === "hinnasto.html") {
-    renderHinnastoPage(data, lang);
-  } else if (page === "contact.html") {
-    renderContactPage(data, lang);
-  } else {
-    const main = document.querySelector("main.container");
-    if (main) main.innerHTML = `<section class="section"><h1>404</h1><p>Sivua ei löytynyt.</p></section>`;
-  }
-
-  if (DEBUG) console.log("Rendered:", { page, lang });
-
+  console.log("Site rendered successfully in language:", lang);
 })();
