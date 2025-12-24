@@ -800,21 +800,75 @@
   }
 
   // boot
-  let data = null;
+   // ---------- boot ----------
+  const DEBUG = false;
+
+  let data;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
-    if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
     data = await res.json();
-    console.log("site.json loaded successfully");
+    if (DEBUG) console.log("site.json loaded");
   } catch (e) {
-    console.error("Failed to load /data/site.json:", e);
-    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
+    console.error("Failed to load /data/site.json", e);
     return;
   }
 
   const lang = getLang(data);
+
+  // Определяем текущую страницу
+  // На Cloudflare Pages обычно главная = "/" (без index.html)
+  const rawPath = window.location.pathname || "/";
+  const page =
+    rawPath === "/" ? "index.html" : (rawPath.split("/").pop() || "index.html");
+
+  // SEO + schema
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
+
+  // Бинды
+  bindLanguageSwitcher(data);
+  bindCopyButtons(lang);
+
+  // Загружаем данные только если нужны
+  const needsInstagram = page === "index.html" || page === "gallery.html";
+  const needsUploads = page === "gallery.html";
+
+  const igFeed = needsInstagram ? await loadInstagramFeed() : null;
+  const uploads = needsUploads ? await loadUploads() : null;
+
+  // Header/Footer всегда
+  renderHeader(data, lang);
+  renderFooter(data, lang);
+
+  // Рендерим только текущую страницу
+  if (page === "index.html") {
+    renderHome(data, lang, igFeed);
+  } else if (page === "services.html") {
+    renderServicesPage(data, lang);
+  } else if (page === "gallery.html") {
+    renderGalleryPage(data, lang, igFeed, uploads);
+  } else if (page === "referenssit.html") {
+    renderReferencesPage(data, lang);
+  } else if (page === "documents.html") {
+    renderDocumentsPage(data, lang);
+  } else if (page === "tarjouspyynto.html") {
+    renderTarjousPage(data, lang);
+  } else if (page === "hinnasto.html") {
+    renderHinnastoPage(data, lang);
+  } else if (page === "contact.html") {
+    renderContactPage(data, lang);
+  } else {
+    // 404 fallback
+    const main = document.querySelector("main.container");
+    if (main) {
+      main.innerHTML =
+        `<section class="section"><h1>404</h1><p>Sivua ei löytynyt.</p></section>`;
+    }
+  }
+
+  if (DEBUG) console.log("Site rendered:", { page, lang });
+})();
+
 
   // Bind events
   document.addEventListener("click", (e) => {
