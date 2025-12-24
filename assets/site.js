@@ -800,47 +800,66 @@
   }
 
   // boot
-   // ---------- boot ----------
+  // ---------- boot ----------
   const DEBUG = false;
 
   let data;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
+    if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
     data = await res.json();
     if (DEBUG) console.log("site.json loaded");
   } catch (e) {
-    console.error("Failed to load /data/site.json", e);
+    console.error("Failed to load /data/site.json:", e);
+    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
     return;
   }
 
   const lang = getLang(data);
 
-  // Определяем текущую страницу
-  // На Cloudflare Pages обычно главная = "/" (без index.html)
+  // page detect
   const rawPath = window.location.pathname || "/";
-  const page =
-    rawPath === "/" ? "index.html" : (rawPath.split("/").pop() || "index.html");
+  const page = rawPath === "/" ? "index.html" : (rawPath.split("/").pop() || "index.html");
 
-  // SEO + schema
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
-  // Бинды
-  bindLanguageSwitcher(data);
-  bindCopyButtons(lang);
+  // bind language switcher
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-lang]");
+    if (!btn) return;
+    const next = btn.getAttribute("data-lang");
+    if (data?.i18n?.available?.includes(next)) {
+      localStorage.setItem("lang", next);
+      window.location.href = setLangInUrl(next);
+    }
+  });
 
-  // Загружаем данные только если нужны
-  const needsInstagram = page === "index.html" || page === "gallery.html";
-  const needsUploads = page === "gallery.html";
+  // bind copy buttons
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+
+    const text = btn.getAttribute("data-copy") || "";
+    const ok = await copyToClipboard(text);
+    const status = $("#copy-status");
+    if (status) {
+      status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
+      status.style.color = ok ? "var(--brand)" : "#ff6b6b";
+      if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
+    }
+  });
+
+  // load only when needed
+  const needsInstagram = (page === "index.html" || page === "gallery.html");
+  const needsUploads = (page === "gallery.html");
 
   const igFeed = needsInstagram ? await loadInstagramFeed() : null;
   const uploads = needsUploads ? await loadUploads() : null;
 
-  // Header/Footer всегда
   renderHeader(data, lang);
   renderFooter(data, lang);
 
-  // Рендерим только текущую страницу
   if (page === "index.html") {
     renderHome(data, lang, igFeed);
   } else if (page === "services.html") {
@@ -858,57 +877,10 @@
   } else if (page === "contact.html") {
     renderContactPage(data, lang);
   } else {
-    // 404 fallback
     const main = document.querySelector("main.container");
-    if (main) {
-      main.innerHTML =
-        `<section class="section"><h1>404</h1><p>Sivua ei löytynyt.</p></section>`;
-    }
+    if (main) main.innerHTML = `<section class="section"><h1>404</h1><p>Sivua ei löytynyt.</p></section>`;
   }
 
-  if (DEBUG) console.log("Site rendered:", { page, lang });
-})();
+  if (DEBUG) console.log("Rendered:", { page, lang });
 
-
-  // Bind events
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-lang]");
-    if (btn) {
-      const lang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(lang)) {
-        localStorage.setItem("lang", lang);
-        window.location.href = setLangInUrl(lang);
-      }
-    }
-  });
-
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-copy]");
-    if (btn) {
-      const text = btn.getAttribute("data-copy") || "";
-      const ok = await copyToClipboard(text);
-      const status = $("#copy-status");
-      if (status) {
-        status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
-        status.style.color = ok ? "var(--brand)" : "#ff6b6b";
-        if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
-      }
-    }
-  });
-
-  const igFeed = await loadInstagramFeed();
-  const uploads = await loadUploads();
-
-  renderHeader(data, lang);
-  renderFooter(data, lang);
-  renderHome(data, lang, igFeed);
-  renderServicesPage(data, lang);
-  renderGalleryPage(data, lang, igFeed, uploads);
-  renderReferencesPage(data, lang);
-  renderDocumentsPage(data, lang);
-  renderTarjousPage(data, lang);
-  renderHinnastoPage(data, lang);
-  renderContactPage(data, lang);
-
-  console.log("Site rendered successfully in language:", lang);
 })();
