@@ -1,8 +1,9 @@
-User-Agent: *
+User-agent: *
 Allow: /
-Content-signal: search=yes,ai-train=no
 
-# Block AI / scraping bots
+Sitemap: https://www.rs-expert.fi/sitemap.xml
+
+# Optional: block AI / scraping bots (does not affect Google indexing)
 User-agent: Amazonbot
 Disallow: /
 
@@ -26,5 +27,3 @@ Disallow: /
 
 User-agent: meta-externalagent
 Disallow: /
-
-Sitemap: https://www.rs-expert.fi/sitemap.xml
