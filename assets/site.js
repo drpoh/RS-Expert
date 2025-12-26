@@ -1,4 +1,4 @@
-// RS-Expert site.js — FULL VERSION (RU on /ru/* + SEO canonical/hreflang) (2025-12-26)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -73,9 +73,10 @@
     return def;
   }
 
-  // ---- RU prefix helpers (/ru/*) ----
-  function isRuPath() {
-    return window.location.pathname === "/ru" || window.location.pathname.startsWith("/ru/");
+  // NEW: RU language selection is path-based: /ru/*
+  function getLangFromPath() {
+    const p = window.location.pathname || "/";
+    return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
   }
 
   function stripRuPrefix(pathname) {
@@ -85,45 +86,79 @@
     return pathname;
   }
 
+  function normalizeToNoTrailingSlash(path) {
+    if (!path) return "/";
+    if (path === "/") return "/";
+    return path.replace(/\/$/, "");
+  }
+
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
 
-    // 1) Path-based language
-    if (isRuPath() && available.includes("ru")) return "ru";
+    // 1) PATH override (for SEO-indexable RU pages)
+    const pathLang = getLangFromPath();
+    if (pathLang && available.includes(pathLang)) return pathLang;
 
-    // 2) Legacy query param (will be redirected)
+    // 2) legacy ?lang=ru (we will redirect to /ru/* in boot)
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) Saved preference
+    // 3) saved
     const saved = localStorage.getItem("lang");
     if (available.includes(saved)) return saved;
 
-    // 4) Browser language
+    // 4) browser
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
     return def;
   }
 
+  // NEW: canonical RU URLs are /ru/..., not ?lang=ru
+  function setLangInUrl(lang) {
+    const url = new URL(window.location.href);
+    const basePath = stripRuPrefix(url.pathname);
+
+    if (lang === "ru") {
+      url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      url.searchParams.delete("lang");
+      return url.toString();
+    }
+
+    // FI
+    url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
+    url.searchParams.delete("lang");
+    return url.toString();
+  }
+
+  // NEW: keep links consistent: if RU -> prefix /ru to internal paths
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
 
-    const h = href.startsWith("/") ? href : `/${href}`;
+    // normalize home
+    if (href === "/index.html") href = "/";
 
-    if (lang === "ru") {
-      if (h === "/") return "/ru/";
-      if (h.startsWith("/ru/")) return h;
-      return `/ru${h}`;
+    if (lang !== "ru") {
+      // FI: never include /ru and never include ?lang
+      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
     }
 
-    // FI
-    if (h === "/ru" || h.startsWith("/ru/")) {
-      return stripRuPrefix(h);
-    }
-    return h;
+    // RU:
+    // convert internal path to /ru/...
+    let path = href;
+    // strip legacy lang=ru
+    try {
+      const u = new URL(href, window.location.origin);
+      u.searchParams.delete("lang");
+      path = u.pathname + (u.search || "") + (u.hash || "");
+    } catch (e) {}
+
+    const clean = stripRuPrefix(path);
+    if (clean === "/" || clean === "") return "/ru/";
+    if (clean.startsWith("/")) return "/ru" + clean;
+    return "/ru/" + clean;
   }
 
   async function copyToClipboard(text) {
@@ -270,69 +305,68 @@
     return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
-  // SEO
-function applySeo(data, lang) {
-  const baseUrl = data?.site?.baseUrl || window.location.origin;
+  // SEO + schema
+  function applySeo(data, lang) {
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
 
-  let pathname = window.location.pathname.replace(/\/$/, "");
-  if (pathname === "" || pathname === "/index.html") pathname = "/";
+    let pathname = window.location.pathname.replace(/\/$/, "");
+    if (pathname === "" || pathname === "/index.html") pathname = "/";
 
-  // map /ru/services.html -> /services.html for seo.pages lookup
-  let logicalPath = stripRuPrefix(pathname);
-  logicalPath = logicalPath.replace(/\/$/, "");
-  if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
-  if (logicalPath === "") logicalPath = "/";
+    // map /ru/services.html -> /services.html for seo.pages lookup
+    let logicalPath = stripRuPrefix(pathname);
+    logicalPath = logicalPath.replace(/\/$/, "");
+    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
+    if (logicalPath === "") logicalPath = "/";
 
-  const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
+    const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
 
-  const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
+    const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
 
-  const description =
-    t(pageSeo.description, lang) ||
-    t(data?.site?.defaultDescription, lang) ||
-    t(data?.tagline, lang) || "";
+    const description =
+      t(pageSeo.description, lang) ||
+      t(data?.site?.defaultDescription, lang) ||
+      t(data?.tagline, lang) || "";
 
-  const fiPath = logicalPath === "/" ? "/" : logicalPath;
-  const ruPath = logicalPath === "/" ? "/ru/" : `/ru${logicalPath}`;
+    const fiPath = logicalPath === "/" ? "/" : logicalPath;
+    const ruPath = logicalPath === "/" ? "/ru/" : `/ru${logicalPath}`;
 
-  const pageUrlFi = absoluteUrl(baseUrl, fiPath);
-  const pageUrlRu = absoluteUrl(baseUrl, ruPath);
+    const pageUrlFi = absoluteUrl(baseUrl, fiPath);
+    const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-  const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
+    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
 
-  const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
+    const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
 
-  if (lang === "ru" && ruNoIndex) {
-    setMeta("robots", "noindex,follow");
-    setMeta("googlebot", "noindex");
-  } else {
-    setMeta("robots", "index,follow");
-    setMeta("googlebot", "index");
+    if (lang === "ru" && ruNoIndex) {
+      setMeta("robots", "noindex,follow");
+      setMeta("googlebot", "noindex");
+    } else {
+      setMeta("robots", "index,follow");
+      setMeta("googlebot", "index");
+    }
+
+    setCanonical(canonicalUrl);
+    setHreflangAlternates(pageUrlFi, pageUrlRu);
+
+    const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
+
+    document.documentElement.lang = lang;
+    document.title = title;
+
+    setMeta("description", description);
+
+    setMeta("og:type", "website", true);
+    setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
+    setMeta("og:title", title, true);
+    setMeta("og:description", description, true);
+    setMeta("og:url", canonicalUrl, true);
+    if (ogImage) setMeta("og:image", ogImage, true);
+
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", title);
+    setMeta("twitter:description", description);
+    if (ogImage) setMeta("twitter:image", ogImage);
   }
-
-  setCanonical(canonicalUrl);
-  setHreflangAlternates(pageUrlFi, pageUrlRu);
-
-  const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
-
-  document.documentElement.lang = lang;
-  document.title = title;
-
-  setMeta("description", description);
-
-  setMeta("og:type", "website", true);
-  setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
-  setMeta("og:title", title, true);
-  setMeta("og:description", description, true);
-  setMeta("og:url", canonicalUrl, true);
-  if (ogImage) setMeta("og:image", ogImage, true);
-
-  setMeta("twitter:card", "summary_large_image");
-  setMeta("twitter:title", title);
-  setMeta("twitter:description", description);
-  if (ogImage) setMeta("twitter:image", ogImage);
-}
-
 
   function applyLocalBusinessSchema(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
@@ -362,7 +396,12 @@ function applySeo(data, lang) {
       };
     }
     Object.keys(schema).forEach(k => {
-      if (schema[k] === undefined || schema[k] === null || schema[k] === "" || (Array.isArray(schema[k]) && schema[k].length === 0)) {
+      if (
+        schema[k] === undefined ||
+        schema[k] === null ||
+        schema[k] === "" ||
+        (Array.isArray(schema[k]) && schema[k].length === 0)
+      ) {
         delete schema[k];
       }
     });
@@ -381,10 +420,11 @@ function applySeo(data, lang) {
     `;
   }
 
-  // RENDER
+  // RENDER FUNCTIONS
   function renderHeader(data, lang) {
     const header = $("#site-header");
     if (!header) return;
+
     const menuHtml = (data.menu || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -394,6 +434,7 @@ function applySeo(data, lang) {
         return `<a class="nav__link" href="${href}">${label}</a>`;
       })
       .join("");
+
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
@@ -402,9 +443,14 @@ function applySeo(data, lang) {
       data.region || "",
       data.phone || ""
     ].filter(Boolean).join(" • ");
+
     const fiActive = lang === "fi" ? " lang__btn--active" : "";
     const ruActive = lang === "ru" ? " lang__btn--active" : "";
-    const igBtn = ig ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>` : "";
+
+    const igBtn = ig
+      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+      : "";
+
     header.innerHTML = `
       <div class="topbar">
         <div class="topbar__left">${escapeHtml(topLeftText)}</div>
@@ -433,15 +479,20 @@ function applySeo(data, lang) {
   function renderFooter(data, lang) {
     const footer = $("#site-footer");
     if (!footer) return;
+
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
     const addr = t(info.address, lang);
     const y = info.yTunnus || "";
-    const igHtml = ig ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>` : "";
+    const igHtml = ig
+      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+      : "";
+
     const line2Parts = [];
     if (addr) line2Parts.push(`${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`);
     if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
+
     footer.innerHTML = `
       <div class="footer__inner">
         <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
@@ -460,13 +511,16 @@ function applySeo(data, lang) {
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
     if (!el) return;
+
     const hero = data.hero || {};
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
+
     const badgesHtml = (hero.badges || [])
       .map(b => `<span class="badge">${escapeHtml(t(b, lang))}</span>`)
       .join("");
+
     const highlightsHtml = (data.highlights || [])
       .filter(x => x && x.enabled !== false)
       .map(h => `
@@ -476,6 +530,7 @@ function applySeo(data, lang) {
           <div class="card__text">${escapeHtml(t(h.text, lang))}</div>
         </div>
       `).join("");
+
     const servicesHtml = (data.services || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -490,6 +545,7 @@ function applySeo(data, lang) {
           <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
         </div>
       `).join("");
+
     const reviewsHtml = (data.reviews || [])
       .filter(x => x && x.enabled !== false)
       .map(r => {
@@ -507,7 +563,11 @@ function applySeo(data, lang) {
           </div>
         `;
       }).join("");
-    const instagramCta = ig ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>` : "";
+
+    const instagramCta = ig
+      ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
+      : "";
+
     el.innerHTML = `
       <section class="hero">
         <h1 class="hero__title">${escapeHtml(t(hero.title, lang))}</h1>
@@ -549,6 +609,7 @@ function applySeo(data, lang) {
   function renderServicesPage(data, lang) {
     const el = $("#page-services");
     if (!el) return;
+
     const servicesHtml = (data.services || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -562,6 +623,7 @@ function applySeo(data, lang) {
           <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
         </div>
       `).join("");
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "services"))}</h1>
@@ -575,8 +637,10 @@ function applySeo(data, lang) {
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
     if (!ig) return "";
+
     const maxItems = Number(data?.instagram?.maxItems || 24);
     const items = (igFeed?.items || []).slice(0, maxItems);
+
     if (!items.length) {
       return `
         <section class="section">
@@ -591,6 +655,7 @@ function applySeo(data, lang) {
         </section>
       `;
     }
+
     const grid = items
       .map(it => {
         const url = escapeHtml(it.url || ig);
@@ -603,6 +668,7 @@ function applySeo(data, lang) {
         `;
       })
       .join("");
+
     return `
       <section class="section">
         <div class="igpreview__head">
@@ -622,8 +688,10 @@ function applySeo(data, lang) {
   function renderGalleryPage(data, lang, igFeed, uploads) {
     const el = $("#page-gallery");
     if (!el) return;
+
     const uploadItems = (uploads?.items || []).filter(x => x && x.image);
     const hasUploads = uploadItems.length > 0;
+
     const uploadsHtml = uploadItems
       .map(it => {
         const img = escapeHtml(it.image);
@@ -635,7 +703,9 @@ function applySeo(data, lang) {
         `;
       })
       .join("");
+
     const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
@@ -655,9 +725,13 @@ function applySeo(data, lang) {
   function renderReferencesPage(data, lang) {
     const el = $("#page-referenssit");
     if (!el) return;
+
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
-    const igCta = ig ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>` : "";
+    const igCta = ig
+      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>`
+      : "";
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "references"))}</h1>
@@ -673,6 +747,7 @@ function applySeo(data, lang) {
   function renderDocumentsPage(data, lang) {
     const el = $("#page-documents");
     if (!el) return;
+
     const docsHtml = (data.documents || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -686,6 +761,7 @@ function applySeo(data, lang) {
         `;
       })
       .join("");
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "documents"))}</h1>
@@ -698,9 +774,11 @@ function applySeo(data, lang) {
   function renderTarjousPage(data, lang) {
     const el = $("#page-tarjous");
     if (!el) return;
+
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const formId = data.tallyFormId || "";
     const iframeSrc = formId ? `https://tally.so/r/${encodeURIComponent(formId)}` : "";
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "quoteTitle"))}</h1>
@@ -730,15 +808,19 @@ function applySeo(data, lang) {
   function renderHinnastoPage(data, lang) {
     const el = $("#page-hinnasto");
     if (!el) return;
+
     const p = data.pricing || null;
     if (!p) {
       el.innerHTML = `<section class="section"><h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1><div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div></section>`;
       return;
     }
+
     const effective = p.effectiveFrom || "";
     const lead = t(p.lead, lang) || ui(lang, "pricingLead");
-    const introLines = Array.isArray(t(p.intro, lang)) ? t(p.intro, lang) : [];
+
+    const introLines = Array.isArray(p.intro?.[lang]) ? p.intro[lang] : (Array.isArray(p.intro?.fi) ? p.intro.fi : []);
     const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+
     const tables = Array.isArray(p.tables) ? p.tables : [];
     const tablesHtml = tables.map(tbl => {
       const title = escapeHtml(t(tbl.title, lang));
@@ -761,9 +843,11 @@ function applySeo(data, lang) {
             <div style="overflow-x:auto;">
               <table style="width:100%;border-collapse:collapse;min-width:600px;">
                 <thead style="background:rgba(255,255,255,0.05);">
-                  <tr><th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
-                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
-                      <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th></tr>
+                  <tr>
+                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
+                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
+                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th>
+                  </tr>
                 </thead>
                 <tbody>
                   ${rowsHtml}
@@ -773,8 +857,10 @@ function applySeo(data, lang) {
           </div>
         </section>`;
     }).join("");
-    const notesLines = Array.isArray(t(p.notes, lang)) ? t(p.notes, lang) : [];
+
+    const notesLines = Array.isArray(p.notes?.[lang]) ? p.notes[lang] : (Array.isArray(p.notes?.fi) ? p.notes.fi : []);
     const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
@@ -790,6 +876,7 @@ function applySeo(data, lang) {
   function renderContactPage(data, lang) {
     const el = $("#page-contact");
     if (!el) return;
+
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
     const info = data.businessInfo || {};
@@ -801,6 +888,7 @@ function applySeo(data, lang) {
     const op = bill.operaattori || "";
     const mapQuery = encodeURIComponent(info.mapAddress || "Siltakatu 73, 04400 Järvenpää, Finland");
     const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+
     const mapBlock = `
       <section class="section">
         <h2>${escapeHtml(ui(lang, "mapTitle"))}</h2>
@@ -816,6 +904,7 @@ function applySeo(data, lang) {
         </div>
       </section>
     `;
+
     const billingHtml = `
       <div class="card card--pad">
         <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
@@ -831,6 +920,7 @@ function applySeo(data, lang) {
         </div>
       </div>
     `;
+
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
@@ -853,7 +943,7 @@ function applySeo(data, lang) {
     `;
   }
 
-  // ---- boot: load data ----
+  // BOOT
   let data = null;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
@@ -866,19 +956,24 @@ function applySeo(data, lang) {
     return;
   }
 
-  const lang = getLang(data);
-
-  // ---- redirect legacy ?lang=ru to /ru/* to avoid duplicate content ----
+  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
   try {
-    const sp = new URLSearchParams(window.location.search);
-    const qLang = sp.get("lang");
-    if (qLang === "ru" && !isRuPath()) {
-      const cleanPath = (window.location.pathname || "/").replace(/\/$/, "") || "/";
-      const target = (cleanPath === "/" || cleanPath === "/index.html") ? "/ru/" : `/ru${cleanPath}`;
-      window.location.replace(target);
+    const url = new URL(window.location.href);
+    const qLang = url.searchParams.get("lang");
+    if (qLang === "ru") {
+      const basePath = stripRuPrefix(url.pathname);
+      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      url.pathname = targetPath;
+      url.searchParams.delete("lang");
+      window.location.replace(url.toString());
       return;
     }
   } catch (e) {}
+
+  const lang = getLang(data);
+
+  // persist selection
+  try { localStorage.setItem("lang", lang); } catch (e) {}
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
@@ -887,19 +982,10 @@ function applySeo(data, lang) {
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const nextLang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(nextLang)) {
-        localStorage.setItem("lang", nextLang);
-
-        // keep same logical page when switching language
-        const currentPath = (window.location.pathname || "/");
-        const logical = stripRuPrefix(currentPath) || "/";
-
-        const target = (nextLang === "ru")
-          ? (logical === "/" ? "/ru/" : `/ru${logical}`)
-          : (logical === "/" ? "/" : logical);
-
-        window.location.href = target;
+      const lang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(lang)) {
+        try { localStorage.setItem("lang", lang); } catch (e) {}
+        window.location.href = setLangInUrl(lang);
       }
     }
   });
@@ -911,7 +997,7 @@ function applySeo(data, lang) {
       const ok = await copyToClipboard(text);
       const status = $("#copy-status");
       if (status) {
-        status.textContent = ok ? ui(lang, "copied") : "Kopiointi epäonnistui";
+        status.textContent = ok ? ui(lang, "copied") : (lang === "ru" ? "Не удалось скопировать" : "Kopiointi epäonnistui");
         status.style.color = ok ? "var(--brand)" : "#ff6b6b";
         if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
       }
@@ -921,7 +1007,6 @@ function applySeo(data, lang) {
   const igFeed = await loadInstagramFeed();
   const uploads = await loadUploads();
 
-  // Render
   renderHeader(data, lang);
   renderFooter(data, lang);
   renderHome(data, lang, igFeed);
