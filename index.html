@@ -4,49 +4,47 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Тема для адресной строки браузера -->
+  <!-- Theme colors -->
   <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)" />
   <meta name="msapplication-TileColor" content="#0b0f1a" />
 
-  <!-- SEO (будет переопределено site.js из data/site.json) -->
-  <title>RS-Expert Oy — Sähköasentaja Uusimaa | Sähkötyöt Järvenpää</title>
-  <meta name="description" content="Sähköasentaja Uudellamaalla: sähköasennukset, vianhaku, sähkökeskukset, valaistus ja ryhmäjohtosuojaukset koteihin ja yrityksiin. Toiminta-alue: Järvenpää, Kerava, Tuusula ja koko Uusimaa." />
+  <!-- SEO (будет переопределено site.js из /data/site.json) -->
+  <title>RS-Expert Oy — Sähköasentaja Järvenpää | Sähkötyöt Uusimaa</title>
+  <meta name="description" content="Sähköasentaja Järvenpäässä ja Uudellamaalla. Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin." />
   <meta name="robots" content="index,follow" />
 
-  <!-- Canonical -->
+  <!-- Canonical: FI главная -->
   <link rel="canonical" href="https://www.rs-expert.fi/" />
 
-  <!-- Open Graph -->
+  <!-- Open Graph (будет переопределено site.js) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="RS-Expert Oy" />
-  <meta property="og:title" content="RS-Expert Oy — Sähköasentaja Uusimaa" />
-  <meta property="og:description" content="Sähköasennukset, vianhaku ja sähkökeskukset koteihin ja yrityksiin Uudellamaalla. Ammattitaitoinen sähköasentaja Järvenpäästä." />
-  <meta property="og:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+  <meta property="og:title" content="RS-Expert Oy" />
+  <meta property="og:description" content="Sähköasennukset, vianhaku ja sähkökeskukset Uudellamaalla." />
+  <meta property="og:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.svg" />
   <meta property="og:url" content="https://www.rs-expert.fi/" />
 
-  <!-- Twitter Cards -->
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="RS-Expert Oy — Sähköasentaja Uusimaa" />
-  <meta name="twitter:description" content="Sähköasennukset ja sähkötyöt Uudellamaalla." />
-  <meta name="twitter:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.jpg" />
+  <meta name="twitter:title" content="RS-Expert Oy" />
+  <meta name="twitter:description" content="Sähkötyöt Uusimaa" />
+  <meta name="twitter:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.svg" />
 
   <!-- Icons -->
   <link rel="icon" href="/assets/uploads/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/uploads/apple-touch-icon.png" />
 
-  <!-- Preload критического JS -->
+  <!-- Preload -->
   <link rel="preload" href="/assets/site.js" as="script" />
 
-  <!-- LocalBusiness JSON-LD (заполняется site.js) -->
+  <!-- LocalBusiness JSON-LD (filled by site.js) -->
   <script id="ld-json" type="application/ld+json">{}</script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="/assets/styles.css" />
 
-  <!-- Fallback для отключенного JavaScript -->
+  <!-- Fallback for no-JS -->
   <noscript>
     <style>
       body { background: #0b0f1a; color: #fff; font-family: system-ui, sans-serif; text-align: center; padding: 100px 20px; }
@@ -57,17 +55,17 @@
     <p>Sivusto vaatii JavaScriptin toimiakseen oikein. Ota se käyttöön selaimen asetuksista tai kokeile toista selainta.</p>
   </noscript>
 </head>
+
 <body>
-  <!-- HEADER (рендерится site.js) -->
+  <!-- HEADER (rendered by site.js) -->
   <header id="site-header"></header>
 
   <!-- MAIN -->
   <main class="container">
-    <!-- HOME PAGE CONTENT (рендерится site.js) -->
     <div id="page-home"></div>
   </main>
 
-  <!-- FOOTER (рендерится site.js) -->
+  <!-- FOOTER (rendered by site.js) -->
   <footer id="site-footer"></footer>
 
   <!-- Main script -->
