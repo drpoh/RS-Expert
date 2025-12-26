@@ -1,9 +1,10 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.rs-expert.fi/sitemap.xml
+# Optional informational hints (не стандартизировано, но можно оставить)
+Content-signal: search=yes,ai-train=no
 
-# Optional: block AI / scraping bots (does not affect Google indexing)
+# Block AI / scraping bots
 User-agent: Amazonbot
 Disallow: /
 
@@ -27,3 +28,6 @@ Disallow: /
 
 User-agent: meta-externalagent
 Disallow: /
+
+# Sitemap
+Sitemap: https://www.rs-expert.fi/sitemap.xml
