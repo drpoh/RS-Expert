@@ -3,7 +3,7 @@
   "i18n": {
     "default": "fi",
     "available": ["fi", "ru"],
-    "ruNoIndex": true,
+    "ruNoIndex": false,
     "preferBrowserLanguage": true
   },
   "tagline": {
