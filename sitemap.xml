@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- FI (основной язык) -->
   <url><loc>https://www.rs-expert.fi/</loc></url>
-  <url><loc>https://www.rs-expert.fi/index.html</loc></url>
   <url><loc>https://www.rs-expert.fi/services.html</loc></url>
   <url><loc>https://www.rs-expert.fi/gallery.html</loc></url>
   <url><loc>https://www.rs-expert.fi/referenssit.html</loc></url>
   <url><loc>https://www.rs-expert.fi/documents.html</loc></url>
+  <url><loc>https://www.rs-expert.fi/hinnasto.html</loc></url>
   <url><loc>https://www.rs-expert.fi/tarjouspyynto.html</loc></url>
   <url><loc>https://www.rs-expert.fi/contact.html</loc></url>
+
+  <!-- RU (индексируемая версия, вторичный приоритет) -->
+  <url><loc>https://www.rs-expert.fi/?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/services.html?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/gallery.html?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/referenssit.html?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/documents.html?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/hinnasto.html?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/tarjouspyynto.html?lang=ru</loc></url>
+  <url><loc>https://www.rs-expert.fi/contact.html?lang=ru</loc></url>
+
 </urlset>
