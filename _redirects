@@ -1,4 +1,4 @@
-# RU pages (path-based). Serve the same HTML, language is determined by /ru/ prefix in site.js
+# RU pages (path-based). Serve same HTML, language is determined by /ru/ prefix
 /ru/                    /index.html             200
 /ru/services.html       /services.html          200
 /ru/gallery.html        /gallery.html           200
@@ -8,18 +8,6 @@
 /ru/contact.html        /contact.html           200
 /ru/hinnasto.html       /hinnasto.html          200
 
-# Normalize RU index.html -> /ru/
-/ru/index.html          /ru/                    301
-
-# Normalize old explicit index.html -> /
+# Normalize index.html
 /index.html             /                       301
-
-# Optional: normalize old query-based RU URLs (helps GSC cleanup)
-/?lang=ru                /ru/                   301
-/services.html?lang=ru   /ru/services.html      301
-/gallery.html?lang=ru    /ru/gallery.html       301
-/referenssit.html?lang=ru /ru/referenssit.html  301
-/documents.html?lang=ru  /ru/documents.html     301
-/tarjouspyynto.html?lang=ru /ru/tarjouspyynto.html 301
-/contact.html?lang=ru    /ru/contact.html       301
-/hinnasto.html?lang=ru   /ru/hinnasto.html      301
+/ru/index.html          /ru/                    301
