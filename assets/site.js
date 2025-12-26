@@ -242,43 +242,84 @@
     return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
-  // SEO и schema (определены до вызова)
-  function applySeo(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
-    let path = window.location.pathname.replace(/\/$/, "");
-    if (path === "" || path === "/index.html") path = "/";
-    const pageSeo = data?.seo?.pages?.[path] || data?.seo?.pages?.["/"] || {};
-    const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
-    const description = t(pageSeo.description, lang) ||
-      t(data?.site?.defaultDescription, lang) ||
-      t(data?.tagline, lang) || "";
-    const pageUrlFi = absoluteUrl(baseUrl, path);
-    const pageUrlRu = setLangInUrl("ru");
-    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
-    if (lang === "ru" && ruNoIndex) {
-      setCanonical(pageUrlFi);
-      setMeta("robots", "noindex,follow");
-      setMeta("googlebot", "noindex");
-    } else {
-      setCanonical(pageUrlFi);
-      setMeta("robots", "index,follow");
+// SEO и schema (определены до вызова)
+function applySeo(data, lang) {
+  const baseUrl = data?.site?.baseUrl || window.location.origin;
+
+  // normalize pathname
+  let path = window.location.pathname.replace(/\/$/, "");
+  if (path === "" || path === "/index.html") path = "/";
+
+  const pageSeo = data?.seo?.pages?.[path] || data?.seo?.pages?.["/"] || {};
+
+  const title =
+    t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
+
+  const description =
+    t(pageSeo.description, lang) ||
+    t(data?.site?.defaultDescription, lang) ||
+    t(data?.tagline, lang) ||
+    "";
+
+  // URLs
+  const pageUrlFi = absoluteUrl(baseUrl, path);
+
+  // RU URL = same page, but with ?lang=ru
+  // Important: use FI url as base to avoid mixing www/non-www and preserving tracking params
+  const pageUrlRu = (() => {
+    try {
+      const u = new URL(pageUrlFi);
+      u.searchParams.set("lang", "ru");
+      return u.toString();
+    } catch (e) {
+      return setLangInUrl("ru");
     }
-    setHreflangAlternates(pageUrlFi, pageUrlRu);
-    const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
-    document.documentElement.lang = lang;
-    document.title = title;
-    setMeta("description", description);
-    setMeta("og:type", "website", true);
-    setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
-    setMeta("og:title", title, true);
-    setMeta("og:description", description, true);
-    setMeta("og:url", pageUrlFi, true);
-    if (ogImage) setMeta("og:image", ogImage, true);
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", title);
-    setMeta("twitter:description", description);
-    if (ogImage) setMeta("twitter:image", ogImage);
+  })();
+
+  const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
+
+  // Canonical should match the *current language version*
+  const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
+
+  // robots
+  if (lang === "ru" && ruNoIndex) {
+    setMeta("robots", "noindex,follow");
+    setMeta("googlebot", "noindex");
+  } else {
+    setMeta("robots", "index,follow");
+    // optional: clear googlebot tag if it existed before
+    // (not required, but helps if user toggles languages)
+    setMeta("googlebot", "index");
   }
+
+  // canonical + hreflang
+  setCanonical(canonicalUrl);
+  setHreflangAlternates(pageUrlFi, pageUrlRu);
+
+  const ogImage = absoluteUrl(
+    baseUrl,
+    pageSeo.ogImage || data?.site?.defaultOgImage || ""
+  );
+
+  // language + title/description
+  document.documentElement.lang = lang;
+  document.title = title;
+  setMeta("description", description);
+
+  // Open Graph / Twitter
+  setMeta("og:type", "website", true);
+  setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
+  setMeta("og:title", title, true);
+  setMeta("og:description", description, true);
+  setMeta("og:url", canonicalUrl, true);
+  if (ogImage) setMeta("og:image", ogImage, true);
+
+  setMeta("twitter:card", "summary_large_image");
+  setMeta("twitter:title", title);
+  setMeta("twitter:description", description);
+  if (ogImage) setMeta("twitter:image", ogImage);
+}
+
 
   function applyLocalBusinessSchema(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
