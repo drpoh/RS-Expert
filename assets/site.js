@@ -1,4 +1,4 @@
-// RS-Expert site.js — ПОЛНАЯ ВЕРСИЯ с render-функциями и SEO (2025-12-23)
+// RS-Expert site.js — FULL VERSION (RU on /ru/* + SEO canonical/hreflang) (2025-12-26)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -73,29 +73,57 @@
     return def;
   }
 
+  // ---- RU prefix helpers (/ru/*) ----
+  function isRuPath() {
+    return window.location.pathname === "/ru" || window.location.pathname.startsWith("/ru/");
+  }
+
+  function stripRuPrefix(pathname) {
+    if (!pathname) return "/";
+    if (pathname === "/ru") return "/";
+    if (pathname.startsWith("/ru/")) return pathname.slice(3) || "/";
+    return pathname;
+  }
+
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
+
+    // 1) Path-based language
+    if (isRuPath() && available.includes("ru")) return "ru";
+
+    // 2) Legacy query param (will be redirected)
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
+
+    // 3) Saved preference
     const saved = localStorage.getItem("lang");
     if (available.includes(saved)) return saved;
+
+    // 4) Browser language
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
     return def;
   }
 
-  function setLangInUrl(lang) {
-    const url = new URL(window.location.href);
-    url.searchParams.set("lang", lang);
-    return url.toString();
-  }
-
   function withLang(href, lang) {
     if (!href) return "#";
-    if (lang !== "ru") return href;
-    return href.includes("?") ? `${href}&lang=ru` : `${href}?lang=ru`;
+    if (href.startsWith("http://") || href.startsWith("https://")) return href;
+
+    const h = href.startsWith("/") ? href : `/${href}`;
+
+    if (lang === "ru") {
+      if (h === "/") return "/ru/";
+      if (h.startsWith("/ru/")) return h;
+      return `/ru${h}`;
+    }
+
+    // FI
+    if (h === "/ru" || h.startsWith("/ru/")) {
+      return stripRuPrefix(h);
+    }
+    return h;
   }
 
   async function copyToClipboard(text) {
@@ -242,84 +270,68 @@
     return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
-// SEO и schema (определены до вызова)
-function applySeo(data, lang) {
-  const baseUrl = data?.site?.baseUrl || window.location.origin;
+  // SEO
+  function applySeo(data, lang) {
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
 
-  // normalize pathname
-  let path = window.location.pathname.replace(/\/$/, "");
-  if (path === "" || path === "/index.html") path = "/";
+    let pathname = window.location.pathname.replace(/\/$/, "");
+    if (pathname === "" || pathname === "/index.html") pathname = "/";
 
-  const pageSeo = data?.seo?.pages?.[path] || data?.seo?.pages?.["/"] || {};
+    // map /ru/services.html -> /services.html for seo.pages lookup
+    let logicalPath = stripRuPrefix(pathname);
+    logicalPath = logicalPath.replace(/\/$/, "");
+    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
+    if (logicalPath === "") logicalPath = "/";
 
-  const title =
-    t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
+    const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
 
-  const description =
-    t(pageSeo.description, lang) ||
-    t(data?.site?.defaultDescription, lang) ||
-    t(data?.tagline, lang) ||
-    "";
+    const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
 
-  // URLs
-  const pageUrlFi = absoluteUrl(baseUrl, path);
+    const description =
+      t(pageSeo.description, lang) ||
+      t(data?.site?.defaultDescription, lang) ||
+      t(data?.tagline, lang) || "";
 
-  // RU URL = same page, but with ?lang=ru
-  // Important: use FI url as base to avoid mixing www/non-www and preserving tracking params
-  const pageUrlRu = (() => {
-    try {
-      const u = new URL(pageUrlFi);
-      u.searchParams.set("lang", "ru");
-      return u.toString();
-    } catch (e) {
-      return setLangInUrl("ru");
+    const fiPath = logicalPath === "/" ? "/" : logicalPath;
+    const ruPath = logicalPath === "/" ? "/ru/" : `/ru${logicalPath}`;
+
+    const pageUrlFi = absoluteUrl(baseUrl, fiPath);
+    const pageUrlRu = absoluteUrl(baseUrl, ruPath);
+
+    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
+
+    const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
+
+    if (lang === "ru" && ruNoIndex) {
+      setMeta("robots", "noindex,follow");
+      setMeta("googlebot", "noindex");
+    } else {
+      setMeta("robots", "index,follow");
+      setMeta("googlebot", "index");
     }
-  })();
 
-  const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
+    setCanonical(canonicalUrl);
+    setHreflangAlternates(pageUrlFi, pageUrlRu);
 
-  // Canonical should match the *current language version*
-  const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
+    const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
 
-  // robots
-  if (lang === "ru" && ruNoIndex) {
-    setMeta("robots", "noindex,follow");
-    setMeta("googlebot", "noindex");
-  } else {
-    setMeta("robots", "index,follow");
-    // optional: clear googlebot tag if it existed before
-    // (not required, but helps if user toggles languages)
-    setMeta("googlebot", "index");
+    document.documentElement.lang = lang;
+    document.title = title;
+
+    setMeta("description", description);
+
+    setMeta("og:type", "website", true);
+    setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
+    setMeta("og:title", title, true);
+    setMeta("og:description", description, true);
+    setMeta("og:url", canonicalUrl, true);
+    if (ogImage) setMeta("og:image", ogImage, true);
+
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", title);
+    setMeta("twitter:description", description);
+    if (ogImage) setMeta("twitter:image", ogImage);
   }
-
-  // canonical + hreflang
-  setCanonical(canonicalUrl);
-  setHreflangAlternates(pageUrlFi, pageUrlRu);
-
-  const ogImage = absoluteUrl(
-    baseUrl,
-    pageSeo.ogImage || data?.site?.defaultOgImage || ""
-  );
-
-  // language + title/description
-  document.documentElement.lang = lang;
-  document.title = title;
-  setMeta("description", description);
-
-  // Open Graph / Twitter
-  setMeta("og:type", "website", true);
-  setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
-  setMeta("og:title", title, true);
-  setMeta("og:description", description, true);
-  setMeta("og:url", canonicalUrl, true);
-  if (ogImage) setMeta("og:image", ogImage, true);
-
-  setMeta("twitter:card", "summary_large_image");
-  setMeta("twitter:title", title);
-  setMeta("twitter:description", description);
-  if (ogImage) setMeta("twitter:image", ogImage);
-}
-
 
   function applyLocalBusinessSchema(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
@@ -368,7 +380,7 @@ function applySeo(data, lang) {
     `;
   }
 
-  // RENDER-ФУНКЦИИ (все вместе)
+  // RENDER
   function renderHeader(data, lang) {
     const header = $("#site-header");
     if (!header) return;
@@ -558,39 +570,6 @@ function applySeo(data, lang) {
     `;
   }
 
-  function renderGalleryPage(data, lang, igFeed, uploads) {
-    const el = $("#page-gallery");
-    if (!el) return;
-    const uploadItems = (uploads?.items || []).filter(x => x && x.image);
-    const hasUploads = uploadItems.length > 0;
-    const uploadsHtml = uploadItems
-      .map(it => {
-        const img = escapeHtml(it.image);
-        const title = escapeHtml(it.title || "");
-        return `
-          <a class="igthumb" href="${img}" target="_blank" rel="noopener">
-            <img class="igthumb__img" src="${img}" alt="${title}" loading="lazy">
-          </a>
-        `;
-      })
-      .join("");
-    const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
-    el.innerHTML = `
-      <section class="section">
-        <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
-      </section>
-      ${
-        hasUploads
-          ? `<section class="section">
-               <h2>${escapeHtml(lang === "ru" ? "Проекты" : "Projektit")}</h2>
-               <div class="iggrid">${uploadsHtml}</div>
-             </section>`
-          : ""
-      }
-      ${igBlock}
-    `;
-  }
-
   function renderInstagramPreviewBlock(data, lang, igFeed) {
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
@@ -636,6 +615,39 @@ function applySeo(data, lang) {
           <a class="link" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
         </div>
       </section>
+    `;
+  }
+
+  function renderGalleryPage(data, lang, igFeed, uploads) {
+    const el = $("#page-gallery");
+    if (!el) return;
+    const uploadItems = (uploads?.items || []).filter(x => x && x.image);
+    const hasUploads = uploadItems.length > 0;
+    const uploadsHtml = uploadItems
+      .map(it => {
+        const img = escapeHtml(it.image);
+        const title = escapeHtml(it.title || "");
+        return `
+          <a class="igthumb" href="${img}" target="_blank" rel="noopener">
+            <img class="igthumb__img" src="${img}" alt="${title}" loading="lazy">
+          </a>
+        `;
+      })
+      .join("");
+    const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
+      </section>
+      ${
+        hasUploads
+          ? `<section class="section">
+               <h2>${escapeHtml(lang === "ru" ? "Проекты" : "Projektit")}</h2>
+               <div class="iggrid">${uploadsHtml}</div>
+             </section>`
+          : ""
+      }
+      ${igBlock}
     `;
   }
 
@@ -840,7 +852,7 @@ function applySeo(data, lang) {
     `;
   }
 
-  // boot
+  // ---- boot: load data ----
   let data = null;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
@@ -854,6 +866,19 @@ function applySeo(data, lang) {
   }
 
   const lang = getLang(data);
+
+  // ---- redirect legacy ?lang=ru to /ru/* to avoid duplicate content ----
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    const qLang = sp.get("lang");
+    if (qLang === "ru" && !isRuPath()) {
+      const cleanPath = (window.location.pathname || "/").replace(/\/$/, "") || "/";
+      const target = (cleanPath === "/" || cleanPath === "/index.html") ? "/ru/" : `/ru${cleanPath}`;
+      window.location.replace(target);
+      return;
+    }
+  } catch (e) {}
+
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
@@ -861,10 +886,19 @@ function applySeo(data, lang) {
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const lang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(lang)) {
-        localStorage.setItem("lang", lang);
-        window.location.href = setLangInUrl(lang);
+      const nextLang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(nextLang)) {
+        localStorage.setItem("lang", nextLang);
+
+        // keep same logical page when switching language
+        const currentPath = (window.location.pathname || "/");
+        const logical = stripRuPrefix(currentPath) || "/";
+
+        const target = (nextLang === "ru")
+          ? (logical === "/" ? "/ru/" : `/ru${logical}`)
+          : (logical === "/" ? "/" : logical);
+
+        window.location.href = target;
       }
     }
   });
@@ -886,6 +920,7 @@ function applySeo(data, lang) {
   const igFeed = await loadInstagramFeed();
   const uploads = await loadUploads();
 
+  // Render
   renderHeader(data, lang);
   renderFooter(data, lang);
   renderHome(data, lang, igFeed);
