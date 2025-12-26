@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
+  <!-- ================= FI (основной язык) ================= -->
+
   <!-- HOME -->
   <url>
     <loc>https://www.rs-expert.fi/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.rs-expert.fi/?lang=ru</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
   </url>
 
   <!-- SERVICES -->
@@ -19,22 +16,12 @@
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>https://www.rs-expert.fi/services.html?lang=ru</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
 
   <!-- GALLERY -->
   <url>
     <loc>https://www.rs-expert.fi/gallery.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.rs-expert.fi/gallery.html?lang=ru</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
   </url>
 
   <!-- REFERENCES -->
@@ -43,22 +30,12 @@
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
-  <url>
-    <loc>https://www.rs-expert.fi/referenssit.html?lang=ru</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
 
   <!-- DOCUMENTS -->
   <url>
     <loc>https://www.rs-expert.fi/documents.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://www.rs-expert.fi/documents.html?lang=ru</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
   </url>
 
   <!-- PRICING -->
@@ -67,22 +44,12 @@
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>
   </url>
-  <url>
-    <loc>https://www.rs-expert.fi/hinnasto.html?lang=ru</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
 
   <!-- QUOTE -->
   <url>
     <loc>https://www.rs-expert.fi/tarjouspyynto.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.rs-expert.fi/tarjouspyynto.html?lang=ru</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
   </url>
 
   <!-- CONTACT -->
@@ -91,8 +58,62 @@
     <changefreq>yearly</changefreq>
     <priority>0.9</priority>
   </url>
+
+
+  <!-- ================= RU (/ru/) ================= -->
+
+  <!-- HOME RU -->
   <url>
-    <loc>https://www.rs-expert.fi/contact.html?lang=ru</loc>
+    <loc>https://www.rs-expert.fi/ru/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- SERVICES RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/services.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- GALLERY RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/gallery.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- REFERENCES RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/referenssit.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <!-- DOCUMENTS RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/documents.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- PRICING RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/hinnasto.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- QUOTE RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/tarjouspyynto.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- CONTACT RU -->
+  <url>
+    <loc>https://www.rs-expert.fi/ru/contact.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
