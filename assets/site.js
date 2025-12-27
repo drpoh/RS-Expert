@@ -1,4 +1,5 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-27) — FIXED
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
+// + FIX: cookie fallback for language persistence (2025-12-27)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -92,6 +93,23 @@
     return path.replace(/\/$/, "");
   }
 
+  // ===== Lang cookie fallback (fix: FI not switching on home when localStorage blocked) =====
+  function setLangCookie(lang) {
+    try {
+      // 365 days
+      document.cookie = `lang=${encodeURIComponent(lang)}; Max-Age=31536000; Path=/; SameSite=Lax`;
+    } catch (e) {}
+  }
+
+  function getLangCookie() {
+    try {
+      const m = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
@@ -104,9 +122,13 @@
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) saved
+    // 3) saved (localStorage)
     const saved = localStorage.getItem("lang");
     if (available.includes(saved)) return saved;
+
+    // 3.5) cookie fallback (when localStorage is blocked)
+    const c = getLangCookie();
+    if (available.includes(c)) return c;
 
     // 4) browser
     if (data?.i18n?.preferBrowserLanguage) {
@@ -1003,23 +1025,9 @@
 
   const lang = getLang(data);
 
-  // FIX: keep URL <-> language consistent (prevents RU on FI URLs and canonical duplicates)
-  try {
-    const p = window.location.pathname || "/";
-    const isRuPath = (p === "/ru" || p.startsWith("/ru/"));
-
-    if (lang === "ru" && !isRuPath) {
-      window.location.replace(setLangInUrl("ru"));
-      return;
-    }
-    if (lang === "fi" && isRuPath) {
-      window.location.replace(setLangInUrl("fi"));
-      return;
-    }
-  } catch (e) {}
-
   // persist selection
   try { localStorage.setItem("lang", lang); } catch (e) {}
+  setLangCookie(lang);
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
@@ -1031,6 +1039,7 @@
       const lang = btn.getAttribute("data-lang");
       if (data?.i18n?.available?.includes(lang)) {
         try { localStorage.setItem("lang", lang); } catch (e) {}
+        setLangCookie(lang);
         window.location.href = setLangInUrl(lang);
       }
     }
