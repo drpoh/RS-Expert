@@ -1,9 +1,31 @@
 # =========================
-# Canonical / normalization
+# RS-Expert redirects (Cloudflare Pages)
+# RU pages are path-based: /ru/...
+# IMPORTANT: order matters (top -> bottom)
 # =========================
 
-/index.html          /              301
-/ru                 /ru/            301
-/ru/index.html       /ru/            301
+# ---- RU: exact rewrites to existing HTML files ----
+/ru/                   /index.html            200
+/ru/index.html         /index.html            200
 
+/ru/services.html      /services.html         200
+/ru/gallery.html       /gallery.html          200
+/ru/referenssit.html   /referenssit.html      200
+/ru/documents.html     /documents.html        200
+/ru/tarjouspyynto.html /tarjouspyynto.html    200
+/ru/contact.html       /contact.html          200
+/ru/hinnasto.html      /hinnasto.html         200
 
+# ---- Optional: normalize old explicit index.html to / ----
+/index.html            /                      301
+
+# ---- Optional: if someone hits /ru (no trailing slash) ----
+/ru                    /ru/                   301
+
+# ---- Optional: RU fallback (only if you want /ru/something to show RU home) ----
+# If you DON'T need this, you can delete the next line.
+# It must be BELOW all exact /ru/*.html rules.
+/ru/*                  /index.html            200
+
+# ---- Site-wide fallback (SPA-like). Keep it LAST ----
+/*                     /index.html            200
