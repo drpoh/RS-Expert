@@ -1,9 +1,4 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-27)
-// FIX: single, consistent language logic across all pages & browsers:
-// - Language is determined ONLY by URL path (/ru/* => RU, otherwise FI)
-// - No auto-switching by localStorage/browser language (prevents Brave inconsistencies)
-// - Legacy ?lang=ru redirects to /ru/* (prevents duplicates)
-// - Canonical always matches current language URL; hreflang points FI<->RU pairs
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ + cookie fallback (2025-12-27)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -49,7 +44,7 @@
   }
 
   function setHreflangAlternates(urlFi, urlRu) {
-    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(n => n.remove());
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((n) => n.remove());
     function add(hreflang, href) {
       const l = document.createElement("link");
       l.rel = "alternate";
@@ -71,12 +66,91 @@
     return "";
   }
 
-  // ========== LANGUAGE (single source of truth) ==========
+  function getLangFromBrowser(available, def) {
+    const nav = (navigator.language || navigator.userLanguage || "").toLowerCase();
+    if (nav.startsWith("ru") && available.includes("ru")) return "ru";
+    if (nav.startsWith("fi") && available.includes("fi")) return "fi";
+    return def;
+  }
 
+  // =========================
+  // Cookie helpers (Brave / strict privacy can block localStorage)
+  // =========================
+  function canUseLocalStorage() {
+    try {
+      const k = "__ls_test__";
+      window.localStorage.setItem(k, "1");
+      window.localStorage.removeItem(k);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setCookie(name, value, days = 365) {
+    try {
+      const d = new Date();
+      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+      const expires = "expires=" + d.toUTCString();
+      // SameSite=Lax is safe default for language
+      document.cookie =
+        encodeURIComponent(name) +
+        "=" +
+        encodeURIComponent(String(value ?? "")) +
+        ";" +
+        expires +
+        ";path=/" +
+        ";SameSite=Lax";
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getCookie(name) {
+    try {
+      const n = encodeURIComponent(name) + "=";
+      const parts = (document.cookie || "").split(";");
+      for (let i = 0; i < parts.length; i++) {
+        const c = parts[i].trim();
+        if (c.startsWith(n)) return decodeURIComponent(c.slice(n.length));
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function persistLang(lang) {
+    // 1) try localStorage
+    if (canUseLocalStorage()) {
+      try {
+        localStorage.setItem("lang", lang);
+        return;
+      } catch (e) {}
+    }
+    // 2) fallback cookie
+    setCookie("rs_lang", lang, 365);
+  }
+
+  function readPersistedLang() {
+    // 1) try localStorage
+    if (canUseLocalStorage()) {
+      try {
+        const v = localStorage.getItem("lang");
+        if (v) return v;
+      } catch (e) {}
+    }
+    // 2) cookie
+    return getCookie("rs_lang");
+  }
+
+  // =========================
   // NEW: RU language selection is path-based: /ru/*
-  function getLangFromPathOnly() {
+  // =========================
+  function getLangFromPath() {
     const p = window.location.pathname || "/";
-    return (p === "/ru" || p.startsWith("/ru/")) ? "ru" : "fi";
+    return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
   }
 
   function stripRuPrefix(pathname) {
@@ -92,41 +166,47 @@
     return path.replace(/\/$/, "");
   }
 
-  // Logical path is the same for FI and RU (used for seo.pages lookup and URL pairing)
-  function getLogicalPathname() {
-    let pathname = window.location.pathname || "/";
-    // normalize /index.html
-    if (pathname === "/index.html") pathname = "/";
-    // strip RU prefix for logical mapping
-    pathname = stripRuPrefix(pathname);
-    // normalize trailing slash
-    pathname = pathname.replace(/\/$/, "");
-    if (pathname === "" || pathname === "/index.html") pathname = "/";
-    if (pathname === "") pathname = "/";
-    return pathname;
-  }
+  function getLang(data) {
+    const available = data?.i18n?.available || ["fi"];
+    const def = data?.i18n?.default || "fi";
 
-  // Build URL (path) for a given language
-  function pathForLang(lang) {
-    const logical = getLogicalPathname();
-    if (lang === "ru") {
-      return (logical === "/") ? "/ru/" : `/ru${logical}`;
+    // 1) PATH override (for SEO-indexable RU pages)
+    const pathLang = getLangFromPath();
+    if (pathLang && available.includes(pathLang)) return pathLang;
+
+    // 2) legacy ?lang=ru (we will redirect to /ru/* in boot)
+    const urlLang = new URLSearchParams(window.location.search).get("lang");
+    if (available.includes(urlLang)) return urlLang;
+
+    // 3) saved (localStorage/cookie)
+    const saved = readPersistedLang();
+    if (available.includes(saved)) return saved;
+
+    // 4) browser
+    if (data?.i18n?.preferBrowserLanguage) {
+      return getLangFromBrowser(available, def);
     }
-    // FI
-    return (logical === "/") ? "/" : logical;
+    return def;
   }
 
-  // Used by language switch buttons
+  // NEW: canonical RU URLs are /ru/..., not ?lang=ru
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
-    const targetPath = pathForLang(lang);
-    url.pathname = targetPath;
-    // remove legacy query param to avoid duplicates
+    const basePath = stripRuPrefix(url.pathname);
+
+    if (lang === "ru") {
+      url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      url.searchParams.delete("lang");
+      return url.toString();
+    }
+
+    // FI
+    url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
     url.searchParams.delete("lang");
     return url.toString();
   }
 
-  // Keep internal links consistent with current language
+  // NEW: keep links consistent: if RU -> prefix /ru to internal paths
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
@@ -134,31 +214,25 @@
     // normalize home
     if (href === "/index.html") href = "/";
 
-    // Parse as URL if possible (so we can drop ?lang=ru reliably)
+    if (lang !== "ru") {
+      // FI: never include /ru and never include ?lang
+      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+    }
+
+    // RU:
+    // convert internal path to /ru/...
     let path = href;
-    let search = "";
-    let hash = "";
+    // strip legacy lang=ru
     try {
       const u = new URL(href, window.location.origin);
       u.searchParams.delete("lang");
-      path = u.pathname;
-      search = u.search || "";
-      hash = u.hash || "";
-    } catch (e) {
-      // plain path
-      // also remove any accidental ?lang=ru manually
-      path = String(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
-    }
+      path = u.pathname + (u.search || "") + (u.hash || "");
+    } catch (e) {}
 
-    // Strip /ru if user accidentally provided it
-    path = stripRuPrefix(path);
-
-    // Compose final localized path
-    const localizedPath = (lang === "ru")
-      ? ((path === "/" || path === "") ? "/ru/" : (path.startsWith("/") ? "/ru" + path : "/ru/" + path))
-      : ((path === "/" || path === "") ? "/" : (path.startsWith("/") ? path : "/" + path));
-
-    return localizedPath + (search || "") + (hash || "");
+    const clean = stripRuPrefix(path);
+    if (clean === "/" || clean === "") return "/ru/";
+    if (clean.startsWith("/")) return "/ru" + clean;
+    return "/ru/" + clean;
   }
 
   async function copyToClipboard(text) {
@@ -302,15 +376,21 @@
   };
 
   function ui(lang, key) {
-    return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
+    return UI[lang]?.[key] || UI.fi?.[key] || key;
   }
 
   // SEO + schema
   function applySeo(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
 
-    // logicalPath for seo.pages lookup
-    const logicalPath = getLogicalPathname();
+    let pathname = window.location.pathname.replace(/\/$/, "");
+    if (pathname === "" || pathname === "/index.html") pathname = "/";
+
+    // map /ru/services.html -> /services.html for seo.pages lookup
+    let logicalPath = stripRuPrefix(pathname);
+    logicalPath = logicalPath.replace(/\/$/, "");
+    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
+    if (logicalPath === "") logicalPath = "/";
 
     const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
 
@@ -319,21 +399,26 @@
     const description =
       t(pageSeo.description, lang) ||
       t(data?.site?.defaultDescription, lang) ||
-      t(data?.tagline, lang) || "";
+      t(data?.tagline, lang) ||
+      "";
 
-    // Pair URLs (FI and RU)
-    const fiPath = (logicalPath === "/") ? "/" : logicalPath;
-    const ruPath = (logicalPath === "/") ? "/ru/" : `/ru${logicalPath}`;
+    const fiPath = logicalPath === "/" ? "/" : logicalPath;
+    const ruPath = logicalPath === "/" ? "/ru/" : `/ru${logicalPath}`;
 
     const pageUrlFi = absoluteUrl(baseUrl, fiPath);
     const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-    // Canonical must match language URL
-    const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
+    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
 
-    // RU MUST be indexable now (do not noindex)
-    setMeta("robots", "index,follow");
-    setMeta("googlebot", "index");
+    const canonicalUrl = lang === "ru" ? pageUrlRu : pageUrlFi;
+
+    if (lang === "ru" && ruNoIndex) {
+      setMeta("robots", "noindex,follow");
+      setMeta("googlebot", "noindex");
+    } else {
+      setMeta("robots", "index,follow");
+      setMeta("googlebot", "index");
+    }
 
     setCanonical(canonicalUrl);
     setHreflangAlternates(pageUrlFi, pageUrlRu);
@@ -370,7 +455,7 @@
       telephone: b.telephone || data?.phone,
       email: b.email || data?.email,
       image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
-      areaServed: (b.areaServed || []).filter(Boolean).map(x => ({ "@type": "City", name: x })),
+      areaServed: (b.areaServed || []).filter(Boolean).map((x) => ({ "@type": "City", name: x })),
       openingHours: b.openingHours || [],
       inLanguage: lang
     };
@@ -385,7 +470,7 @@
         addressCountry: "FI"
       };
     }
-    Object.keys(schema).forEach(k => {
+    Object.keys(schema).forEach((k) => {
       if (
         schema[k] === undefined ||
         schema[k] === null ||
@@ -416,9 +501,9 @@
     if (!header) return;
 
     const menuHtml = (data.menu || [])
-      .filter(x => x && x.enabled !== false)
+      .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(m => {
+      .map((m) => {
         const href = escapeHtml(withLang(m.href || "#", lang));
         const label = escapeHtml(t(m.label, lang));
         return `<a class="nav__link" href="${href}">${label}</a>`;
@@ -428,17 +513,17 @@
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
-    const topLeftText = [
-      lang === "ru" ? "Быстрая помощь" : "Nopea apu",
-      data.region || "",
-      data.phone || ""
-    ].filter(Boolean).join(" • ");
+    const topLeftText = [lang === "ru" ? "Быстрая помощь" : "Nopea apu", data.region || "", data.phone || ""]
+      .filter(Boolean)
+      .join(" • ");
 
     const fiActive = lang === "fi" ? " lang__btn--active" : "";
     const ruActive = lang === "ru" ? " lang__btn--active" : "";
 
     const igBtn = ig
-      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
+          ui(lang, "instagram")
+        )}</a>`
       : "";
 
     header.innerHTML = `
@@ -460,7 +545,9 @@
         </div>
         <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
+            ui(lang, "requestQuote")
+          )}</a>
         </div>
       </div>
     `;
@@ -476,7 +563,9 @@
     const addr = t(info.address, lang);
     const y = info.yTunnus || "";
     const igHtml = ig
-      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
+      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
+          ui(lang, "instagram")
+        )}</a>`
       : "";
 
     const line2Parts = [];
@@ -492,7 +581,11 @@
           <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
           ${igHtml}
         </div>
-        ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
+        ${
+          line2Parts.length
+            ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>`
+            : ""
+        }
         <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
       </div>
     `;
@@ -538,25 +631,27 @@
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
 
-    const badgesHtml = (hero.badges || [])
-      .map(b => `<span class="badge">${escapeHtml(t(b, lang))}</span>`)
-      .join("");
+    const badgesHtml = (hero.badges || []).map((b) => `<span class="badge">${escapeHtml(t(b, lang))}</span>`).join("");
 
     const highlightsHtml = (data.highlights || [])
-      .filter(x => x && x.enabled !== false)
-      .map(h => `
+      .filter((x) => x && x.enabled !== false)
+      .map(
+        (h) => `
         <div class="card">
           <div class="card__icon">${escapeHtml(h.icon || "")}</div>
           <div class="card__title">${escapeHtml(t(h.title, lang))}</div>
           <div class="card__text">${escapeHtml(t(h.text, lang))}</div>
         </div>
-      `).join("");
+      `
+      )
+      .join("");
 
     const servicesHtml = (data.services || [])
-      .filter(x => x && x.enabled !== false)
+      .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .slice(0, 6)
-      .map(s => `
+      .map(
+        (s) => `
         <div class="service">
           <div class="service__top">
             <div class="service__icon">${escapeHtml(s.icon || "")}</div>
@@ -565,11 +660,13 @@
           <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
           <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
         </div>
-      `).join("");
+      `
+      )
+      .join("");
 
     const reviewsHtml = (data.reviews || [])
-      .filter(x => x && x.enabled !== false)
-      .map(r => {
+      .filter((x) => x && x.enabled !== false)
+      .map((r) => {
         const starsCount = Number(r.stars || 0);
         const stars = "★".repeat(starsCount).padEnd(5, "☆");
         const meta = [r.city, t(r.service, lang)].filter(Boolean).join(" • ");
@@ -583,10 +680,13 @@
             <div class="review__text">${escapeHtml(t(r.text, lang))}</div>
           </div>
         `;
-      }).join("");
+      })
+      .join("");
 
     const instagramCta = ig
-      ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
+      ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
+          ui(lang, "instagramCTA")
+        )}</a>`
       : "";
 
     el.innerHTML = `
@@ -595,7 +695,9 @@
         <p class="hero__subtitle">${escapeHtml(t(hero.subtitle, lang))}</p>
         <div class="hero__badges">${badgesHtml}</div>
         <div class="hero__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
+            ui(lang, "requestQuote")
+          )}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
@@ -615,7 +717,9 @@
         <h2>${escapeHtml(ui(lang, "needElectrician"))}</h2>
         <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
         <div class="cta__buttons">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
+            ui(lang, "requestQuote")
+          )}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
@@ -632,9 +736,10 @@
     if (!el) return;
 
     const servicesHtml = (data.services || [])
-      .filter(x => x && x.enabled !== false)
+      .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(s => `
+      .map(
+        (s) => `
         <div class="service service--big">
           <div class="service__top">
             <div class="service__icon">${escapeHtml(s.icon || "")}</div>
@@ -643,7 +748,9 @@
           <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
           <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
         </div>
-      `).join("");
+      `
+      )
+      .join("");
 
     el.innerHTML = `
       <section class="section">
@@ -678,7 +785,7 @@
     }
 
     const grid = items
-      .map(it => {
+      .map((it) => {
         const url = escapeHtml(it.url || ig);
         const img = escapeHtml(it.image || "");
         const alt = escapeHtml(it.alt || "Instagram");
@@ -710,11 +817,11 @@
     const el = $("#page-gallery");
     if (!el) return;
 
-    const uploadItems = (uploads?.items || []).filter(x => x && x.image);
+    const uploadItems = (uploads?.items || []).filter((x) => x && x.image);
     const hasUploads = uploadItems.length > 0;
 
     const uploadsHtml = uploadItems
-      .map(it => {
+      .map((it) => {
         const img = escapeHtml(it.image);
         const title = escapeHtml(it.title || "");
         return `
@@ -750,7 +857,9 @@
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
     const igCta = ig
-      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>`
+      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
+          ui(lang, "instagramCTA")
+        )}</a></div>`
       : "";
 
     el.innerHTML = `
@@ -770,9 +879,9 @@
     if (!el) return;
 
     const docsHtml = (data.documents || [])
-      .filter(x => x && x.enabled !== false)
+      .filter((x) => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(d => {
+      .map((d) => {
         const url = escapeHtml(d.url || "#");
         return `
           <a class="doc" href="${url}" target="_blank" rel="noopener">
@@ -806,7 +915,9 @@
         <p class="lead">${escapeHtml(ui(lang, "quoteLead"))}</p>
         <div class="card card--pad">
           <div class="stack">
-            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
+      data.phone || ""
+    )}</a></div>
             <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
           </div>
         </div>
@@ -839,25 +950,28 @@
     const effective = p.effectiveFrom || "";
     const lead = t(p.lead, lang) || ui(lang, "pricingLead");
 
-    const introLines = Array.isArray(p.intro?.[lang]) ? p.intro[lang] : (Array.isArray(p.intro?.fi) ? p.intro.fi : []);
-    const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+    const introLines = Array.isArray(p.intro?.[lang]) ? p.intro[lang] : Array.isArray(p.intro?.fi) ? p.intro.fi : [];
+    const introHtml = introLines.map((x) => `<li>${escapeHtml(String(x))}</li>`).join("");
 
     const tables = Array.isArray(p.tables) ? p.tables : [];
-    const tablesHtml = tables.map(tbl => {
-      const title = escapeHtml(t(tbl.title, lang));
-      const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
-        ui(lang, "pricingTableProduct"),
-        ui(lang, "pricingTableVat0"),
-        ui(lang, "pricingTableVat")
-      ];
-      const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
-      const rowsHtml = rows.map(r => {
-        const name = escapeHtml(t(r.name, lang));
-        const p0 = escapeHtml(r.price0 || "");
-        const pv = escapeHtml(r.priceVat || "");
-        return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
-      }).join("");
-      return `
+    const tablesHtml = tables
+      .map((tbl) => {
+        const title = escapeHtml(t(tbl.title, lang));
+        const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
+          ui(lang, "pricingTableProduct"),
+          ui(lang, "pricingTableVat0"),
+          ui(lang, "pricingTableVat")
+        ];
+        const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
+        const rowsHtml = rows
+          .map((r) => {
+            const name = escapeHtml(t(r.name, lang));
+            const p0 = escapeHtml(r.price0 || "");
+            const pv = escapeHtml(r.priceVat || "");
+            return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
+          })
+          .join("");
+        return `
         <section class="section">
           <h2>${title}</h2>
           <div class="card card--pad">
@@ -877,16 +991,23 @@
             </div>
           </div>
         </section>`;
-    }).join("");
+      })
+      .join("");
 
-    const notesLines = Array.isArray(p.notes?.[lang]) ? p.notes[lang] : (Array.isArray(p.notes?.fi) ? p.notes.fi : []);
-    const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+    const notesLines = Array.isArray(p.notes?.[lang]) ? p.notes[lang] : Array.isArray(p.notes?.fi) ? p.notes.fi : [];
+    const notesHtml = notesLines.map((x) => `<li>${escapeHtml(String(x))}</li>`).join("");
 
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
         ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
-        ${effective ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(effective)}</span></div>` : ""}
+        ${
+          effective
+            ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(
+                effective
+              )}</span></div>`
+            : ""
+        }
         ${introHtml ? `<div class="card card--pad mt"><ul>${introHtml}</ul></div>` : ""}
       </section>
       ${tablesHtml}
@@ -930,12 +1051,16 @@
       <div class="card card--pad">
         <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
         <div class="stack">
-          ${iban ? `
+          ${
+            iban
+              ? `
             <div class="rowline">
               <div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> <span class="mono">${escapeHtml(iban)}</span></div>
               <button class="copybtn" type="button" data-copy="${escapeHtml(iban)}">${escapeHtml(ui(lang, "copyIban"))}</button>
             </div>
-            <div class="copystatus" id="copy-status" aria-live="polite"></div>` : ""}
+            <div class="copystatus" id="copy-status" aria-live="polite"></div>`
+              : ""
+          }
           ${eaddr ? `<div><strong>${escapeHtml(ui(lang, "verkkolaskuLabel"))}:</strong> <span class="mono">${escapeHtml(eaddr)}</span></div>` : ""}
           ${op ? `<div><strong>${escapeHtml(ui(lang, "operaattoriLabel"))}:</strong> ${escapeHtml(op)}</div>` : ""}
         </div>
@@ -949,12 +1074,16 @@
           <div class="stack">
             <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
             <div>${escapeHtml(regionCity)}</div>
-            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
+      data.phone || ""
+    )}</a></div>
             <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
             ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
             ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
             <div class="mt">
-              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
+              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
+      ui(lang, "contactCTA")
+    )}</a>
             </div>
           </div>
         </div>
@@ -977,15 +1106,13 @@
     return;
   }
 
-  // Legacy redirect: ?lang=ru => /ru/* (prevents duplicates + canonical variant)
+  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
     if (qLang === "ru") {
       const basePath = stripRuPrefix(url.pathname);
-      const targetPath = (basePath === "/" || basePath === "" || basePath === "/index.html")
-        ? "/ru/"
-        : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
       url.pathname = targetPath;
       url.searchParams.delete("lang");
       window.location.replace(url.toString());
@@ -993,11 +1120,27 @@
     }
   } catch (e) {}
 
-  // Single source of truth:
-  const lang = getLangFromPathOnly();
+  // Resolve language
+  const lang = getLang(data);
 
-  // Optional: keep preference stored (does NOT affect rendering logic)
-  try { localStorage.setItem("lang", lang); } catch (e) {}
+  // Persist selection (localStorage or cookie)
+  persistLang(lang);
+
+  // OPTIONAL UX: if user has RU selected but opened FI path (or vice versa) — normalize
+  // This keeps behavior consistent across all pages/browsers.
+  try {
+    const pathLang = getLangFromPath(); // "ru" or null
+    if (lang === "ru" && !pathLang) {
+      // go to /ru equivalent
+      window.location.replace(setLangInUrl("ru"));
+      return;
+    }
+    if (lang === "fi" && pathLang === "ru") {
+      // go to FI equivalent
+      window.location.replace(setLangInUrl("fi"));
+      return;
+    }
+  } catch (e) {}
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
@@ -1008,7 +1151,7 @@
     if (btn) {
       const targetLang = btn.getAttribute("data-lang");
       if (data?.i18n?.available?.includes(targetLang)) {
-        try { localStorage.setItem("lang", targetLang); } catch (e) {}
+        persistLang(targetLang);
         window.location.href = setLangInUrl(targetLang);
       }
     }
@@ -1021,9 +1164,12 @@
       const ok = await copyToClipboard(text);
       const status = $("#copy-status");
       if (status) {
-        status.textContent = ok ? ui(lang, "copied") : (lang === "ru" ? "Не удалось скопировать" : "Kopiointi epäonnistui");
+        status.textContent = ok ? ui(lang, "copied") : lang === "ru" ? "Не удалось скопировать" : "Kopiointi epäonnistui";
         status.style.color = ok ? "var(--brand)" : "#ff6b6b";
-        if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
+        if (ok) setTimeout(() => {
+          status.textContent = "";
+          status.style.color = "";
+        }, 2500);
       }
     }
   });
