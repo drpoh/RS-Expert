@@ -1,4 +1,4 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-27) — FIXED
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -509,35 +509,35 @@
   }
 
   function renderStickyCall(data, lang) {
-  // показываем только если есть телефон
-  const phone = (data.phone || "").trim();
-  if (!phone) return;
+    // показываем только если есть телефон
+    const phone = (data.phone || "").trim();
+    if (!phone) return;
 
-  const phoneRaw = phone.replaceAll(" ", "");
-  const label = ui(lang, "call"); // "Soita" / "Позвонить"
-  const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
+    const phoneRaw = phone.replaceAll(" ", "");
+    const label = ui(lang, "call"); // "Soita" / "Позвонить"
+    const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
 
-  // контейнер создаём один раз
-  let wrap = document.getElementById("stickycall");
-  if (!wrap) {
-    wrap = document.createElement("div");
-    wrap.id = "stickycall";
-    wrap.className = "stickycall";
-    document.body.appendChild(wrap);
+    // контейнер создаём один раз
+    let wrap = document.getElementById("stickycall");
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.id = "stickycall";
+      wrap.className = "stickycall";
+      document.body.appendChild(wrap);
+    }
+
+    wrap.innerHTML = `
+      <div class="stickycall__inner">
+        <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
+          📞 ${escapeHtml(label)} ${escapeHtml(phone)}
+        </a>
+        <div class="stickycall__sub">${escapeHtml(sub)}</div>
+      </div>
+    `;
+
+    // добавляем отступ снизу, чтобы контент не перекрывался
+    document.body.classList.add("has-stickycall");
   }
-
-  wrap.innerHTML = `
-    <div class="stickycall__inner">
-      <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
-        📞 ${escapeHtml(label)} ${escapeHtml(phone)}
-      </a>
-      <div class="stickycall__sub">${escapeHtml(sub)}</div>
-    </div>
-  `;
-
-  // добавляем отступ снизу, чтобы контент не перекрывался
-  document.body.classList.add("has-stickycall");
-}
 
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
@@ -1003,6 +1003,21 @@
 
   const lang = getLang(data);
 
+  // FIX: keep URL <-> language consistent (prevents RU on FI URLs and canonical duplicates)
+  try {
+    const p = window.location.pathname || "/";
+    const isRuPath = (p === "/ru" || p.startsWith("/ru/"));
+
+    if (lang === "ru" && !isRuPath) {
+      window.location.replace(setLangInUrl("ru"));
+      return;
+    }
+    if (lang === "fi" && isRuPath) {
+      window.location.replace(setLangInUrl("fi"));
+      return;
+    }
+  } catch (e) {}
+
   // persist selection
   try { localStorage.setItem("lang", lang); } catch (e) {}
 
@@ -1049,6 +1064,6 @@
   renderHinnastoPage(data, lang);
   renderContactPage(data, lang);
   renderStickyCall(data, lang);
-  
+
   console.log("Site rendered successfully in language:", lang);
 })();
