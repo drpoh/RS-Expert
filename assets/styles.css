@@ -50,6 +50,32 @@ a:hover { text-decoration: none; }
 strong { color: var(--text); }
 ::selection { background: rgba(106, 228, 255, 0.25); }
 
+/* ===================== CLS FIX (added) ===================== */
+/* Reserve space for header/footer and JS-rendered pages to avoid layout shifts */
+#site-header:empty {
+  display: block;
+  min-height: 120px;
+}
+
+@media (min-width: 900px) {
+  #site-header:empty { min-height: 114px; }
+}
+
+#site-footer:empty {
+  display: block;
+  min-height: 90px;
+}
+
+/* Page roots rendered by site.js — keep a stable initial height */
+#page-home:empty { min-height: 860px; }
+#page-services:empty { min-height: 560px; }
+#page-gallery:empty { min-height: 560px; }
+#page-contact:empty { min-height: 640px; }
+#page-documents:empty { min-height: 520px; }
+#page-hinnasto:empty { min-height: 560px; }
+#page-referenssit:empty { min-height: 520px; }
+/* =================== /CLS FIX (added) ====================== */
+
 /* ========== common utilities ========== */
 .glass {
   background: var(--glass);
