@@ -1,4 +1,9 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ + Brave persistence fix (2025-12-27)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-27)
+// FIX: single, consistent language logic across all pages & browsers:
+// - Language is determined ONLY by URL path (/ru/* => RU, otherwise FI)
+// - No auto-switching by localStorage/browser language (prevents Brave inconsistencies)
+// - Legacy ?lang=ru redirects to /ru/* (prevents duplicates)
+// - Canonical always matches current language URL; hreflang points FI<->RU pairs
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -66,17 +71,12 @@
     return "";
   }
 
-  function getLangFromBrowser(available, def) {
-    const nav = (navigator.language || navigator.userLanguage || "").toLowerCase();
-    if (nav.startsWith("ru") && available.includes("ru")) return "ru";
-    if (nav.startsWith("fi") && available.includes("fi")) return "fi";
-    return def;
-  }
+  // ========== LANGUAGE (single source of truth) ==========
 
   // NEW: RU language selection is path-based: /ru/*
-  function getLangFromPath() {
+  function getLangFromPathOnly() {
     const p = window.location.pathname || "/";
-    return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
+    return (p === "/ru" || p.startsWith("/ru/")) ? "ru" : "fi";
   }
 
   function stripRuPrefix(pathname) {
@@ -92,102 +92,41 @@
     return path.replace(/\/$/, "");
   }
 
-  // ===== cookies (language persistence fallback for Brave / strict modes) =====
-  function setLangCookie(lang) {
-    try {
-      // 1 year, path-wide, Lax is safest
-      document.cookie = `lang=${encodeURIComponent(lang)}; Max-Age=31536000; Path=/; SameSite=Lax`;
-    } catch (e) {}
+  // Logical path is the same for FI and RU (used for seo.pages lookup and URL pairing)
+  function getLogicalPathname() {
+    let pathname = window.location.pathname || "/";
+    // normalize /index.html
+    if (pathname === "/index.html") pathname = "/";
+    // strip RU prefix for logical mapping
+    pathname = stripRuPrefix(pathname);
+    // normalize trailing slash
+    pathname = pathname.replace(/\/$/, "");
+    if (pathname === "" || pathname === "/index.html") pathname = "/";
+    if (pathname === "") pathname = "/";
+    return pathname;
   }
 
-  function getLangCookie() {
-    try {
-      const m = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/);
-      return m ? decodeURIComponent(m[1]) : "";
-    } catch (e) {
-      return "";
+  // Build URL (path) for a given language
+  function pathForLang(lang) {
+    const logical = getLogicalPathname();
+    if (lang === "ru") {
+      return (logical === "/") ? "/ru/" : `/ru${logical}`;
     }
+    // FI
+    return (logical === "/") ? "/" : logical;
   }
 
-  function canPersistLang() {
-    // localStorage test
-    let lsOk = false;
-    try {
-      const k = "__lang_test__";
-      localStorage.setItem(k, "1");
-      lsOk = localStorage.getItem(k) === "1";
-      localStorage.removeItem(k);
-    } catch (e) {}
-
-    // cookie test
-    let cOk = false;
-    try {
-      document.cookie = "lang_test=1; Max-Age=60; Path=/; SameSite=Lax";
-      cOk = /(?:^|;\s*)lang_test=1(?:;|$)/.test(document.cookie);
-      document.cookie = "lang_test=; Max-Age=0; Path=/; SameSite=Lax";
-    } catch (e) {}
-
-    return lsOk || cOk;
-  }
-
-  function getLang(data) {
-    const available = data?.i18n?.available || ["fi"];
-    const def = data?.i18n?.default || "fi";
-
-    // 1) PATH override (for SEO-indexable RU pages)
-    const pathLang = getLangFromPath();
-    if (pathLang && available.includes(pathLang)) return pathLang;
-
-    // 2) URL param (legacy / fallback): ?lang=fi|ru
-    const urlLang = new URLSearchParams(window.location.search).get("lang");
-    if (available.includes(urlLang)) return urlLang;
-
-    // 3) cookie
-    const c = getLangCookie();
-    if (available.includes(c)) return c;
-
-    // 4) saved (localStorage)
-    const saved = (() => {
-      try { return localStorage.getItem("lang"); } catch (e) { return ""; }
-    })();
-    if (available.includes(saved)) return saved;
-
-    // 5) browser
-    if (data?.i18n?.preferBrowserLanguage) {
-      return getLangFromBrowser(available, def);
-    }
-    return def;
-  }
-
-  // NEW: canonical RU URLs are /ru/..., not ?lang=ru
-  // Brave fix: if storage/cookies are blocked, keep ?lang=fi for FI so language doesn't revert to browser default
+  // Used by language switch buttons
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
-    const basePath = stripRuPrefix(url.pathname);
-
-    const persistOk = canPersistLang();
-
-    if (lang === "ru") {
-      url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
-      url.searchParams.delete("lang");
-      return url.toString();
-    }
-
-    // FI
-    url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
-
-    // If persistence is blocked (Brave Shields / strict privacy), keep ?lang=fi
-    if (!persistOk) {
-      url.searchParams.set("lang", "fi");
-    } else {
-      url.searchParams.delete("lang");
-    }
-
+    const targetPath = pathForLang(lang);
+    url.pathname = targetPath;
+    // remove legacy query param to avoid duplicates
+    url.searchParams.delete("lang");
     return url.toString();
   }
 
-  // NEW: keep links consistent: if RU -> prefix /ru to internal paths
-  // Brave fix: if persistence is blocked AND current lang is FI, keep ?lang=fi on internal links
+  // Keep internal links consistent with current language
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
@@ -195,42 +134,31 @@
     // normalize home
     if (href === "/index.html") href = "/";
 
-    const persistOk = canPersistLang();
-    const needFiParam = (lang !== "ru") && !persistOk;
-
-    if (lang !== "ru") {
-      // FI: never include /ru and never include ?lang=ru
-      let out = stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
-
-      // If Brave blocks storage/cookies, keep ?lang=fi across navigation
-      if (needFiParam) {
-        try {
-          const u = new URL(out, window.location.origin);
-          if (!u.searchParams.get("lang")) u.searchParams.set("lang", "fi");
-          out = u.pathname + (u.search || "") + (u.hash || "");
-        } catch (e) {
-          // very defensive fallback
-          if (!out.includes("?")) out += "?lang=fi";
-          else if (!out.includes("lang=")) out += "&lang=fi";
-        }
-      }
-      return out;
-    }
-
-    // RU:
-    // convert internal path to /ru/...
+    // Parse as URL if possible (so we can drop ?lang=ru reliably)
     let path = href;
-    // strip legacy lang=ru
+    let search = "";
+    let hash = "";
     try {
       const u = new URL(href, window.location.origin);
       u.searchParams.delete("lang");
-      path = u.pathname + (u.search || "") + (u.hash || "");
-    } catch (e) {}
+      path = u.pathname;
+      search = u.search || "";
+      hash = u.hash || "";
+    } catch (e) {
+      // plain path
+      // also remove any accidental ?lang=ru manually
+      path = String(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+    }
 
-    const clean = stripRuPrefix(path);
-    if (clean === "/" || clean === "") return "/ru/";
-    if (clean.startsWith("/")) return "/ru" + clean;
-    return "/ru/" + clean;
+    // Strip /ru if user accidentally provided it
+    path = stripRuPrefix(path);
+
+    // Compose final localized path
+    const localizedPath = (lang === "ru")
+      ? ((path === "/" || path === "") ? "/ru/" : (path.startsWith("/") ? "/ru" + path : "/ru/" + path))
+      : ((path === "/" || path === "") ? "/" : (path.startsWith("/") ? path : "/" + path));
+
+    return localizedPath + (search || "") + (hash || "");
   }
 
   async function copyToClipboard(text) {
@@ -381,14 +309,8 @@
   function applySeo(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
 
-    let pathname = window.location.pathname.replace(/\/$/, "");
-    if (pathname === "" || pathname === "/index.html") pathname = "/";
-
-    // map /ru/services.html -> /services.html for seo.pages lookup
-    let logicalPath = stripRuPrefix(pathname);
-    logicalPath = logicalPath.replace(/\/$/, "");
-    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
-    if (logicalPath === "") logicalPath = "/";
+    // logicalPath for seo.pages lookup
+    const logicalPath = getLogicalPathname();
 
     const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
 
@@ -399,23 +321,19 @@
       t(data?.site?.defaultDescription, lang) ||
       t(data?.tagline, lang) || "";
 
-    const fiPath = logicalPath === "/" ? "/" : logicalPath;
-    const ruPath = logicalPath === "/" ? "/ru/" : `/ru${logicalPath}`;
+    // Pair URLs (FI and RU)
+    const fiPath = (logicalPath === "/") ? "/" : logicalPath;
+    const ruPath = (logicalPath === "/") ? "/ru/" : `/ru${logicalPath}`;
 
     const pageUrlFi = absoluteUrl(baseUrl, fiPath);
     const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
-
+    // Canonical must match language URL
     const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
 
-    if (lang === "ru" && ruNoIndex) {
-      setMeta("robots", "noindex,follow");
-      setMeta("googlebot", "noindex");
-    } else {
-      setMeta("robots", "index,follow");
-      setMeta("googlebot", "index");
-    }
+    // RU MUST be indexable now (do not noindex)
+    setMeta("robots", "index,follow");
+    setMeta("googlebot", "index");
 
     setCanonical(canonicalUrl);
     setHreflangAlternates(pageUrlFi, pageUrlRu);
@@ -1059,13 +977,15 @@
     return;
   }
 
-  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
+  // Legacy redirect: ?lang=ru => /ru/* (prevents duplicates + canonical variant)
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
     if (qLang === "ru") {
       const basePath = stripRuPrefix(url.pathname);
-      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      const targetPath = (basePath === "/" || basePath === "" || basePath === "/index.html")
+        ? "/ru/"
+        : `/ru${normalizeToNoTrailingSlash(basePath)}`;
       url.pathname = targetPath;
       url.searchParams.delete("lang");
       window.location.replace(url.toString());
@@ -1073,11 +993,11 @@
     }
   } catch (e) {}
 
-  const lang = getLang(data);
+  // Single source of truth:
+  const lang = getLangFromPathOnly();
 
-  // persist selection (localStorage + cookie)
+  // Optional: keep preference stored (does NOT affect rendering logic)
   try { localStorage.setItem("lang", lang); } catch (e) {}
-  setLangCookie(lang);
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
@@ -1086,11 +1006,10 @@
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const nextLang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(nextLang)) {
-        try { localStorage.setItem("lang", nextLang); } catch (e) {}
-        setLangCookie(nextLang);
-        window.location.href = setLangInUrl(nextLang);
+      const targetLang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(targetLang)) {
+        try { localStorage.setItem("lang", targetLang); } catch (e) {}
+        window.location.href = setLangInUrl(targetLang);
       }
     }
   });
