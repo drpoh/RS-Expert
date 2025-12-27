@@ -1,9 +1,4 @@
-/* RS-Expert v0.2 — optimized styles.css (2025-12-27) */
-/* NOTE: only FIXES applied, nothing removed:
-   - removed invalid "composes:" usage (was breaking plain CSS)
-   - added missing classes used by site.js (card__*, card--pad, stickycall, has-stickycall)
-*/
-
+/* RS-Expert v0.2 — optimized styles.css (2025-12-22) */
 /* ========== base / reset ========== */
 *,
 *::before,
@@ -366,7 +361,11 @@ p { margin: 0 0 12px; color: var(--muted); }
 }
 
 /* ========== cards / services / works / docs / reviews ========== */
-/* FIX: "composes:" is not valid in plain CSS. We apply the same base styles directly. */
+/* IMPORTANT FIX:
+   Your previous CSS used "composes:" which is NOT valid in plain CSS.
+   That broke styles in some browsers (and can indirectly affect perceived "language switching").
+   We keep all selectors and intent, but implement the same effect with real CSS. */
+
 .card,
 .service,
 .work,
@@ -383,11 +382,17 @@ p { margin: 0 0 12px; color: var(--muted); }
   border: 1px solid var(--border);
 }
 
+.service,
+.doc,
+.work,
+.workcard {
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
 .service:hover,
 .doc:hover,
 .work:hover,
 .workcard:hover {
-  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.065);
@@ -454,11 +459,13 @@ p { margin: 0 0 12px; color: var(--muted); }
 .review__meta { color: var(--muted); font-size: 13px; margin: 6px 0 8px; }
 .review__text { color: var(--muted); white-space: pre-wrap; font-size: 14px; }
 
-/* ========== added: card helpers used in site.js ========== */
+/* helper: card--pad (used in JS) */
 .card--pad { padding: 16px; }
-.card__icon { font-size: 22px; margin-bottom: 8px; }
-.card__title { font-weight: 850; letter-spacing: -0.02em; margin-bottom: 6px; }
+
+/* OPTIONAL: card inner title/text blocks (used in some sections) */
+.card__title { font-weight: 850; margin-bottom: 6px; }
 .card__text { color: var(--muted); font-size: 14px; }
+.card__icon { font-size: 22px; margin-bottom: 8px; }
 
 /* ========== instagram preview ========== */
 .igpreview__head { margin-bottom: 10px; }
@@ -584,58 +591,56 @@ p { margin: 0 0 12px; color: var(--muted); }
 .list { list-style: disc; padding-left: 20px; }
 .list li { margin-bottom: 8px; }
 
-/* ========== Sticky call button (mobile) ========== */
-/* shown when site.js adds .has-stickycall */
-.has-stickycall .container {
-  padding-bottom: 92px; /* reserve space for sticky bar */
-}
-
+/* ========== sticky call button (mobile) ========== */
+/* appears when JS adds #stickycall and body.has-stickycall */
 .stickycall {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
   z-index: 60;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: rgba(11, 15, 26, 0.72);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border-top: 1px solid var(--border-light);
+  display: none;
 }
 
 .stickycall__inner {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  display: grid;
-  gap: 4px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(11, 15, 26, 0.72);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+  padding: 10px;
 }
 
 .stickycall__btn {
+  width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 14px;
-  color: #07101a;
-  background: linear-gradient(135deg, var(--brand), var(--brand-2));
-  box-shadow: 0 10px 30px rgba(106, 228, 255, 0.18);
+  border-radius: 16px;
   font-weight: 850;
   letter-spacing: -0.01em;
+  color: #07101a;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  box-shadow: 0 10px 30px rgba(106, 228, 255, 0.16);
 }
-
-.stickycall__btn:active { transform: translateY(1px); }
 
 .stickycall__sub {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.70);
+  margin-top: 6px;
   text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.66);
 }
 
-/* hide on desktop (optional) */
-@media (min-width: 900px) {
-  .stickycall { display: none; }
-  .has-stickycall .container { padding-bottom: 60px; }
+@media (max-width: 900px) {
+  .stickycall { display: block; }
+}
+
+/* add breathing room for pages so sticky does not cover content */
+body.has-stickycall .container {
+  padding-bottom: 110px;
 }
 
 /* ========== background extras ========== */
