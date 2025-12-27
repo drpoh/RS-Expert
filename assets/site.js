@@ -1,5 +1,4 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
-// + FIX: cookie fallback for language persistence (2025-12-27)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ + Brave persistence fix (2025-12-27)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -93,10 +92,10 @@
     return path.replace(/\/$/, "");
   }
 
-  // ===== Lang cookie fallback (fix: FI not switching on home when localStorage blocked) =====
+  // ===== cookies (language persistence fallback for Brave / strict modes) =====
   function setLangCookie(lang) {
     try {
-      // 365 days
+      // 1 year, path-wide, Lax is safest
       document.cookie = `lang=${encodeURIComponent(lang)}; Max-Age=31536000; Path=/; SameSite=Lax`;
     } catch (e) {}
   }
@@ -104,10 +103,31 @@
   function getLangCookie() {
     try {
       const m = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/);
-      return m ? decodeURIComponent(m[1]) : null;
+      return m ? decodeURIComponent(m[1]) : "";
     } catch (e) {
-      return null;
+      return "";
     }
+  }
+
+  function canPersistLang() {
+    // localStorage test
+    let lsOk = false;
+    try {
+      const k = "__lang_test__";
+      localStorage.setItem(k, "1");
+      lsOk = localStorage.getItem(k) === "1";
+      localStorage.removeItem(k);
+    } catch (e) {}
+
+    // cookie test
+    let cOk = false;
+    try {
+      document.cookie = "lang_test=1; Max-Age=60; Path=/; SameSite=Lax";
+      cOk = /(?:^|;\s*)lang_test=1(?:;|$)/.test(document.cookie);
+      document.cookie = "lang_test=; Max-Age=0; Path=/; SameSite=Lax";
+    } catch (e) {}
+
+    return lsOk || cOk;
   }
 
   function getLang(data) {
@@ -118,19 +138,21 @@
     const pathLang = getLangFromPath();
     if (pathLang && available.includes(pathLang)) return pathLang;
 
-    // 2) legacy ?lang=ru (we will redirect to /ru/* in boot)
+    // 2) URL param (legacy / fallback): ?lang=fi|ru
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) saved (localStorage)
-    const saved = localStorage.getItem("lang");
-    if (available.includes(saved)) return saved;
-
-    // 3.5) cookie fallback (when localStorage is blocked)
+    // 3) cookie
     const c = getLangCookie();
     if (available.includes(c)) return c;
 
-    // 4) browser
+    // 4) saved (localStorage)
+    const saved = (() => {
+      try { return localStorage.getItem("lang"); } catch (e) { return ""; }
+    })();
+    if (available.includes(saved)) return saved;
+
+    // 5) browser
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -138,9 +160,12 @@
   }
 
   // NEW: canonical RU URLs are /ru/..., not ?lang=ru
+  // Brave fix: if storage/cookies are blocked, keep ?lang=fi for FI so language doesn't revert to browser default
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
     const basePath = stripRuPrefix(url.pathname);
+
+    const persistOk = canPersistLang();
 
     if (lang === "ru") {
       url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
@@ -150,11 +175,19 @@
 
     // FI
     url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
-    url.searchParams.delete("lang");
+
+    // If persistence is blocked (Brave Shields / strict privacy), keep ?lang=fi
+    if (!persistOk) {
+      url.searchParams.set("lang", "fi");
+    } else {
+      url.searchParams.delete("lang");
+    }
+
     return url.toString();
   }
 
   // NEW: keep links consistent: if RU -> prefix /ru to internal paths
+  // Brave fix: if persistence is blocked AND current lang is FI, keep ?lang=fi on internal links
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
@@ -162,9 +195,26 @@
     // normalize home
     if (href === "/index.html") href = "/";
 
+    const persistOk = canPersistLang();
+    const needFiParam = (lang !== "ru") && !persistOk;
+
     if (lang !== "ru") {
-      // FI: never include /ru and never include ?lang
-      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+      // FI: never include /ru and never include ?lang=ru
+      let out = stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+
+      // If Brave blocks storage/cookies, keep ?lang=fi across navigation
+      if (needFiParam) {
+        try {
+          const u = new URL(out, window.location.origin);
+          if (!u.searchParams.get("lang")) u.searchParams.set("lang", "fi");
+          out = u.pathname + (u.search || "") + (u.hash || "");
+        } catch (e) {
+          // very defensive fallback
+          if (!out.includes("?")) out += "?lang=fi";
+          else if (!out.includes("lang=")) out += "&lang=fi";
+        }
+      }
+      return out;
     }
 
     // RU:
@@ -1025,7 +1075,7 @@
 
   const lang = getLang(data);
 
-  // persist selection
+  // persist selection (localStorage + cookie)
   try { localStorage.setItem("lang", lang); } catch (e) {}
   setLangCookie(lang);
 
@@ -1036,11 +1086,11 @@
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const lang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(lang)) {
-        try { localStorage.setItem("lang", lang); } catch (e) {}
-        setLangCookie(lang);
-        window.location.href = setLangInUrl(lang);
+      const nextLang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(nextLang)) {
+        try { localStorage.setItem("lang", nextLang); } catch (e) {}
+        setLangCookie(nextLang);
+        window.location.href = setLangInUrl(nextLang);
       }
     }
   });
