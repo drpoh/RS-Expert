@@ -1,28 +1,22 @@
 # =========================
-# RS-Expert — Cloudflare Pages redirects
-# FI is default. RU is path-based under /ru/*
+# Canonical / normalization
 # =========================
 
-# --- Normalize explicit /index.html to / (optional but recommended)
-# (prevents duplicate content)
- /index.html            /                      301
+/index.html          /              301
+/ru                 /ru/            301
+/ru/index.html       /ru/            301
 
-# --- RU pages (path-based). Serve the same HTML, language is determined by /ru/ prefix in site.js
-/ru/                    /index.html            200
-/ru/index.html          /index.html            200
-/ru/services.html       /services.html         200
-/ru/gallery.html        /gallery.html          200
-/ru/referenssit.html    /referenssit.html      200
-/ru/documents.html      /documents.html        200
-/ru/tarjouspyynto.html  /tarjouspyynto.html    200
-/ru/contact.html        /contact.html          200
-/ru/hinnasto.html       /hinnasto.html         200
 
-# --- (Optional) If anyone still links old query-based RU, canonical is handled in JS.
-# Cloudflare Pages redirects cannot match query strings in _redirects reliably,
-# so we DON'T add ?lang=ru rules here.
+# =========================
+# RU pages (path-based)
+# Serve the same HTML, but keep /ru/* in the URL (so site.js can render RU)
+# =========================
 
-# --- Safety: unknown /ru/* should go to RU home (prevents 404 indexed junk)
-/ru/*                   /index.html            302
-
-# --- Everything else is static files as-is (no catch-all needed)
+/ru/                 /index.html            200
+/ru/services.html     /services.html         200
+/ru/gallery.html      /gallery.html          200
+/ru/referenssit.html  /referenssit.html      200
+/ru/documents.html    /documents.html        200
+/ru/tarjouspyynto.html /tarjouspyynto.html   200
+/ru/contact.html      /contact.html          200
+/ru/hinnasto.html     /hinnasto.html         200
