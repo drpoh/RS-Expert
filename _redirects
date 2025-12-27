@@ -7,16 +7,3 @@
 /ru/index.html       /ru/            301
 
 
-# =========================
-# RU pages (path-based)
-# Serve the same HTML, but keep /ru/* in the URL (so site.js can render RU)
-# =========================
-
-/ru/                 /index.html            200
-/ru/services.html     /services.html         200
-/ru/gallery.html      /gallery.html          200
-/ru/referenssit.html  /referenssit.html      200
-/ru/documents.html    /documents.html        200
-/ru/tarjouspyynto.html /tarjouspyynto.html   200
-/ru/contact.html      /contact.html          200
-/ru/hinnasto.html     /hinnasto.html         200
