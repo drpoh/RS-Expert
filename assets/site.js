@@ -508,6 +508,37 @@
     `;
   }
 
+  function renderStickyCall(data, lang) {
+  // показываем только если есть телефон
+  const phone = (data.phone || "").trim();
+  if (!phone) return;
+
+  const phoneRaw = phone.replaceAll(" ", "");
+  const label = ui(lang, "call"); // "Soita" / "Позвонить"
+  const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
+
+  // контейнер создаём один раз
+  let wrap = document.getElementById("stickycall");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "stickycall";
+    wrap.className = "stickycall";
+    document.body.appendChild(wrap);
+  }
+
+  wrap.innerHTML = `
+    <div class="stickycall__inner">
+      <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
+        📞 ${escapeHtml(label)} ${escapeHtml(phone)}
+      </a>
+      <div class="stickycall__sub">${escapeHtml(sub)}</div>
+    </div>
+  `;
+
+  // добавляем отступ снизу, чтобы контент не перекрывался
+  document.body.classList.add("has-stickycall");
+}
+
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
     if (!el) return;
@@ -1017,6 +1048,7 @@
   renderTarjousPage(data, lang);
   renderHinnastoPage(data, lang);
   renderContactPage(data, lang);
-
+  renderStickyCall(data, lang);
+  
   console.log("Site rendered successfully in language:", lang);
 })();
