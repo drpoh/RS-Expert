@@ -4,7 +4,7 @@
 # RU = path-based (/ru/*) serves same HTML, language decided by site.js
 # =========================
 
-# ---------- RU pages (MUST be first, most specific) ----------
+# ---------- RU pages ----------
 /ru/                    /index.html            200
 /ru/index.html          /index.html            200
 
@@ -25,8 +25,3 @@
 # ---------- Static files: never rewrite ----------
 /assets/*               /assets/:splat         200
 /data/*                 /data/:splat           200
-
-# ---------- Default fallback ----------
-# Any unknown path -> home (FI). Keep this LAST.
-# (Do NOT redirect to /ru/ here, otherwise Brave can get stuck)
-/*                      /index.html            200
