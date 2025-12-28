@@ -6,6 +6,7 @@
   <!-- HOME -->
   <url>
     <loc>https://www.rs-expert.fi/</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -13,6 +14,7 @@
   <!-- SERVICES -->
   <url>
     <loc>https://www.rs-expert.fi/services.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -20,6 +22,7 @@
   <!-- GALLERY -->
   <url>
     <loc>https://www.rs-expert.fi/gallery.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -27,6 +30,7 @@
   <!-- REFERENCES -->
   <url>
     <loc>https://www.rs-expert.fi/referenssit.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -34,6 +38,7 @@
   <!-- DOCUMENTS -->
   <url>
     <loc>https://www.rs-expert.fi/documents.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -41,6 +46,7 @@
   <!-- PRICING -->
   <url>
     <loc>https://www.rs-expert.fi/hinnasto.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -48,6 +54,7 @@
   <!-- QUOTE -->
   <url>
     <loc>https://www.rs-expert.fi/tarjouspyynto.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -55,6 +62,7 @@
   <!-- CONTACT -->
   <url>
     <loc>https://www.rs-expert.fi/contact.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -65,6 +73,7 @@
   <!-- HOME RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -72,6 +81,7 @@
   <!-- SERVICES RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/services.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -79,6 +89,7 @@
   <!-- GALLERY RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/gallery.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -86,6 +97,7 @@
   <!-- REFERENCES RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/referenssit.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -93,6 +105,7 @@
   <!-- DOCUMENTS RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/documents.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -100,6 +113,7 @@
   <!-- PRICING RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/hinnasto.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -107,6 +121,7 @@
   <!-- QUOTE RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/tarjouspyynto.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -114,6 +129,7 @@
   <!-- CONTACT RU -->
   <url>
     <loc>https://www.rs-expert.fi/ru/contact.html</loc>
+    <lastmod>2025-12-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
