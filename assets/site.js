@@ -1,4 +1,5 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ + cookie fallback (2025-12-28)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
+// + FIX: reliable FI/RU switching (Brave-safe), consistent /ru handling, no accidental stuck-on-/ru
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -74,70 +75,31 @@
   }
 
   // NEW: RU language selection is path-based: /ru/*
+  // FIX: normalize "/ru" and "/ru/" and "/ru/index.html"
   function getLangFromPath() {
     const p = window.location.pathname || "/";
-    return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
+    return (p === "/ru" || p === "/ru/" || p.startsWith("/ru/")) ? "ru" : null;
   }
 
+  // FIX: strip RU prefix reliably
   function stripRuPrefix(pathname) {
-    if (!pathname) return "/";
-    if (pathname === "/ru") return "/";
-    if (pathname.startsWith("/ru/")) return pathname.slice(3) || "/";
-    return pathname;
+    const p = pathname || "/";
+    if (p === "/ru" || p === "/ru/") return "/";
+    if (p.startsWith("/ru/")) return p.slice(3) || "/"; // remove "/ru"
+    return p;
   }
 
   function normalizeToNoTrailingSlash(path) {
     if (!path) return "/";
     if (path === "/") return "/";
-    return path.replace(/\/$/, "");
+    return path.replace(/\/+$/, "");
   }
 
-  // ---------------------------
-  // Cookie/localStorage fallback (Brave-friendly)
-  // ---------------------------
-  const LANG_COOKIE = "rs_lang";
-  function setCookie(name, value, days = 365) {
-    try {
-      const d = new Date();
-      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-      const expires = "expires=" + d.toUTCString();
-      document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(String(value))}; ${expires}; path=/; SameSite=Lax`;
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function getCookie(name) {
-    try {
-      const n = encodeURIComponent(name) + "=";
-      const parts = (document.cookie || "").split(";");
-      for (let p of parts) {
-        p = p.trim();
-        if (p.startsWith(n)) return decodeURIComponent(p.slice(n.length));
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function safeSetLangPref(lang) {
-    // 1) localStorage (may be blocked or ephemeral in Brave shields / privacy modes)
-    try { localStorage.setItem("lang", lang); } catch (e) {}
-    // 2) cookie fallback
-    setCookie(LANG_COOKIE, lang, 365);
-  }
-
-  function safeGetSavedLang() {
-    // 1) localStorage
-    try {
-      const v = localStorage.getItem("lang");
-      if (v) return v;
-    } catch (e) {}
-    // 2) cookie
-    const c = getCookie(LANG_COOKIE);
-    return c || null;
+  // FIX: normalize "index.html" → "/"
+  function normalizePathForPage(path) {
+    if (!path) return "/";
+    if (path === "/index.html") return "/";
+    return path;
   }
 
   function getLang(data) {
@@ -152,11 +114,11 @@
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) saved (localStorage or cookie)
-    const saved = safeGetSavedLang();
+    // 3) saved
+    const saved = localStorage.getItem("lang");
     if (available.includes(saved)) return saved;
 
-    // 4) browser (optional)
+    // 4) browser
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -164,19 +126,27 @@
   }
 
   // NEW: canonical RU URLs are /ru/..., not ?lang=ru
+  // FIX: make FI always remove "/ru", RU always add "/ru"
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
-    const basePath = stripRuPrefix(url.pathname);
 
+    // Start from logical (FI) path
+    let basePath = stripRuPrefix(url.pathname);
+    basePath = normalizePathForPage(basePath);
+
+    if (basePath === "" || basePath === "/") basePath = "/";
+
+    // Remove legacy query
+    url.searchParams.delete("lang");
+
+    // Build pathname
     if (lang === "ru") {
-      url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
-      url.searchParams.delete("lang");
+      url.pathname = (basePath === "/") ? "/ru/" : ("/ru" + normalizeToNoTrailingSlash(basePath));
       return url.toString();
     }
 
     // FI
-    url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
-    url.searchParams.delete("lang");
+    url.pathname = (basePath === "/") ? "/" : normalizeToNoTrailingSlash(basePath);
     return url.toString();
   }
 
@@ -381,7 +351,6 @@
     const pageUrlFi = absoluteUrl(baseUrl, fiPath);
     const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-    // IMPORTANT: RU MUST be indexable when using /ru/ (set ruNoIndex=false in site.json)
     const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
 
     const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
@@ -1037,7 +1006,6 @@
   }
 
   // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
-  // NOTE: do NOT auto-redirect based on preference (only handle legacy query param).
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
@@ -1053,23 +1021,27 @@
 
   const lang = getLang(data);
 
-  // persist selection (localStorage + cookie fallback)
-  safeSetLangPref(lang);
+  // persist selection
+  try { localStorage.setItem("lang", lang); } catch (e) {}
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
   // Bind events
+  // FIX: Brave-safe click handling + capture + preventDefault (avoid stuck on /ru/)
   document.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-lang]");
-    if (btn) {
-      const nextLang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(nextLang)) {
-        safeSetLangPref(nextLang);
-        window.location.href = setLangInUrl(nextLang);
-      }
+    const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const nextLang = btn.getAttribute("data-lang");
+    if (data?.i18n?.available?.includes(nextLang)) {
+      try { localStorage.setItem("lang", nextLang); } catch (e) {}
+      window.location.href = setLangInUrl(nextLang);
     }
-  });
+  }, true);
 
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-copy]");
