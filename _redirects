@@ -1,65 +1,31 @@
 # =========================
-# RS-Expert — _redirects
-# RU pages are REAL routes (/ru/...), language is determined by /ru/ prefix in site.js
+# RS-Expert redirects (Cloudflare Pages)
+# RU pages are path-based: /ru/...
+# IMPORTANT: order matters (top -> bottom)
 # =========================
 
-# ---- Canonical host: force www -> apex (pick ONE canonical host)
-https://www.rs-expert.fi/*  https://rs-expert.fi/:splat  301!
+# ---- RU: exact rewrites to existing HTML files ----
+/ru/                   /index.html            200
+/ru/index.html         /index.html            200
 
-# ---- HTTPS (Cloudflare обычно уже делает, но пусть будет)
-http://rs-expert.fi/*       https://rs-expert.fi/:splat  301!
-http://www.rs-expert.fi/*   https://rs-expert.fi/:splat  301!
+/ru/services.html      /services.html         200
+/ru/gallery.html       /gallery.html          200
+/ru/referenssit.html   /referenssit.html      200
+/ru/documents.html     /documents.html        200
+/ru/tarjouspyynto.html /tarjouspyynto.html    200
+/ru/contact.html       /contact.html          200
+/ru/hinnasto.html      /hinnasto.html         200
 
-# ---- Normalize FI: /index.html -> /
-/index.html                 /                   301
+# ---- Optional: normalize old explicit index.html to / ----
+/index.html            /                      301
 
-# =========================
-# RU (path-based)
-# =========================
+# ---- Optional: if someone hits /ru (no trailing slash) ----
+/ru                    /ru/                   301
 
-# IMPORTANT:
-# Use EXACT mappings (no wildcards) to avoid "everything becomes /index.html"
-# and to ensure /ru/services.html serves services.html, etc.
+# ---- Optional: RU fallback (only if you want /ru/something to show RU home) ----
+# If you DON'T need this, you can delete the next line.
+# It must be BELOW all exact /ru/*.html rules.
+/ru/*                  /index.html            200
 
-# RU Home
-/ru                        /index.html         200
-/ru/                       /index.html         200
-/ru/index.html             /index.html         200
-
-# RU Services
-/ru/services.html          /services.html      200
-
-# RU Gallery
-/ru/gallery.html           /gallery.html       200
-
-# RU References
-/ru/referenssit.html       /referenssit.html   200
-
-# RU Documents
-/ru/documents.html         /documents.html     200
-
-# RU Quote
-/ru/tarjouspyynto.html     /tarjouspyynto.html 200
-
-# RU Contact
-/ru/contact.html           /contact.html       200
-
-# RU Pricing
-/ru/hinnasto.html          /hinnasto.html      200
-
-
-# =========================
-# Optional: legacy query-based RU (keep or remove)
-# If you used old links like /services.html?lang=ru — keep them working.
-# These are redirects to the canonical /ru/ URLs to prevent duplicates in Google.
-# =========================
-
-/?lang=ru                  /ru/                 301
-/index.html?lang=ru         /ru/                 301
-/services.html?lang=ru      /ru/services.html    301
-/gallery.html?lang=ru       /ru/gallery.html     301
-/referenssit.html?lang=ru   /ru/referenssit.html 301
-/documents.html?lang=ru     /ru/documents.html   301
-/tarjouspyynto.html?lang=ru /ru/tarjouspyynto.html 301
-/contact.html?lang=ru       /ru/contact.html     301
-/hinnasto.html?lang=ru      /ru/hinnasto.html    301
+# ---- Site-wide fallback (SPA-like). Keep it LAST ----
+/*                     /index.html            200
