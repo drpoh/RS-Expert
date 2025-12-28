@@ -1,4 +1,4 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ + cookie fallback (2025-12-27)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-27)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -73,81 +73,7 @@
     return def;
   }
 
-  // =========================
-  // Cookie helpers (Brave / strict privacy can block localStorage)
-  // =========================
-  function canUseLocalStorage() {
-    try {
-      const k = "__ls_test__";
-      window.localStorage.setItem(k, "1");
-      window.localStorage.removeItem(k);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function setCookie(name, value, days = 365) {
-    try {
-      const d = new Date();
-      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-      const expires = "expires=" + d.toUTCString();
-      // SameSite=Lax is safe default for language
-      document.cookie =
-        encodeURIComponent(name) +
-        "=" +
-        encodeURIComponent(String(value ?? "")) +
-        ";" +
-        expires +
-        ";path=/" +
-        ";SameSite=Lax";
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function getCookie(name) {
-    try {
-      const n = encodeURIComponent(name) + "=";
-      const parts = (document.cookie || "").split(";");
-      for (let i = 0; i < parts.length; i++) {
-        const c = parts[i].trim();
-        if (c.startsWith(n)) return decodeURIComponent(c.slice(n.length));
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function persistLang(lang) {
-    // 1) try localStorage
-    if (canUseLocalStorage()) {
-      try {
-        localStorage.setItem("lang", lang);
-        return;
-      } catch (e) {}
-    }
-    // 2) fallback cookie
-    setCookie("rs_lang", lang, 365);
-  }
-
-  function readPersistedLang() {
-    // 1) try localStorage
-    if (canUseLocalStorage()) {
-      try {
-        const v = localStorage.getItem("lang");
-        if (v) return v;
-      } catch (e) {}
-    }
-    // 2) cookie
-    return getCookie("rs_lang");
-  }
-
-  // =========================
   // NEW: RU language selection is path-based: /ru/*
-  // =========================
   function getLangFromPath() {
     const p = window.location.pathname || "/";
     return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
@@ -166,6 +92,50 @@
     return path.replace(/\/$/, "");
   }
 
+  function normalizeInternalPath(href) {
+    if (!href) return "/";
+    // keep external as-is
+    if (href.startsWith("http://") || href.startsWith("https://")) return href;
+    // remove double slashes
+    let p = String(href);
+    // if relative like "services.html" -> "/services.html"
+    if (!p.startsWith("/")) p = "/" + p;
+    // normalize home
+    if (p === "/index.html") p = "/";
+    return p;
+  }
+
+  // ===== Cookie helpers (Brave / strict privacy fallback) =====
+  function setCookie(name, value, days = 365) {
+    try {
+      const d = new Date();
+      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+      const expires = "expires=" + d.toUTCString();
+      // SameSite=Lax is safe for normal browsing; Secure because your site is https
+      document.cookie =
+        encodeURIComponent(name) +
+        "=" +
+        encodeURIComponent(String(value ?? "")) +
+        ";" +
+        expires +
+        ";path=/" +
+        ";SameSite=Lax" +
+        ";Secure";
+    } catch (e) {}
+  }
+
+  function getCookie(name) {
+    try {
+      const n = encodeURIComponent(name) + "=";
+      const parts = (document.cookie || "").split(";");
+      for (const raw of parts) {
+        const c = raw.trim();
+        if (c.startsWith(n)) return decodeURIComponent(c.slice(n.length));
+      }
+    } catch (e) {}
+    return null;
+  }
+
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
@@ -178,11 +148,17 @@
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) saved (localStorage/cookie)
-    const saved = readPersistedLang();
-    if (available.includes(saved)) return saved;
+    // 3) saved (localStorage) — may be blocked in some Brave configurations
+    try {
+      const saved = localStorage.getItem("lang");
+      if (available.includes(saved)) return saved;
+    } catch (e) {}
 
-    // 4) browser
+    // 4) saved (cookie fallback)
+    const savedCookie = getCookie("rs_lang");
+    if (available.includes(savedCookie)) return savedCookie;
+
+    // 5) browser
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -211,20 +187,27 @@
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
 
-    // normalize home
-    if (href === "/index.html") href = "/";
+    let normalized = normalizeInternalPath(href);
 
+    // FI: never include /ru and never include ?lang=ru
     if (lang !== "ru") {
-      // FI: never include /ru and never include ?lang
-      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+      // strip /ru prefix if any and remove legacy ?lang=ru
+      let clean = stripRuPrefix(normalized);
+      try {
+        const u = new URL(clean, window.location.origin);
+        u.searchParams.delete("lang");
+        clean = u.pathname + (u.search || "") + (u.hash || "");
+      } catch (e) {}
+      return clean;
     }
 
     // RU:
     // convert internal path to /ru/...
-    let path = href;
+    let path = normalized;
+
     // strip legacy lang=ru
     try {
-      const u = new URL(href, window.location.origin);
+      const u = new URL(path, window.location.origin);
       u.searchParams.delete("lang");
       path = u.pathname + (u.search || "") + (u.hash || "");
     } catch (e) {}
@@ -304,7 +287,8 @@
       documents: "Dokumentit",
       docsLead: "PDF-dokumentit ja ohjeet.",
       galleryLead: "Työnäytteitä ja toteutuksia.",
-      referencesLead: "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
+      referencesLead:
+        "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
       quoteTitle: "Tarjouspyyntö",
       quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
       phoneLabel: "Puhelin",
@@ -326,7 +310,7 @@
       pricingEffectiveFrom: "Voimassa alkaen",
       pricingTableProduct: "Tuote",
       pricingTableVat0: "Hinta (ALV 0 %)",
-      pricingTableVat: "Hinta (ALV 25,5 %)"
+      pricingTableVat: "Hinta (ALV 25,5 %)",
     },
     ru: {
       call: "Позвонить",
@@ -349,7 +333,8 @@
       documents: "Документы",
       docsLead: "PDF-документы и инструкции.",
       galleryLead: "Примеры выполненных работ.",
-      referencesLead: "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
+      referencesLead:
+        "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
       quoteTitle: "Заявка на расчёт",
       quoteLead: "Опишите объект и пожелания — быстро ответим.",
       phoneLabel: "Телефон",
@@ -361,7 +346,7 @@
       ibanLabel: "IBAN",
       copyIban: "Копировать IBAN",
       copied: "Скопировано!",
-      verkkolaskuLabel: "Verkkolaskuosoite",
+      verkkolaskuLabel: "Verkkолaskuosoite",
       operaattoriLabel: "Оператор",
       serviceAreaTitleFallback: "Зона обслуживания",
       serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa.",
@@ -371,8 +356,8 @@
       pricingEffectiveFrom: "Действует с",
       pricingTableProduct: "Услуга",
       pricingTableVat0: "Цена (без НДС)",
-      pricingTableVat: "Цена (с НДС 25,5%)"
-    }
+      pricingTableVat: "Цена (с НДС 25,5%)",
+    },
   };
 
   function ui(lang, key) {
@@ -457,7 +442,7 @@
       image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
       areaServed: (b.areaServed || []).filter(Boolean).map((x) => ({ "@type": "City", name: x })),
       openingHours: b.openingHours || [],
-      inLanguage: lang
+      inLanguage: lang,
     };
     if (info?.yTunnus) {
       schema.identifier = { "@type": "PropertyValue", name: "Y-tunnus", value: info.yTunnus };
@@ -467,7 +452,7 @@
       schema.address = {
         "@type": "PostalAddress",
         streetAddress: addr,
-        addressCountry: "FI"
+        addressCountry: "FI",
       };
     }
     Object.keys(schema).forEach((k) => {
@@ -521,9 +506,9 @@
     const ruActive = lang === "ru" ? " lang__btn--active" : "";
 
     const igBtn = ig
-      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
-          ui(lang, "instagram")
-        )}</a>`
+      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(
+          ig
+        )}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
       : "";
 
     header.innerHTML = `
@@ -541,13 +526,15 @@
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
+          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(
+      data.companyName || "RS-Expert Oy"
+    )}</a>
         </div>
         <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-            ui(lang, "requestQuote")
-          )}</a>
+      ui(lang, "requestQuote")
+    )}</a>
         </div>
       </div>
     `;
@@ -563,9 +550,9 @@
     const addr = t(info.address, lang);
     const y = info.yTunnus || "";
     const igHtml = ig
-      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
-          ui(lang, "instagram")
-        )}</a>`
+      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(
+          ig
+        )}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
       : "";
 
     const line2Parts = [];
@@ -696,8 +683,8 @@
         <div class="hero__badges">${badgesHtml}</div>
         <div class="hero__cta">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-            ui(lang, "requestQuote")
-          )}</a>
+      ui(lang, "requestQuote")
+    )}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
@@ -718,8 +705,8 @@
         <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
         <div class="cta__buttons">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(
-            ui(lang, "requestQuote")
-          )}</a>
+      ui(lang, "requestQuote")
+    )}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
@@ -857,9 +844,9 @@
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
     const igCta = ig
-      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(
-          ui(lang, "instagramCTA")
-        )}</a></div>`
+      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(
+          ig
+        )}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>`
       : "";
 
     el.innerHTML = `
@@ -918,7 +905,9 @@
             <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
       data.phone || ""
     )}</a></div>
-            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(
+      data.email || ""
+    )}</a></div>
           </div>
         </div>
         ${
@@ -957,11 +946,13 @@
     const tablesHtml = tables
       .map((tbl) => {
         const title = escapeHtml(t(tbl.title, lang));
-        const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
-          ui(lang, "pricingTableProduct"),
-          ui(lang, "pricingTableVat0"),
-          ui(lang, "pricingTableVat")
-        ];
+        const cols =
+          tbl.columns?.[lang] ||
+          tbl.columns?.fi || [
+            ui(lang, "pricingTableProduct"),
+            ui(lang, "pricingTableVat0"),
+            ui(lang, "pricingTableVat"),
+          ];
         const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
         const rowsHtml = rows
           .map((r) => {
@@ -1077,7 +1068,9 @@
             <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(
       data.phone || ""
     )}</a></div>
-            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(
+      data.email || ""
+    )}</a></div>
             ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
             ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
             <div class="mt">
@@ -1120,27 +1113,13 @@
     }
   } catch (e) {}
 
-  // Resolve language
   const lang = getLang(data);
 
-  // Persist selection (localStorage or cookie)
-  persistLang(lang);
-
-  // OPTIONAL UX: if user has RU selected but opened FI path (or vice versa) — normalize
-  // This keeps behavior consistent across all pages/browsers.
+  // persist selection (localStorage + cookie fallback)
   try {
-    const pathLang = getLangFromPath(); // "ru" or null
-    if (lang === "ru" && !pathLang) {
-      // go to /ru equivalent
-      window.location.replace(setLangInUrl("ru"));
-      return;
-    }
-    if (lang === "fi" && pathLang === "ru") {
-      // go to FI equivalent
-      window.location.replace(setLangInUrl("fi"));
-      return;
-    }
+    localStorage.setItem("lang", lang);
   } catch (e) {}
+  setCookie("rs_lang", lang, 365);
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
@@ -1149,10 +1128,15 @@
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const targetLang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(targetLang)) {
-        persistLang(targetLang);
-        window.location.href = setLangInUrl(targetLang);
+      const nextLang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(nextLang)) {
+        try {
+          localStorage.setItem("lang", nextLang);
+        } catch (e) {}
+        setCookie("rs_lang", nextLang, 365);
+
+        // IMPORTANT: navigation is the source of truth (works even if storage is blocked)
+        window.location.href = setLangInUrl(nextLang);
       }
     }
   });
@@ -1166,10 +1150,11 @@
       if (status) {
         status.textContent = ok ? ui(lang, "copied") : lang === "ru" ? "Не удалось скопировать" : "Kopiointi epäonnistui";
         status.style.color = ok ? "var(--brand)" : "#ff6b6b";
-        if (ok) setTimeout(() => {
-          status.textContent = "";
-          status.style.color = "";
-        }, 2500);
+        if (ok)
+          setTimeout(() => {
+            status.textContent = "";
+            status.style.color = "";
+          }, 2500);
       }
     }
   });
