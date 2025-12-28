@@ -1,22 +1,30 @@
-# =========================
-# Canonical / normalization
-# =========================
+# Cloudflare Pages redirects for RS-Expert
+# Logic:
+# - FI is default: normal paths (/services.html, /gallery.html, ...)
+# - RU is path-based: /ru/... serves the SAME html file (language picked by site.js via /ru prefix)
+# - Keep /ru (no trailing slash) normalized to /ru/
+# - DO NOT redirect / -> /ru/ (to avoid “stuck on RU” + redirect loops)
 
-/index.html          /              301
-/ru                 /ru/            301
-/ru/index.html       /ru/            301
+# --- Normalize (optional but recommended) ---
+/index.html                 /                       301
+/ru                         /ru/                    301
 
+# --- RU pages (path-based) ---
+/ru/                        /index.html             200
+/ru/index.html              /index.html             200
 
-# =========================
-# RU pages (path-based)
-# Serve the same HTML, but keep /ru/* in the URL (so site.js can render RU)
-# =========================
+/ru/services.html           /services.html          200
+/ru/gallery.html            /gallery.html           200
+/ru/referenssit.html        /referenssit.html       200
+/ru/documents.html          /documents.html         200
+/ru/tarjouspyynto.html      /tarjouspyynto.html     200
+/ru/contact.html            /contact.html           200
+/ru/hinnasto.html           /hinnasto.html          200
 
-/ru/                 /index.html            200
-/ru/services.html     /services.html         200
-/ru/gallery.html      /gallery.html          200
-/ru/referenssit.html  /referenssit.html      200
-/ru/documents.html    /documents.html        200
-/ru/tarjouspyynto.html /tarjouspyynto.html   200
-/ru/contact.html      /contact.html          200
-/ru/hinnasto.html     /hinnasto.html         200
+# --- (Optional) old legacy query style (if someone has links with ?lang=ru) ---
+# Cloudflare _redirects cannot match query params reliably.
+# The redirect from ?lang=ru is handled in assets/site.js (window.location.replace).
+
+# --- SPA fallback (IMPORTANT: last rule) ---
+# If a user opens some unknown URL, serve home (FI) instead of 404.
+/*                         /index.html              200
