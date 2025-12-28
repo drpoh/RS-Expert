@@ -1,6 +1,9 @@
 // RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-28)
-// FIX: language logic is now STRICTLY path-based (FI = /..., RU = /ru/...) to avoid Brave/cookie/localStorage quirks.
-//      No automatic redirect to RU based on browser/previous choice (FI is priority).
+// FIX (language logic): SINGLE source of truth = URL path
+//   - /ru/*  => RU
+//   - other  => FI
+// No cookies/localStorage/browser-language affect the active language.
+// Buttons just navigate to the correct URL variant of the SAME page.
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -75,10 +78,10 @@
     return def;
   }
 
-  // RU language selection is path-based: /ru/*
+  // URL-language (path-based): /ru or /ru/* => ru
   function getLangFromPath() {
     const p = window.location.pathname || "/";
-    return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
+    return p === "/ru" || p.startsWith("/ru/") ? "ru" : "fi";
   }
 
   function stripRuPrefix(pathname) {
@@ -94,77 +97,78 @@
     return path.replace(/\/$/, "");
   }
 
-  // FIX: strict, deterministic language
-  // - If URL is /ru/... => ru
-  // - Else => fi
-  // No localStorage/browser auto-switching (FI is priority)
+  // FIX: ONE TRUE language logic.
+  // We keep older helper logic in file (browser/localStorage), but do NOT use it anymore.
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
-    // PATH override (for SEO-indexable RU pages)
-    const pathLang = getLangFromPath();
-    if (pathLang && available.includes(pathLang)) return pathLang;
+    const def = data?.i18n?.default || "fi";
 
-    // Legacy ?lang=ru is handled by redirect in BOOT (below).
-    // Everything else -> FI (priority).
-    return available.includes("fi") ? "fi" : (available[0] || "fi");
+    // URL decides language
+    const lang = getLangFromPath();
+
+    // Safety fallback: if RU not available, fallback to default
+    if (lang === "ru" && !available.includes("ru")) return def;
+    if (lang === "fi" && !available.includes("fi")) return def;
+
+    return lang;
   }
 
-  // canonical RU URLs are /ru/..., not ?lang=ru
+  // Build URL for SAME page in requested lang (FI <-> RU), based on current pathname.
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
     const basePath = stripRuPrefix(url.pathname);
 
+    // normalize: /index.html => /
+    let logical = basePath;
+    if (logical === "/index.html") logical = "/";
+    logical = normalizeToNoTrailingSlash(logical);
+    if (logical === "") logical = "/";
+
+    // Keep hash, drop legacy ?lang
+    url.searchParams.delete("lang");
+
     if (lang === "ru") {
-      url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
-      url.searchParams.delete("lang");
+      url.pathname = (logical === "/") ? "/ru/" : `/ru${logical}`;
       return url.toString();
     }
 
     // FI
-    url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
-    url.searchParams.delete("lang");
+    url.pathname = (logical === "/") ? "/" : logical;
     return url.toString();
   }
 
-  // keep links consistent: if RU -> prefix /ru to internal paths
+  // Internal links normalization:
+  // - RU pages must link to /ru/....
+  // - FI pages must link to non-/ru paths
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
 
-    // normalize home
+    // normalize home alias
     if (href === "/index.html") href = "/";
-    if (href === "index.html") href = "/";
 
-    // Normalize relative href to absolute-path-ish (site uses leading slash)
-    if (!href.startsWith("/") && !href.startsWith("#") && !href.startsWith("?")) {
-      href = "/" + href;
-    }
-
-    if (lang !== "ru") {
-      // FI: never include /ru and never include ?lang
-      const cleaned = stripRuPrefix(href)
-        .replace(/\?lang=ru\b/g, "")
-        .replace(/[?&]lang=ru\b/g, "");
-      // also normalize /index.html -> /
-      return cleaned === "/index.html" ? "/" : cleaned;
-    }
-
-    // RU:
-    // convert internal path to /ru/...
+    // Remove legacy ?lang=ru from internal links
     let path = href;
-
-    // strip legacy lang=ru (if any)
     try {
       const u = new URL(href, window.location.origin);
       u.searchParams.delete("lang");
       path = u.pathname + (u.search || "") + (u.hash || "");
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     const clean = stripRuPrefix(path);
-    if (clean === "/" || clean === "") return "/ru/";
-    if (clean === "/index.html") return "/ru/";
-    if (clean.startsWith("/")) return "/ru" + clean;
-    return "/ru/" + clean;
+
+    if (lang === "ru") {
+      if (clean === "/" || clean === "") return "/ru/";
+      if (clean.startsWith("/")) return "/ru" + clean;
+      return "/ru/" + clean;
+    }
+
+    // FI
+    if (clean === "" || clean === "/") return "/";
+    if (clean.startsWith("/")) return clean;
+    return "/" + clean;
   }
 
   async function copyToClipboard(text) {
@@ -339,10 +343,10 @@
     const pageUrlFi = absoluteUrl(baseUrl, fiPath);
     const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-    // IMPORTANT: RU should be indexable now (user request),
-    // so even if site.json has ruNoIndex=true, we override it to allow indexing.
-    // If you WANT to keep the option, set ruNoIndex=false in /data/site.json.
-    const ruNoIndex = false;
+    // IMPORTANT:
+    // You want RU indexed. Therefore we DO NOT noindex RU here.
+    // If you ever want to noindex RU again, set i18n.ruNoIndex=true in data/site.json.
+    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
 
     const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
 
@@ -996,23 +1000,28 @@
     return;
   }
 
-  // Redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
+  // Optional: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
     if (qLang === "ru") {
       const basePath = stripRuPrefix(url.pathname);
-      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
-      url.pathname = targetPath;
+      let logical = basePath;
+      if (logical === "/index.html") logical = "/";
+      logical = normalizeToNoTrailingSlash(logical);
+      if (logical === "") logical = "/";
+      url.pathname = (logical === "/") ? "/ru/" : `/ru${logical}`;
       url.searchParams.delete("lang");
       window.location.replace(url.toString());
       return;
     }
   } catch (e) {}
 
+  // FIX: language from URL ONLY
   const lang = getLang(data);
 
-  // Persist selection (optional, but NOT used to auto-switch language anymore)
+  // NOTE: we do NOT rely on localStorage/cookies for language anymore.
+  // But we keep the old line guarded, so it never breaks Brave:
   try { localStorage.setItem("lang", lang); } catch (e) {}
 
   applySeo(data, lang);
@@ -1024,9 +1033,8 @@
     if (btn) {
       const nextLang = btn.getAttribute("data-lang");
       if (data?.i18n?.available?.includes(nextLang)) {
-        try { localStorage.setItem("lang", nextLang); } catch (e) {}
-        // Use assign (not replace) so user can go back
-        window.location.assign(setLangInUrl(nextLang));
+        // No storage needed, just navigate to correct URL
+        window.location.href = setLangInUrl(nextLang);
       }
     }
   });
