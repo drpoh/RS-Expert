@@ -1,4 +1,6 @@
 // RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-27)
+// FIX (Brave): FI is determined by URL path. If you are NOT on /ru/*, language is FI (priority),
+//              and we ignore saved lang from localStorage/cookie to prevent “stuck on RU” on FI pages.
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -143,6 +145,11 @@
     // 1) PATH override (for SEO-indexable RU pages)
     const pathLang = getLangFromPath();
     if (pathLang && available.includes(pathLang)) return pathLang;
+
+    // FIX (Brave + “FI priority”): if URL is NOT /ru/*, language MUST be FI (or default).
+    // This prevents / (FI) from rendering as RU because cookie/localStorage says "ru".
+    if (available.includes(def)) return def;
+    if (available.includes("fi")) return "fi";
 
     // 2) legacy ?lang=ru (we will redirect to /ru/* in boot)
     const urlLang = new URLSearchParams(window.location.search).get("lang");
@@ -346,7 +353,8 @@
       ibanLabel: "IBAN",
       copyIban: "Копировать IBAN",
       copied: "Скопировано!",
-      verkkolaskuLabel: "Verkkолaskuosoite",
+      // FIX: latin letters (was mixed Cyrillic)
+      verkkolaskuLabel: "Verkkolaskuosoite",
       operaattoriLabel: "Оператор",
       serviceAreaTitleFallback: "Зона обслуживания",
       serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa.",
