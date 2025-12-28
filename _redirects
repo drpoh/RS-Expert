@@ -1,18 +1,21 @@
 # =========================
-# RS-Expert — minimal safe redirects
-# RU pages are path-based (/ru/...) and should serve same HTML via rewrites (200)
+# RS-Expert — redirects/rewrite
+# RU is path-based: /ru/*
 # =========================
 
-# RU pages (path-based). Serve the same HTML, language is determined by /ru/ prefix in site.js
-/ru/                   /index.html            200
-/ru/index.html         /index.html            200
-/ru/services.html      /services.html         200
-/ru/gallery.html       /gallery.html          200
-/ru/referenssit.html   /referenssit.html      200
-/ru/documents.html     /documents.html        200
-/ru/tarjouspyynto.html /tarjouspyynto.html    200
-/ru/contact.html       /contact.html          200
-/ru/hinnasto.html      /hinnasto.html         200
+# --- Normalize /ru (no trailing slash) ---
+/ru    /ru/    301
 
-# Optional: normalize old explicit index.html to /
-/index.html            /                      301
+# --- RU pages (REWRITE 200, keep /ru/... in browser) ---
+/ru/                 /index.html            200
+/ru/index.html       /index.html            200
+/ru/services.html    /services.html         200
+/ru/gallery.html     /gallery.html          200
+/ru/referenssit.html /referenssit.html      200
+/ru/documents.html   /documents.html        200
+/ru/tarjouspyynto.html /tarjouspyynto.html  200
+/ru/contact.html     /contact.html          200
+/ru/hinnasto.html    /hinnasto.html         200
+
+# --- Optional: normalize explicit index.html (FI only) ---
+/index.html          /                      301
