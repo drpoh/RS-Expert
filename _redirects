@@ -1,12 +1,5 @@
-# =========================
-# RS-Expert — redirects/rewrite
-# RU is path-based: /ru/*
-# =========================
-
-# --- Normalize /ru (no trailing slash) ---
 /ru    /ru/    301
 
-# --- RU pages (REWRITE 200, keep /ru/... in browser) ---
 /ru/                 /index.html            200
 /ru/index.html       /index.html            200
 /ru/services.html    /services.html         200
@@ -17,5 +10,4 @@
 /ru/contact.html     /contact.html          200
 /ru/hinnasto.html    /hinnasto.html         200
 
-# --- Optional: normalize explicit index.html (FI only) ---
 /index.html          /                      301
