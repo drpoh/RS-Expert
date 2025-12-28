@@ -5,9 +5,7 @@
 # - Keep /ru (no trailing slash) normalized to /ru/
 # - DO NOT redirect / -> /ru/ (to avoid “stuck on RU” + redirect loops)
 
-# --- Normalize (optional but recommended) ---
-/index.html                 /                       301
-/ru                         /ru/                    301
+
 
 # --- RU pages (path-based) ---
 /ru/                        /index.html             200
