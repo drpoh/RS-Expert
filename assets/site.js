@@ -1,4 +1,6 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-28)
+// FIX: language logic is now STRICTLY path-based (FI = /..., RU = /ru/...) to avoid Brave/cookie/localStorage quirks.
+//      No automatic redirect to RU based on browser/previous choice (FI is priority).
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -73,12 +75,10 @@
     return def;
   }
 
-  // NEW (PATCH): Language is determined ONLY by path (single source of truth):
-  // /ru/* -> ru, everything else -> fi
+  // RU language selection is path-based: /ru/*
   function getLangFromPath() {
     const p = window.location.pathname || "/";
-    if (p === "/ru" || p.startsWith("/ru/")) return "ru";
-    return "fi";
+    return p === "/ru" || p.startsWith("/ru/") ? "ru" : null;
   }
 
   function stripRuPrefix(pathname) {
@@ -94,28 +94,22 @@
     return path.replace(/\/$/, "");
   }
 
-  // NEW (PATCH): Path wins always. No localStorage/browser mixing (fixes Brave “sticky RU”)
+  // FIX: strict, deterministic language
+  // - If URL is /ru/... => ru
+  // - Else => fi
+  // No localStorage/browser auto-switching (FI is priority)
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
-    const def = data?.i18n?.default || "fi";
-
-    // 1) PATH is source of truth
+    // PATH override (for SEO-indexable RU pages)
     const pathLang = getLangFromPath();
-    if (available.includes(pathLang)) return pathLang;
+    if (pathLang && available.includes(pathLang)) return pathLang;
 
-    // 2) legacy ?lang=ru (will redirect to /ru/* in boot, but keep as fallback)
-    const urlLang = new URLSearchParams(window.location.search).get("lang");
-    if (available.includes(urlLang)) return urlLang;
-
-    // 3) optional browser fallback (won't happen normally because path returns fi/ru)
-    if (data?.i18n?.preferBrowserLanguage) {
-      return getLangFromBrowser(available, def);
-    }
-
-    return def;
+    // Legacy ?lang=ru is handled by redirect in BOOT (below).
+    // Everything else -> FI (priority).
+    return available.includes("fi") ? "fi" : (available[0] || "fi");
   }
 
-  // NEW: canonical RU URLs are /ru/..., not ?lang=ru
+  // canonical RU URLs are /ru/..., not ?lang=ru
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
     const basePath = stripRuPrefix(url.pathname);
@@ -132,23 +126,34 @@
     return url.toString();
   }
 
-  // NEW: keep links consistent: if RU -> prefix /ru to internal paths
+  // keep links consistent: if RU -> prefix /ru to internal paths
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
 
     // normalize home
     if (href === "/index.html") href = "/";
+    if (href === "index.html") href = "/";
+
+    // Normalize relative href to absolute-path-ish (site uses leading slash)
+    if (!href.startsWith("/") && !href.startsWith("#") && !href.startsWith("?")) {
+      href = "/" + href;
+    }
 
     if (lang !== "ru") {
       // FI: never include /ru and never include ?lang
-      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+      const cleaned = stripRuPrefix(href)
+        .replace(/\?lang=ru\b/g, "")
+        .replace(/[?&]lang=ru\b/g, "");
+      // also normalize /index.html -> /
+      return cleaned === "/index.html" ? "/" : cleaned;
     }
 
     // RU:
     // convert internal path to /ru/...
     let path = href;
-    // strip legacy lang=ru
+
+    // strip legacy lang=ru (if any)
     try {
       const u = new URL(href, window.location.origin);
       u.searchParams.delete("lang");
@@ -157,6 +162,7 @@
 
     const clean = stripRuPrefix(path);
     if (clean === "/" || clean === "") return "/ru/";
+    if (clean === "/index.html") return "/ru/";
     if (clean.startsWith("/")) return "/ru" + clean;
     return "/ru/" + clean;
   }
@@ -333,7 +339,10 @@
     const pageUrlFi = absoluteUrl(baseUrl, fiPath);
     const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
+    // IMPORTANT: RU should be indexable now (user request),
+    // so even if site.json has ruNoIndex=true, we override it to allow indexing.
+    // If you WANT to keep the option, set ruNoIndex=false in /data/site.json.
+    const ruNoIndex = false;
 
     const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
 
@@ -509,35 +518,35 @@
   }
 
   function renderStickyCall(data, lang) {
-  // показываем только если есть телефон
-  const phone = (data.phone || "").trim();
-  if (!phone) return;
+    // показываем только если есть телефон
+    const phone = (data.phone || "").trim();
+    if (!phone) return;
 
-  const phoneRaw = phone.replaceAll(" ", "");
-  const label = ui(lang, "call"); // "Soita" / "Позвонить"
-  const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
+    const phoneRaw = phone.replaceAll(" ", "");
+    const label = ui(lang, "call"); // "Soita" / "Позвонить"
+    const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
 
-  // контейнер создаём один раз
-  let wrap = document.getElementById("stickycall");
-  if (!wrap) {
-    wrap = document.createElement("div");
-    wrap.id = "stickycall";
-    wrap.className = "stickycall";
-    document.body.appendChild(wrap);
+    // контейнер создаём один раз
+    let wrap = document.getElementById("stickycall");
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.id = "stickycall";
+      wrap.className = "stickycall";
+      document.body.appendChild(wrap);
+    }
+
+    wrap.innerHTML = `
+      <div class="stickycall__inner">
+        <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
+          📞 ${escapeHtml(label)} ${escapeHtml(phone)}
+        </a>
+        <div class="stickycall__sub">${escapeHtml(sub)}</div>
+      </div>
+    `;
+
+    // добавляем отступ снизу, чтобы контент не перекрывался
+    document.body.classList.add("has-stickycall");
   }
-
-  wrap.innerHTML = `
-    <div class="stickycall__inner">
-      <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
-        📞 ${escapeHtml(label)} ${escapeHtml(phone)}
-      </a>
-      <div class="stickycall__sub">${escapeHtml(sub)}</div>
-    </div>
-  `;
-
-  // добавляем отступ снизу, чтобы контент не перекрывался
-  document.body.classList.add("has-stickycall");
-}
 
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
@@ -987,7 +996,7 @@
     return;
   }
 
-  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
+  // Redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
@@ -1003,7 +1012,7 @@
 
   const lang = getLang(data);
 
-  // persist selection (kept, but no longer affects language selection)
+  // Persist selection (optional, but NOT used to auto-switch language anymore)
   try { localStorage.setItem("lang", lang); } catch (e) {}
 
   applySeo(data, lang);
@@ -1013,10 +1022,11 @@
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const lang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(lang)) {
-        try { localStorage.setItem("lang", lang); } catch (e) {}
-        window.location.href = setLangInUrl(lang);
+      const nextLang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(nextLang)) {
+        try { localStorage.setItem("lang", nextLang); } catch (e) {}
+        // Use assign (not replace) so user can go back
+        window.location.assign(setLangInUrl(nextLang));
       }
     }
   });
@@ -1049,6 +1059,6 @@
   renderHinnastoPage(data, lang);
   renderContactPage(data, lang);
   renderStickyCall(data, lang);
-  
+
   console.log("Site rendered successfully in language:", lang);
 })();
