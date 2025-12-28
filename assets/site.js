@@ -1,9 +1,4 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-28)
-// FIX (language logic): SINGLE source of truth = URL path
-//   - /ru/*  => RU
-//   - other  => FI
-// No cookies/localStorage/browser-language affect the active language.
-// Buttons just navigate to the correct URL variant of the SAME page.
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -78,10 +73,12 @@
     return def;
   }
 
-  // URL-language (path-based): /ru or /ru/* => ru
+  // NEW (PATCH): Language is determined ONLY by path (single source of truth):
+  // /ru/* -> ru, everything else -> fi
   function getLangFromPath() {
     const p = window.location.pathname || "/";
-    return p === "/ru" || p.startsWith("/ru/") ? "ru" : "fi";
+    if (p === "/ru" || p.startsWith("/ru/")) return "ru";
+    return "fi";
   }
 
   function stripRuPrefix(pathname) {
@@ -97,78 +94,71 @@
     return path.replace(/\/$/, "");
   }
 
-  // FIX: ONE TRUE language logic.
-  // We keep older helper logic in file (browser/localStorage), but do NOT use it anymore.
+  // NEW (PATCH): Path wins always. No localStorage/browser mixing (fixes Brave “sticky RU”)
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
 
-    // URL decides language
-    const lang = getLangFromPath();
+    // 1) PATH is source of truth
+    const pathLang = getLangFromPath();
+    if (available.includes(pathLang)) return pathLang;
 
-    // Safety fallback: if RU not available, fallback to default
-    if (lang === "ru" && !available.includes("ru")) return def;
-    if (lang === "fi" && !available.includes("fi")) return def;
+    // 2) legacy ?lang=ru (will redirect to /ru/* in boot, but keep as fallback)
+    const urlLang = new URLSearchParams(window.location.search).get("lang");
+    if (available.includes(urlLang)) return urlLang;
 
-    return lang;
+    // 3) optional browser fallback (won't happen normally because path returns fi/ru)
+    if (data?.i18n?.preferBrowserLanguage) {
+      return getLangFromBrowser(available, def);
+    }
+
+    return def;
   }
 
-  // Build URL for SAME page in requested lang (FI <-> RU), based on current pathname.
+  // NEW: canonical RU URLs are /ru/..., not ?lang=ru
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
     const basePath = stripRuPrefix(url.pathname);
 
-    // normalize: /index.html => /
-    let logical = basePath;
-    if (logical === "/index.html") logical = "/";
-    logical = normalizeToNoTrailingSlash(logical);
-    if (logical === "") logical = "/";
-
-    // Keep hash, drop legacy ?lang
-    url.searchParams.delete("lang");
-
     if (lang === "ru") {
-      url.pathname = (logical === "/") ? "/ru/" : `/ru${logical}`;
+      url.pathname = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      url.searchParams.delete("lang");
       return url.toString();
     }
 
     // FI
-    url.pathname = (logical === "/") ? "/" : logical;
+    url.pathname = basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath);
+    url.searchParams.delete("lang");
     return url.toString();
   }
 
-  // Internal links normalization:
-  // - RU pages must link to /ru/....
-  // - FI pages must link to non-/ru paths
+  // NEW: keep links consistent: if RU -> prefix /ru to internal paths
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
 
-    // normalize home alias
+    // normalize home
     if (href === "/index.html") href = "/";
 
-    // Remove legacy ?lang=ru from internal links
+    if (lang !== "ru") {
+      // FI: never include /ru and never include ?lang
+      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+    }
+
+    // RU:
+    // convert internal path to /ru/...
     let path = href;
+    // strip legacy lang=ru
     try {
       const u = new URL(href, window.location.origin);
       u.searchParams.delete("lang");
       path = u.pathname + (u.search || "") + (u.hash || "");
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
 
     const clean = stripRuPrefix(path);
-
-    if (lang === "ru") {
-      if (clean === "/" || clean === "") return "/ru/";
-      if (clean.startsWith("/")) return "/ru" + clean;
-      return "/ru/" + clean;
-    }
-
-    // FI
-    if (clean === "" || clean === "/") return "/";
-    if (clean.startsWith("/")) return clean;
-    return "/" + clean;
+    if (clean === "/" || clean === "") return "/ru/";
+    if (clean.startsWith("/")) return "/ru" + clean;
+    return "/ru/" + clean;
   }
 
   async function copyToClipboard(text) {
@@ -343,9 +333,6 @@
     const pageUrlFi = absoluteUrl(baseUrl, fiPath);
     const pageUrlRu = absoluteUrl(baseUrl, ruPath);
 
-    // IMPORTANT:
-    // You want RU indexed. Therefore we DO NOT noindex RU here.
-    // If you ever want to noindex RU again, set i18n.ruNoIndex=true in data/site.json.
     const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
 
     const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
@@ -522,35 +509,35 @@
   }
 
   function renderStickyCall(data, lang) {
-    // показываем только если есть телефон
-    const phone = (data.phone || "").trim();
-    if (!phone) return;
+  // показываем только если есть телефон
+  const phone = (data.phone || "").trim();
+  if (!phone) return;
 
-    const phoneRaw = phone.replaceAll(" ", "");
-    const label = ui(lang, "call"); // "Soita" / "Позвонить"
-    const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
+  const phoneRaw = phone.replaceAll(" ", "");
+  const label = ui(lang, "call"); // "Soita" / "Позвонить"
+  const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
 
-    // контейнер создаём один раз
-    let wrap = document.getElementById("stickycall");
-    if (!wrap) {
-      wrap = document.createElement("div");
-      wrap.id = "stickycall";
-      wrap.className = "stickycall";
-      document.body.appendChild(wrap);
-    }
-
-    wrap.innerHTML = `
-      <div class="stickycall__inner">
-        <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
-          📞 ${escapeHtml(label)} ${escapeHtml(phone)}
-        </a>
-        <div class="stickycall__sub">${escapeHtml(sub)}</div>
-      </div>
-    `;
-
-    // добавляем отступ снизу, чтобы контент не перекрывался
-    document.body.classList.add("has-stickycall");
+  // контейнер создаём один раз
+  let wrap = document.getElementById("stickycall");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "stickycall";
+    wrap.className = "stickycall";
+    document.body.appendChild(wrap);
   }
+
+  wrap.innerHTML = `
+    <div class="stickycall__inner">
+      <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
+        📞 ${escapeHtml(label)} ${escapeHtml(phone)}
+      </a>
+      <div class="stickycall__sub">${escapeHtml(sub)}</div>
+    </div>
+  `;
+
+  // добавляем отступ снизу, чтобы контент не перекрывался
+  document.body.classList.add("has-stickycall");
+}
 
   function renderHome(data, lang, igFeed) {
     const el = $("#page-home");
@@ -1000,28 +987,23 @@
     return;
   }
 
-  // Optional: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
+  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
     if (qLang === "ru") {
       const basePath = stripRuPrefix(url.pathname);
-      let logical = basePath;
-      if (logical === "/index.html") logical = "/";
-      logical = normalizeToNoTrailingSlash(logical);
-      if (logical === "") logical = "/";
-      url.pathname = (logical === "/") ? "/ru/" : `/ru${logical}`;
+      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      url.pathname = targetPath;
       url.searchParams.delete("lang");
       window.location.replace(url.toString());
       return;
     }
   } catch (e) {}
 
-  // FIX: language from URL ONLY
   const lang = getLang(data);
 
-  // NOTE: we do NOT rely on localStorage/cookies for language anymore.
-  // But we keep the old line guarded, so it never breaks Brave:
+  // persist selection (kept, but no longer affects language selection)
   try { localStorage.setItem("lang", lang); } catch (e) {}
 
   applySeo(data, lang);
@@ -1031,10 +1013,10 @@
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) {
-      const nextLang = btn.getAttribute("data-lang");
-      if (data?.i18n?.available?.includes(nextLang)) {
-        // No storage needed, just navigate to correct URL
-        window.location.href = setLangInUrl(nextLang);
+      const lang = btn.getAttribute("data-lang");
+      if (data?.i18n?.available?.includes(lang)) {
+        try { localStorage.setItem("lang", lang); } catch (e) {}
+        window.location.href = setLangInUrl(lang);
       }
     }
   });
@@ -1067,6 +1049,6 @@
   renderHinnastoPage(data, lang);
   renderContactPage(data, lang);
   renderStickyCall(data, lang);
-
+  
   console.log("Site rendered successfully in language:", lang);
 })();
