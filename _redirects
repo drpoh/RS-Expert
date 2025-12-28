@@ -1,65 +1,22 @@
 # =========================
-# RS-Expert — _redirects
-# RU pages are REAL routes (/ru/...), language is determined by /ru/ prefix in site.js
+# Canonical / normalization
 # =========================
 
-# ---- Canonical host: force www -> apex (pick ONE canonical host)
-https://www.rs-expert.fi/*  https://rs-expert.fi/:splat  301!
-
-# ---- HTTPS (Cloudflare обычно уже делает, но пусть будет)
-http://rs-expert.fi/*       https://rs-expert.fi/:splat  301!
-http://www.rs-expert.fi/*   https://rs-expert.fi/:splat  301!
-
-# ---- Normalize FI: /index.html -> /
-/index.html                 /                   301
-
-# =========================
-# RU (path-based)
-# =========================
-
-# IMPORTANT:
-# Use EXACT mappings (no wildcards) to avoid "everything becomes /index.html"
-# and to ensure /ru/services.html serves services.html, etc.
-
-# RU Home
-/ru                        /index.html         200
-/ru/                       /index.html         200
-/ru/index.html             /index.html         200
-
-# RU Services
-/ru/services.html          /services.html      200
-
-# RU Gallery
-/ru/gallery.html           /gallery.html       200
-
-# RU References
-/ru/referenssit.html       /referenssit.html   200
-
-# RU Documents
-/ru/documents.html         /documents.html     200
-
-# RU Quote
-/ru/tarjouspyynto.html     /tarjouspyynto.html 200
-
-# RU Contact
-/ru/contact.html           /contact.html       200
-
-# RU Pricing
-/ru/hinnasto.html          /hinnasto.html      200
+/index.html          /              301
+/ru                 /ru/            301
+/ru/index.html       /ru/            301
 
 
 # =========================
-# Optional: legacy query-based RU (keep or remove)
-# If you used old links like /services.html?lang=ru — keep them working.
-# These are redirects to the canonical /ru/ URLs to prevent duplicates in Google.
+# RU pages (path-based)
+# Serve the same HTML, but keep /ru/* in the URL (so site.js can render RU)
 # =========================
 
-/?lang=ru                  /ru/                 301
-/index.html?lang=ru         /ru/                 301
-/services.html?lang=ru      /ru/services.html    301
-/gallery.html?lang=ru       /ru/gallery.html     301
-/referenssit.html?lang=ru   /ru/referenssit.html 301
-/documents.html?lang=ru     /ru/documents.html   301
-/tarjouspyynto.html?lang=ru /ru/tarjouspyynto.html 301
-/contact.html?lang=ru       /ru/contact.html     301
-/hinnasto.html?lang=ru      /ru/hinnasto.html    301
+/ru/                 /index.html            200
+/ru/services.html     /services.html         200
+/ru/gallery.html      /gallery.html          200
+/ru/referenssit.html  /referenssit.html      200
+/ru/documents.html    /documents.html        200
+/ru/tarjouspyynto.html /tarjouspyynto.html   200
+/ru/contact.html      /contact.html          200
+/ru/hinnasto.html     /hinnasto.html         200
