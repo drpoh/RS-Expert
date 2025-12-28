@@ -1,51 +1,40 @@
 # =========================
-# RS-Expert — Cloudflare Pages redirects
+# RS-Expert — Cloudflare Pages redirects (SAFE, no loops)
 # RU pages are path-based (/ru/...) and should be indexable
 # =========================
 
-# --- Normalize explicit index.html ---
-/index.html            /                 301
-/ru/index.html         /ru/              301
+# --- Normalize explicit index.html (optional, safe) ---
+/ru/index.html          /ru/               301
+/index.html             /                  301
 
 # --- Pretty URLs (FI): /services -> /services.html ---
-/services              /services.html     301
-/gallery               /gallery.html      301
-/referenssit           /referenssit.html  301
-/documents             /documents.html    301
-/tarjouspyynto         /tarjouspyynto.html 301
-/contact               /contact.html      301
-/hinnasto              /hinnasto.html     301
+/services               /services.html     301
+/gallery                /gallery.html      301
+/referenssit            /referenssit.html  301
+/documents              /documents.html    301
+/tarjouspyynto           /tarjouspyynto.html 301
+/contact                /contact.html      301
+/hinnasto               /hinnasto.html     301
 
 # --- Pretty URLs (RU): /ru/services -> /ru/services.html ---
-/ru/services           /ru/services.html  301
-/ru/gallery            /ru/gallery.html   301
-/ru/referenssit        /ru/referenssit.html 301
-/ru/documents          /ru/documents.html 301
-/ru/tarjouspyynto      /ru/tarjouspyynto.html 301
-/ru/contact            /ru/contact.html   301
-/ru/hinnasto           /ru/hinnasto.html  301
+/ru/services            /ru/services.html  301
+/ru/gallery             /ru/gallery.html   301
+/ru/referenssit         /ru/referenssit.html 301
+/ru/documents           /ru/documents.html 301
+/ru/tarjouspyynto       /ru/tarjouspyynto.html 301
+/ru/contact             /ru/contact.html   301
+/ru/hinnasto            /ru/hinnasto.html  301
 
 # =========================
-# Rewrites (200) — serve same HTML files for RU prefix
-# IMPORTANT: do NOT use /ru/* /index.html 200 (it breaks RU subpages)
+# Rewrites (200) — ONLY for RU prefix
+# (FI pages should be served normally by Pages without rewrites)
 # =========================
 
-# FI pages (normal)
-/                     /index.html         200
-/services.html         /services.html      200
-/gallery.html          /gallery.html       200
-/referenssit.html      /referenssit.html   200
-/documents.html        /documents.html     200
-/tarjouspyynto.html    /tarjouspyynto.html 200
-/contact.html          /contact.html       200
-/hinnasto.html         /hinnasto.html      200
-
-# RU pages (serve same HTML via /ru/ prefix)
-/ru/                   /index.html         200
-/ru/services.html      /services.html      200
-/ru/gallery.html       /gallery.html       200
-/ru/referenssit.html   /referenssit.html   200
-/ru/documents.html     /documents.html     200
-/ru/tarjouspyynto.html /tarjouspyynto.html 200
-/ru/contact.html       /contact.html       200
-/ru/hinnasto.html      /hinnasto.html      200
+/ru/                    /index.html         200
+/ru/services.html       /services.html      200
+/ru/gallery.html        /gallery.html       200
+/ru/referenssit.html    /referenssit.html   200
+/ru/documents.html      /documents.html     200
+/ru/tarjouspyynto.html  /tarjouspyynto.html 200
+/ru/contact.html        /contact.html       200
+/ru/hinnasto.html       /hinnasto.html      200
