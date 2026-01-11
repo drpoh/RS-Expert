@@ -31,42 +31,58 @@
       else el.setAttribute("name", nameOrProp);
       document.head.appendChild(el);
     }
-    el.setAttribute("content", String(value ?? ""));
+    el.setAttribute("content", value);
   }
 
-  function setCanonical(url) {
-    let link = document.querySelector('link[rel="canonical"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "canonical";
-      document.head.appendChild(link);
+  function setLink(rel, href, hreflang) {
+    let selector = `link[rel="${rel}"]`;
+    if (hreflang) selector += `[hreflang="${hreflang}"]`;
+    let el = document.querySelector(selector);
+    if (!el) {
+      el = document.createElement("link");
+      el.setAttribute("rel", rel);
+      if (hreflang) el.setAttribute("hreflang", hreflang);
+      document.head.appendChild(el);
     }
-    link.href = url;
+    el.setAttribute("href", href);
   }
 
-  function setHreflangAlternates(urlFi, urlRu) {
-    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(n => n.remove());
-    function add(hreflang, href) {
-      const l = document.createElement("link");
-      l.rel = "alternate";
-      l.hreflang = hreflang;
-      l.href = href;
-      document.head.appendChild(l);
+  function removeLink(rel, hreflang) {
+    let selector = `link[rel="${rel}"]`;
+    if (hreflang) selector += `[hreflang="${hreflang}"]`;
+    document.querySelectorAll(selector).forEach((n) => n.remove());
+  }
+
+  function removeMeta(nameOrProp, isProperty = false) {
+    const selector = isProperty
+      ? `meta[property="${nameOrProp}"]`
+      : `meta[name="${nameOrProp}"]`;
+    document.querySelectorAll(selector).forEach((n) => n.remove());
+  }
+
+  function copyToClipboard(text) {
+    if (!text) return Promise.resolve(false);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
     }
-    add("fi", urlFi);
-    add("ru", urlRu);
-    add("x-default", urlFi);
-  }
-
-  function t(value, lang) {
-    if (value == null) return "";
-    if (typeof value === "string") return value;
-    if (typeof value === "object") {
-      return value[lang] || value.fi || Object.values(value)[0] || "";
+    // fallback
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return Promise.resolve(ok);
+    } catch (e) {
+      return Promise.resolve(false);
     }
-    return "";
   }
 
+  // i18n helpers
   function getLangFromBrowser(available, def) {
     const nav = (navigator.language || navigator.userLanguage || "").toLowerCase();
     if (nav.startsWith("ru") && available.includes("ru")) return "ru";
@@ -81,12 +97,36 @@
     return (p === "/ru" || p === "/ru/" || p.startsWith("/ru/")) ? "ru" : null;
   }
 
+  // NEW: persistent user language choice (sticky across pages/tabs)
+  const LANG_STORAGE_KEY = "rs_lang";
+
+  function getLangFromStorage(available) {
+    try {
+      const v = (localStorage.getItem(LANG_STORAGE_KEY) || "").toLowerCase();
+      if (available.includes(v)) return v;
+    } catch (e) {}
+    return null;
+  }
+
+  function setLangToStorage(lang) {
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, lang);
+    } catch (e) {}
+  }
+
+  function clearLangStorage() {
+    try {
+      localStorage.removeItem(LANG_STORAGE_KEY);
+    } catch (e) {}
+  }
+
   // FIX: strip RU prefix reliably
   function stripRuPrefix(pathname) {
-    const p = pathname || "/";
-    if (p === "/ru" || p === "/ru/") return "/";
-    if (p.startsWith("/ru/")) return p.slice(3) || "/"; // remove "/ru"
-    return p;
+    if (!pathname) return "/";
+    if (pathname === "/ru") return "/";
+    if (pathname === "/ru/") return "/";
+    if (pathname.startsWith("/ru/")) return pathname.slice(3) || "/";
+    return pathname;
   }
 
   function normalizeToNoTrailingSlash(path) {
@@ -102,6 +142,39 @@
     return path;
   }
 
+  // NEW: determine logical page key from current path (works even if server rewrites to index.html)
+  function getPageKeyFromPath() {
+    const p = normalizePathForPage(stripRuPrefix(window.location.pathname || "/"));
+    if (p === "/" || p === "") return "home";
+    const m = p.match(/^\/([a-z0-9_-]+)\.html$/i);
+    if (m) return m[1].toLowerCase();
+    // allow folder-style URLs if they ever appear
+    const m2 = p.match(/^\/([a-z0-9_-]+)\/?$/i);
+    if (m2) return m2[1].toLowerCase();
+    return "home";
+  }
+
+  // NEW: ensure correct page container exists (important when /ru/* is served by index.html)
+  function ensurePageContainer(pageKey) {
+    const id = "page-" + pageKey;
+    let el = document.getElementById(id);
+    if (el) return el;
+
+    // Prefer #main-content, else first <main>, else body
+    const main = document.getElementById("main-content") || document.querySelector("main") || document.body;
+
+    // If there is a dedicated main, clear it (we are on wrong template)
+    try {
+      // remove previous page-* containers to avoid duplicates
+      main.querySelectorAll('[id^="page-"]').forEach((n) => n.remove());
+    } catch (e) {}
+
+    el = document.createElement("div");
+    el.id = id;
+    main.appendChild(el);
+    return el;
+  }
+
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
@@ -110,15 +183,15 @@
     const pathLang = getLangFromPath();
     if (pathLang && available.includes(pathLang)) return pathLang;
 
-    // 2) legacy ?lang=ru (we will redirect to /ru/* in boot)
+    // 2) legacy ?lang=ru (will be normalized to /ru/* in boot)
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) saved
-    const saved = localStorage.getItem("lang");
-    if (available.includes(saved)) return saved;
+    // 3) user preference from localStorage (sticky)
+    const stored = getLangFromStorage(available);
+    if (stored) return stored;
 
-    // 4) browser
+    // 4) browser (only if enabled)
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -146,21 +219,37 @@
     }
 
     // FI
-    url.pathname = (basePath === "/") ? "/" : normalizeToNoTrailingSlash(basePath);
+    url.pathname = basePath;
     return url.toString();
   }
 
-  // NEW: keep links consistent: if RU -> prefix /ru to internal paths
-  function withLang(href, lang) {
-    if (!href) return "#";
-    if (href.startsWith("http://") || href.startsWith("https://")) return href;
+  function toLangHref(href, lang) {
+    if (!href) return href;
+    if (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("#")) return href;
 
-    // normalize home
-    if (href === "/index.html") href = "/";
+    // absolute external
+    if (href.startsWith("http://") || href.startsWith("https://")) {
+      try {
+        const u = new URL(href);
+        if (u.origin !== window.location.origin) return href;
+        // same-origin absolute: convert
+        href = u.pathname + u.search + u.hash;
+      } catch (e) {
+        return href;
+      }
+    }
 
     if (lang !== "ru") {
-      // FI: never include /ru and never include ?lang
-      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+      // FI:
+      // strip /ru prefix if present
+      try {
+        const u = new URL(href, window.location.origin);
+        u.searchParams.delete("lang");
+        const p = stripRuPrefix(u.pathname);
+        return p + (u.search || "") + (u.hash || "");
+      } catch (e) {
+        return stripRuPrefix(href);
+      }
     }
 
     // RU:
@@ -175,32 +264,198 @@
 
     const clean = stripRuPrefix(path);
     if (clean === "/" || clean === "") return "/ru/";
-    if (clean.startsWith("/")) return "/ru" + clean;
+    if (clean.startsWith("/")) return "/ru" + normalizeToNoTrailingSlash(clean);
     return "/ru/" + clean;
   }
 
-  async function copyToClipboard(text) {
-    const value = String(text || "");
-    if (!value) return false;
+  // UI strings
+  const UI = {
+    fi: {
+      copied: "Kopioitu!",
+      copy: "Kopioi",
+      call: "Soita",
+      whatsapp: "WhatsApp",
+      telegram: "Telegram",
+      email: "Sähköposti",
+      requestQuote: "Pyydä tarjous",
+      services: "Palvelut",
+      references: "Referenssit",
+      pricing: "Hinnasto",
+      gallery: "Galleria",
+      docs: "Dokumentit",
+      contact: "Yhteystiedot",
+      footerFollow: "Seuraa meitä",
+      footerCompany: "Yritys",
+      footerLegal: "Tiedot",
+      footerSlogan: "Sähkötyöt Uusimaa – nopeasti ja luotettavasti.",
+      pageTitleHome: "Sähköasentaja Järvenpää | RS-Expert Oy",
+      pageTitleServices: "Palvelut — RS-Expert Oy",
+      pageTitleReferences: "Referenssit — RS-Expert Oy",
+      pageTitleGallery: "Galleria — RS-Expert Oy",
+      pageTitlePricing: "Hinnasto — RS-Expert Oy",
+      pageTitleDocs: "Dokumentit — RS-Expert Oy",
+      pageTitleContact: "Yhteystiedot — RS-Expert Oy",
+      pageTitleTarjous: "Tarjouspyyntö — RS-Expert Oy",
+      whyUs: "Miksi RS-Expert?",
+      highlights: "Vahvuudet",
+      instagram: "Instagram",
+      galleryIntro: "Työnäytteitä ja projektikuvia.",
+      referencesIntro: "Kohteita ja esimerkkejä tekemistämme töistä.",
+      pricingIntro: "Hinnat (suuntaa-antavat).",
+      docsIntro: "Ladattavat dokumentit ja todistukset.",
+      contactIntro: "Ota yhteyttä – vastaamme nopeasti.",
+      tarjousIntro: "Kuvaile työ – palaamme tarjouksella.",
+      pricingTableProduct: "Palvelu",
+      pricingTableVat0: "Hinta (alv 0%)",
+      pricingTableVat: "Hinta (alv 25,5%)",
+      tariffEffectiveFrom: "Voimassa alkaen",
+    },
+    ru: {
+      copied: "Скопировано!",
+      copy: "Копировать",
+      call: "Позвонить",
+      whatsapp: "WhatsApp",
+      telegram: "Telegram",
+      email: "Email",
+      requestQuote: "Запросить предложение",
+      services: "Услуги",
+      references: "Референсы",
+      pricing: "Прайс",
+      gallery: "Галерея",
+      docs: "Документы",
+      contact: "Контакты",
+      footerFollow: "Мы в соцсетях",
+      footerCompany: "Компания",
+      footerLegal: "Информация",
+      footerSlogan: "Электромонтаж в Уусимаа — быстро и надёжно.",
+      pageTitleHome: "Электрик Ярвенпяя | RS-Expert Oy",
+      pageTitleServices: "Услуги — RS-Expert Oy",
+      pageTitleReferences: "Референсы — RS-Expert Oy",
+      pageTitleGallery: "Галерея — RS-Expert Oy",
+      pageTitlePricing: "Прайс — RS-Expert Oy",
+      pageTitleDocs: "Документы — RS-Expert Oy",
+      pageTitleContact: "Контакты — RS-Expert Oy",
+      pageTitleTarjous: "Запрос предложения — RS-Expert Oy",
+      whyUs: "Почему RS-Expert?",
+      highlights: "Преимущества",
+      instagram: "Instagram",
+      galleryIntro: "Примеры работ и фото проектов.",
+      referencesIntro: "Объекты и примеры выполненных работ.",
+      pricingIntro: "Цены (ориентировочно).",
+      docsIntro: "Документы и сертификаты для скачивания.",
+      contactIntro: "Свяжитесь с нами — отвечаем быстро.",
+      tarjousIntro: "Опишите задачу — вернёмся с предложением.",
+      tariffEffectiveFrom: "Действует с",
+      pricingTableProduct: "Услуга",
+      pricingTableVat0: "Цена (без НДС)",
+      pricingTableVat: "Цена (с НДС 25,5%)"
+    }
+  };
+
+  function ui(lang, key) {
+    return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
+  }
+
+  // SEO + schema
+  function applySeo(data, lang) {
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
+
+    let pathname = window.location.pathname.replace(/\/$/, "");
+    if (pathname === "" || pathname === "/index.html") pathname = "/";
+
+    // map /ru/services.html -> /services.html for seo.pages lookup
+    let logicalPath = stripRuPrefix(pathname);
+    logicalPath = normalizePathForPage(logicalPath);
+    if (logicalPath === "") logicalPath = "/";
+
+    const pages = data?.seo?.pages || {};
+    const pageSeo = pages[logicalPath] || {};
+
+    const title = (lang === "ru" ? pageSeo?.title_ru : pageSeo?.title_fi) || document.title;
+    const desc = (lang === "ru" ? pageSeo?.description_ru : pageSeo?.description_fi)
+      || document.querySelector('meta[name="description"]')?.getAttribute("content")
+      || "";
+
+    document.title = title;
+    setMeta("description", desc, false);
+
+    // canonical / alternate
+    const fiUrl = absoluteUrl(baseUrl, logicalPath === "/" ? "/" : logicalPath);
+    const ruUrl = absoluteUrl(baseUrl, (logicalPath === "/" ? "/ru/" : ("/ru" + normalizeToNoTrailingSlash(logicalPath))));
+
+    // canonical depends on language
+    setLink("canonical", lang === "ru" ? ruUrl : fiUrl);
+
+    // alternates
+    removeLink("alternate", "fi");
+    removeLink("alternate", "ru");
+    setLink("alternate", fiUrl, "fi");
+    setLink("alternate", ruUrl, "ru");
+
+    // OG / Twitter
+    setMeta("og:type", "website", true);
+    setMeta("og:title", title, true);
+    setMeta("og:description", desc, true);
+    setMeta("og:url", (lang === "ru" ? ruUrl : fiUrl), true);
+    setMeta("twitter:card", "summary_large_image", false);
+    setMeta("twitter:title", title, false);
+    setMeta("twitter:description", desc, false);
+
+    // language on <html>
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(value);
-        return true;
-      }
+      document.documentElement.setAttribute("lang", lang === "ru" ? "ru" : "fi");
     } catch (e) {}
+  }
+
+  function applyLocalBusinessSchema(data, lang) {
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
+    const info = data?.businessInfo || {};
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": info?.name || "RS-Expert Oy",
+      "url": baseUrl,
+      "telephone": info?.phone || data?.phone || "",
+      "email": info?.email || "",
+      "image": absoluteUrl(baseUrl, info?.logo || "/assets/logo.png"),
+      "address": info?.address ? {
+        "@type": "PostalAddress",
+        "streetAddress": info.address.street || "",
+        "postalCode": info.address.zip || "",
+        "addressLocality": info.address.city || "",
+        "addressCountry": info.address.country || "FI"
+      } : undefined,
+      "areaServed": info?.areaServed || ["Uusimaa"],
+      "sameAs": (info?.socials || [])
+        .filter(s => s?.url)
+        .map(s => s.url),
+      "inLanguage": lang === "ru" ? "ru" : "fi"
+    };
+
+    // remove undefined
+    Object.keys(schema).forEach((k) => (schema[k] === undefined) && delete schema[k]);
+
+    // inject
+    const id = "ld-localbusiness";
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement("script");
+      el.type = "application/ld+json";
+      el.id = id;
+      document.head.appendChild(el);
+    }
+    el.textContent = JSON.stringify(schema);
+  }
+
+  // Data loaders
+  async function loadSiteData() {
     try {
-      const ta = document.createElement("textarea");
-      ta.value = value;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return ok;
+      const res = await fetch("/data/site.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error("Failed to load site.json");
+      return await res.json();
     } catch (e) {
-      return false;
+      console.error("Site data not loaded:", e);
+      return null;
     }
   }
 
@@ -226,331 +481,120 @@
     }
   }
 
-  const UI = {
-    fi: {
-      call: "Soita",
-      email: "Email",
-      instagram: "Instagram",
-      instagramCTA: "Katso Instagram",
-      instagramPreviewTitle: "Uusimmat kuvat Instagramissa",
-      instagramPreviewLead: "Työnäytteet ja toteutukset — seuraa uusimmat kohteet.",
-      requestQuote: "Pyydä tarjous",
-      services: "Palvelut",
-      works: "Työnäytteet",
-      gallery: "Galleria",
-      references: "Referenssit",
-      showAll: "Näytä kaikki →",
-      seeGallery: "Katso galleria →",
-      reviews: "Asiakaspalaute",
-      needElectrician: "Tarvitsetko sähkömiestä?",
-      sendRequest: "Lähetä pyyntö — palaamme nopeasti.",
-      whyUs: "Miksi valita meidät",
-      documents: "Dokumentit",
-      docsLead: "PDF-dokumentit ja ohjeet.",
-      galleryLead: "Työnäytteitä ja toteutuksia.",
-      referencesLead: "Päivitämme parhaillaan referenssejä. Uudet kohteet julkaistaan pian — seuraa Instagramia.",
-      quoteTitle: "Tarjouspyyntö",
-      quoteLead: "Kerro kohde ja toiveet — palaamme nopeasti.",
-      phoneLabel: "Puhelin",
-      contactTitle: "Yhteystiedot",
-      contactCTA: "Pyydä tarjous",
-      addressLabel: "Osoite",
-      yLabel: "Y-tunnus",
-      billingTitle: "Laskutusosoite",
-      ibanLabel: "IBAN",
-      copyIban: "Kopioi IBAN",
-      copied: "Kopioitu!",
-      verkkolaskuLabel: "Verkkolaskuosoite",
-      operaattoriLabel: "Operaattori",
-      serviceAreaTitleFallback: "Palvelualue",
-      serviceAreaNoteFallback: "Kysy myös muista kohteista Uudellamaalla.",
-      mapTitle: "SIJAINTIMME KARTALLA",
-      pricingTitle: "Hinnasto",
-      pricingLead: "Hinnat ALV 0 % ja ALV 25,5 %.",
-      pricingEffectiveFrom: "Voimassa alkaen",
-      pricingTableProduct: "Tuote",
-      pricingTableVat0: "Hinta (ALV 0 %)",
-      pricingTableVat: "Hinta (ALV 25,5 %)"
-    },
-    ru: {
-      call: "Позвонить",
-      email: "Email",
-      instagram: "Instagram",
-      instagramCTA: "Смотреть Instagram",
-      instagramPreviewTitle: "Свежие фото из Instagram",
-      instagramPreviewLead: "Примеры работ и объекты — новые фото появляются там.",
-      requestQuote: "Заявка",
-      services: "Услуги",
-      works: "Примеры работ",
-      gallery: "Галерея",
-      references: "Референсы",
-      showAll: "Показать все →",
-      seeGallery: "Смотреть галерею →",
-      reviews: "Отзывы",
-      needElectrician: "Нужен электрик?",
-      sendRequest: "Отправьте заявку — быстро ответим.",
-      whyUs: "Почему мы",
-      documents: "Документы",
-      docsLead: "PDF-документы и инструкции.",
-      galleryLead: "Примеры выполненных работ.",
-      referencesLead: "Сейчас обновляем референсы. Новые объекты скоро появятся — следите за Instagram.",
-      quoteTitle: "Заявка на расчёт",
-      quoteLead: "Опишите объект и пожелания — быстро ответим.",
-      phoneLabel: "Телефон",
-      contactTitle: "Контакты",
-      contactCTA: "Оставить заявку",
-      addressLabel: "Адрес",
-      yLabel: "Y-tunnus",
-      billingTitle: "Реквизиты для счета",
-      ibanLabel: "IBAN",
-      copyIban: "Копировать IBAN",
-      copied: "Скопировано!",
-      verkkolaskuLabel: "Verkkolaskuosoite",
-      operaattoriLabel: "Оператор",
-      serviceAreaTitleFallback: "Зона обслуживания",
-      serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa.",
-      mapTitle: "МЫ НА КАРТЕ",
-      pricingTitle: "Цены",
-      pricingLead: "Цены без НДС и с НДС 25,5%.",
-      pricingEffectiveFrom: "Действует с",
-      pricingTableProduct: "Услуга",
-      pricingTableVat0: "Цена (без НДС)",
-      pricingTableVat: "Цена (с НДС 25,5%)"
-    }
-  };
-
-  function ui(lang, key) {
-    return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
-  }
-
-  // SEO + schema
-  function applySeo(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
-
-    let pathname = window.location.pathname.replace(/\/$/, "");
-    if (pathname === "" || pathname === "/index.html") pathname = "/";
-
-    // map /ru/services.html -> /services.html for seo.pages lookup
-    let logicalPath = stripRuPrefix(pathname);
-    logicalPath = logicalPath.replace(/\/$/, "");
-    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
-    if (logicalPath === "") logicalPath = "/";
-
-    const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
-
-    const title = t(pageSeo.title, lang) || data?.companyName || "RS-Expert Oy";
-
-    const description =
-      t(pageSeo.description, lang) ||
-      t(data?.site?.defaultDescription, lang) ||
-      t(data?.tagline, lang) || "";
-
-    const fiPath = logicalPath === "/" ? "/" : logicalPath;
-    const ruPath = logicalPath === "/" ? "/ru/" : `/ru${logicalPath}`;
-
-    const pageUrlFi = absoluteUrl(baseUrl, fiPath);
-    const pageUrlRu = absoluteUrl(baseUrl, ruPath);
-
-    const ruNoIndex = Boolean(data?.i18n?.ruNoIndex);
-
-    const canonicalUrl = (lang === "ru") ? pageUrlRu : pageUrlFi;
-
-    if (lang === "ru" && ruNoIndex) {
-      setMeta("robots", "noindex,follow");
-      setMeta("googlebot", "noindex");
-    } else {
-      setMeta("robots", "index,follow");
-      setMeta("googlebot", "index");
-    }
-
-    setCanonical(canonicalUrl);
-    setHreflangAlternates(pageUrlFi, pageUrlRu);
-
-    const ogImage = absoluteUrl(baseUrl, pageSeo.ogImage || data?.site?.defaultOgImage || "");
-
-    document.documentElement.lang = lang;
-    document.title = title;
-
-    setMeta("description", description);
-
-    setMeta("og:type", "website", true);
-    setMeta("og:site_name", data?.companyName || "RS-Expert Oy", true);
-    setMeta("og:title", title, true);
-    setMeta("og:description", description, true);
-    setMeta("og:url", canonicalUrl, true);
-    if (ogImage) setMeta("og:image", ogImage, true);
-
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", title);
-    setMeta("twitter:description", description);
-    if (ogImage) setMeta("twitter:image", ogImage);
-  }
-
-  function applyLocalBusinessSchema(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
-    const b = data?.business || {};
-    const info = data?.businessInfo || {};
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: b.legalName || data?.companyName || "RS-Expert Oy",
-      url: b.url || baseUrl,
-      telephone: b.telephone || data?.phone,
-      email: b.email || data?.email,
-      image: absoluteUrl(baseUrl, b.image || data?.site?.defaultOgImage || ""),
-      areaServed: (b.areaServed || []).filter(Boolean).map(x => ({ "@type": "City", name: x })),
-      openingHours: b.openingHours || [],
-      inLanguage: lang
-    };
-    if (info?.yTunnus) {
-      schema.identifier = { "@type": "PropertyValue", name: "Y-tunnus", value: info.yTunnus };
-    }
-    const addr = t(info.address, lang);
-    if (addr) {
-      schema.address = {
-        "@type": "PostalAddress",
-        streetAddress: addr,
-        addressCountry: "FI"
-      };
-    }
-    Object.keys(schema).forEach(k => {
-      if (
-        schema[k] === undefined ||
-        schema[k] === null ||
-        schema[k] === "" ||
-        (Array.isArray(schema[k]) && schema[k].length === 0)
-      ) {
-        delete schema[k];
-      }
-    });
-    const el = document.getElementById("ld-json");
-    if (el) el.textContent = JSON.stringify(schema, null, 2);
-  }
-
-  function showError(message) {
-    const main = $("main.container") || document.body;
-    main.innerHTML = `
-      <div class="card card--pad" style="margin:100px auto;max-width:600px;text-align:center;background:#1a1f2e;color:#fff;">
-        <h2>Virhe sivun lataamisessa</h2>
-        <p>${escapeHtml(message)}</p>
-        <p>Yritä päivittää sivu tai ota yhteyttä: <a href="mailto:rs.expert.oy@gmail.com" style="color:#6ae4ff;">rs.expert.oy@gmail.com</a></p>
-      </div>
-    `;
-  }
-
-  // RENDER FUNCTIONS
+  // UI blocks
   function renderHeader(data, lang) {
-    const header = $("#site-header");
-    if (!header) return;
+    const el = $("#site-header");
+    if (!el) return;
 
-    const menuHtml = (data.menu || [])
-      .filter(x => x && x.enabled !== false)
+    const baseUrl = data?.site?.baseUrl || window.location.origin;
+    const info = data?.businessInfo || {};
+    const phoneRaw = (data.phone || info.phone || "").replaceAll(" ", "");
+    const email = info.email || "";
+    const brand = data?.brand || {};
+    const logo = brand.logo || "/assets/logo.svg";
+    const nav = data?.nav || [];
+
+    const navHtml = nav
+      .filter((n) => n && n.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(m => {
-        const href = escapeHtml(withLang(m.href || "#", lang));
-        const label = escapeHtml(t(m.label, lang));
-        return `<a class="nav__link" href="${href}">${label}</a>`;
+      .map((n) => {
+        const text = lang === "ru" ? (n.title_ru || n.title_fi || "") : (n.title_fi || "");
+        const href = toLangHref(n.href || "#", lang);
+        const active =
+          stripRuPrefix(window.location.pathname).replace(/\/$/, "") === (n.href || "").replace(/\/$/, "");
+        return `<a class="nav__link ${active ? "is-active" : ""}" href="${escapeHtml(href)}">${escapeHtml(text)}</a>`;
       })
       .join("");
 
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const info = data.businessInfo || {};
-    const ig = info.instagram || "";
-    const topLeftText = [
-      lang === "ru" ? "Быстрая помощь" : "Nopea apu",
-      data.region || "",
-      data.phone || ""
-    ].filter(Boolean).join(" • ");
+    const langFiActive = (lang === "fi") ? "is-active" : "";
+    const langRuActive = (lang === "ru") ? "is-active" : "";
 
-    const fiActive = lang === "fi" ? " lang__btn--active" : "";
-    const ruActive = lang === "ru" ? " lang__btn--active" : "";
+    el.innerHTML = `
+      <div class="header container">
+        <a class="brand" href="${escapeHtml(toLangHref("/", lang))}">
+          <img class="brand__logo" src="${escapeHtml(logo)}" alt="RS-Expert" loading="eager"/>
+          <span class="brand__name">RS-Expert</span>
+        </a>
 
-    const igBtn = ig
-      ? `<a class="topbar__btn topbar__btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
-      : "";
+        <nav class="nav" aria-label="Primary">
+          ${navHtml}
+        </nav>
 
-    header.innerHTML = `
-      <div class="topbar">
-        <div class="topbar__left">${escapeHtml(topLeftText)}</div>
-        <div class="topbar__right">
+        <div class="header__actions">
           <div class="lang">
-            <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
-            <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
+            <a class="lang__btn ${langFiActive}" data-lang="fi" href="${escapeHtml(setLangInUrl("fi"))}">FI</a>
+            <a class="lang__btn ${langRuActive}" data-lang="ru" href="${escapeHtml(setLangInUrl("ru"))}">RU</a>
           </div>
-          ${igBtn}
-          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
-        </div>
-      </div>
-      <div class="nav">
-        <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
-        </div>
-        <nav class="nav__links">${menuHtml}</nav>
-        <div class="nav__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+
+          ${phoneRaw ? `
+            <a class="btn btn--primary" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          ` : ""}
+
+          <a class="btn btn--ghost" href="${escapeHtml(toLangHref("/tarjouspyynto.html", lang))}">
+            ${escapeHtml(ui(lang, "requestQuote"))}
+          </a>
         </div>
       </div>
     `;
   }
 
   function renderFooter(data, lang) {
-    const footer = $("#site-footer");
-    if (!footer) return;
+    const el = $("#site-footer");
+    if (!el) return;
 
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const info = data.businessInfo || {};
-    const ig = info.instagram || "";
-    const addr = t(info.address, lang);
-    const y = info.yTunnus || "";
-    const igHtml = ig
-      ? `<span class="dot">•</span><a class="footer__ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagram"))}</a>`
-      : "";
+    const info = data?.businessInfo || {};
+    const phoneRaw = (info.phone || data.phone || "").replaceAll(" ", "");
+    const email = info.email || "";
+    const socials = info.socials || [];
+    const year = new Date().getFullYear();
 
-    const line2Parts = [];
-    if (addr) line2Parts.push(`${escapeHtml(ui(lang, "addressLabel"))}: ${escapeHtml(addr)}`);
-    if (y) line2Parts.push(`${escapeHtml(ui(lang, "yLabel"))}: ${escapeHtml(y)}`);
+    const socialsHtml = socials
+      .filter(s => s && s.enabled !== false && s.url)
+      .map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title || s.platform || "Link")}</a>`)
+      .join(" • ");
 
-    footer.innerHTML = `
-      <div class="footer__inner">
-        <div class="footer__brand">${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
-        <div class="footer__meta">
-          <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a>
-          <span class="dot">•</span>
-          <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
-          ${igHtml}
+    const address = info?.address ? [
+      info.address.street,
+      `${info.address.zip || ""} ${info.address.city || ""}`.trim(),
+      info.address.country || "Finland"
+    ].filter(Boolean).join(", ") : "";
+
+    el.innerHTML = `
+      <div class="footer container">
+        <div class="footer__col">
+          <div class="footer__title">RS-Expert Oy</div>
+          <div class="footer__text">${escapeHtml(ui(lang, "footerSlogan"))}</div>
+          ${address ? `<div class="footer__text">${escapeHtml(address)}</div>` : ""}
+          ${phoneRaw ? `<div class="footer__text"><a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(info.phone || data.phone || "")}</a></div>` : ""}
+          ${email ? `<div class="footer__text"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></div>` : ""}
+          <div class="footer__muted">© ${year} RS-Expert Oy</div>
         </div>
-        ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
-        <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+
+        <div class="footer__col">
+          <div class="footer__title">${escapeHtml(ui(lang, "footerFollow"))}</div>
+          <div class="footer__text">${socialsHtml || ""}</div>
+        </div>
       </div>
     `;
   }
 
   function renderStickyCall(data, lang) {
-    // показываем только если есть телефон
-    const phone = (data.phone || "").trim();
-    if (!phone) return;
+    const info = data?.businessInfo || {};
+    const phoneRaw = (info.phone || data.phone || "").replaceAll(" ", "");
+    if (!phoneRaw) return;
 
-    const phoneRaw = phone.replaceAll(" ", "");
-    const label = ui(lang, "call"); // "Soita" / "Позвонить"
-    const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
-
-    // контейнер создаём один раз
-    let wrap = document.getElementById("stickycall");
-    if (!wrap) {
-      wrap = document.createElement("div");
-      wrap.id = "stickycall";
-      wrap.className = "stickycall";
-      document.body.appendChild(wrap);
+    let el = document.getElementById("stickycall");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "stickycall";
+      document.body.appendChild(el);
     }
 
-    wrap.innerHTML = `
-      <div class="stickycall__inner">
-        <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(label)}">
-          📞 ${escapeHtml(label)} ${escapeHtml(phone)}
-        </a>
-        <div class="stickycall__sub">${escapeHtml(sub)}</div>
-      </div>
+    el.innerHTML = `
+      <a class="stickycall__btn" href="tel:${escapeHtml(phoneRaw)}">
+        <span class="stickycall__icon">☎</span>
+        <span class="stickycall__text">${escapeHtml(ui(lang, "call"))}</span>
+      </a>
     `;
 
     // добавляем отступ снизу, чтобы контент не перекрывался
@@ -558,454 +602,399 @@
   }
 
   function renderHome(data, lang, igFeed) {
-    const el = $("#page-home");
-    if (!el) return;
-
+    const el = ensurePageContainer("home");
     const hero = data.hero || {};
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
-
-    const badgesHtml = (hero.badges || [])
-      .map(b => `<span class="badge">${escapeHtml(t(b, lang))}</span>`)
-      .join("");
-
-    const highlightsHtml = (data.highlights || [])
-      .filter(x => x && x.enabled !== false)
-      .map(h => `
-        <div class="card">
-          <div class="card__icon">${escapeHtml(h.icon || "")}</div>
-          <div class="card__title">${escapeHtml(t(h.title, lang))}</div>
-          <div class="card__text">${escapeHtml(t(h.text, lang))}</div>
-        </div>
-      `).join("");
-
-    const servicesHtml = (data.services || [])
+    const tagline = lang === "ru" ? (hero.tagline_ru || hero.tagline_fi || "") : (hero.tagline_fi || "");
+    const subtitle = lang === "ru" ? (hero.subtitle_ru || hero.subtitle_fi || "") : (hero.subtitle_fi || "");
+    const highlights = (data.highlights || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .slice(0, 6)
-      .map(s => `
-        <div class="service">
-          <div class="service__top">
-            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
-            <div class="service__tag">${escapeHtml(t(s.tag, lang))}</div>
-          </div>
-          <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
-          <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
-        </div>
-      `).join("");
-
-    const reviewsHtml = (data.reviews || [])
-      .filter(x => x && x.enabled !== false)
-      .map(r => {
-        const starsCount = Number(r.stars || 0);
-        const stars = "★".repeat(starsCount).padEnd(5, "☆");
-        const meta = [r.city, t(r.service, lang)].filter(Boolean).join(" • ");
+      .map(h => {
+        const t = lang === "ru" ? (h.title_ru || h.title_fi || "") : (h.title_fi || "");
+        const d = lang === "ru" ? (h.desc_ru || h.desc_fi || "") : (h.desc_fi || "");
         return `
-          <div class="review">
-            <div class="review__top">
-              <div class="review__title">${escapeHtml(t(r.title, lang))}</div>
-              <div class="review__stars" aria-label="${starsCount} stars">${stars}</div>
-            </div>
-            <div class="review__meta">${escapeHtml(meta)}</div>
-            <div class="review__text">${escapeHtml(t(r.text, lang))}</div>
+          <div class="card">
+            <div class="card__title">${escapeHtml(t)}</div>
+            <div class="card__text">${escapeHtml(d)}</div>
           </div>
         `;
-      }).join("");
+      })
+      .join("");
 
-    const instagramCta = ig
-      ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
-      : "";
+    const servicesHtml = (data.services || [])
+      .filter(x => x && x.enabled !== false && x.featured)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .slice(0, 6)
+      .map(s => {
+        const t = lang === "ru" ? (s.title_ru || s.title_fi || "") : (s.title_fi || "");
+        const d = lang === "ru" ? (s.desc_ru || s.desc_fi || "") : (s.desc_fi || "");
+        return `
+          <div class="card">
+            <div class="card__title">${escapeHtml(t)}</div>
+            <div class="card__text">${escapeHtml(d)}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    const heroButtons = `
+      <div class="hero__actions">
+        ${phoneRaw ? `<a class="btn btn--primary" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>` : ""}
+        <a class="btn btn--ghost" href="${escapeHtml(toLangHref("/tarjouspyynto.html", lang))}">
+          ${escapeHtml(ui(lang, "requestQuote"))}
+        </a>
+      </div>
+    `;
+
+    // Instagram preview
+    const igPreview = renderInstagramPreviewBlock(data, lang, igFeed);
 
     el.innerHTML = `
       <section class="hero">
-        <h1 class="hero__title">${escapeHtml(t(hero.title, lang))}</h1>
-        <p class="hero__subtitle">${escapeHtml(t(hero.subtitle, lang))}</p>
-        <div class="hero__badges">${badgesHtml}</div>
-        <div class="hero__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
-          ${instagramCta}
+        <div class="hero__content">
+          <h1 class="hero__title">${escapeHtml(tagline)}</h1>
+          <p class="hero__subtitle">${escapeHtml(subtitle)}</p>
+          ${heroButtons}
         </div>
       </section>
+
       <section class="section">
         <h2>${escapeHtml(ui(lang, "services"))}</h2>
-        <div class="grid grid--services">${servicesHtml}</div>
-        <div class="section__more">
-          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
+        <div class="grid">${servicesHtml}</div>
+        <div class="section__actions">
+          <a class="btn btn--ghost" href="${escapeHtml(toLangHref("/services.html", lang))}">${escapeHtml(ui(lang, "services"))}</a>
         </div>
       </section>
-      <section class="section">
-        <h2>${escapeHtml(ui(lang, "reviews"))}</h2>
-        <div class="grid grid--reviews">${reviewsHtml}</div>
-      </section>
-      <section class="section section--cta">
-        <h2>${escapeHtml(ui(lang, "needElectrician"))}</h2>
-        <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
-        <div class="cta__buttons">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
-          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
-          ${instagramCta}
-        </div>
-      </section>
+
       <section class="section">
         <h2>${escapeHtml(ui(lang, "whyUs"))}</h2>
-        <div class="grid grid--highlights">${highlightsHtml}</div>
+        <div class="grid grid--highlights">${highlights}</div>
+      </section>
+
+      ${igPreview ? `<section class="section">${igPreview}</section>` : ""}
+
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "contact"))}</h2>
+        <p>${escapeHtml(lang === "ru" ? (data.contactIntro_ru || UI.ru.contactIntro) : (data.contactIntro_fi || UI.fi.contactIntro))}</p>
+        <div class="section__actions">
+          <a class="btn btn--primary" href="${escapeHtml(toLangHref("/contact.html", lang))}">${escapeHtml(ui(lang, "contact"))}</a>
+        </div>
       </section>
     `;
   }
 
   function renderServicesPage(data, lang) {
-    const el = $("#page-services");
-    if (!el) return;
-
+    const el = ensurePageContainer("services");
     const servicesHtml = (data.services || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map(s => `
-        <div class="service service--big">
-          <div class="service__top">
-            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
-            <div class="service__tag">${escapeHtml(t(s.tag, lang))}</div>
-          </div>
-          <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
-          <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
+        <div class="card">
+          <div class="card__title">${escapeHtml(lang === "ru" ? (s.title_ru || s.title_fi || "") : (s.title_fi || ""))}</div>
+          <div class="card__text">${escapeHtml(lang === "ru" ? (s.desc_ru || s.desc_fi || "") : (s.desc_fi || ""))}</div>
         </div>
-      `).join("");
+      `)
+      .join("");
 
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "services"))}</h1>
-        <p class="lead">${escapeHtml(t(data.tagline, lang))}</p>
-        <div class="grid grid--services">${servicesHtml}</div>
+        <div class="grid">${servicesHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderReferencesPage(data, lang) {
+    const el = ensurePageContainer("referenssit");
+    const intro = lang === "ru" ? (data.referencesIntro_ru || UI.ru.referencesIntro) : (data.referencesIntro_fi || UI.fi.referencesIntro);
+
+    const itemsHtml = (data.references || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(r => {
+        const t = lang === "ru" ? (r.title_ru || r.title_fi || "") : (r.title_fi || "");
+        const d = lang === "ru" ? (r.desc_ru || r.desc_fi || "") : (r.desc_fi || "");
+        const meta = [r.city, r.year].filter(Boolean).join(" • ");
+        return `
+          <div class="card">
+            <div class="card__title">${escapeHtml(t)}</div>
+            ${meta ? `<div class="card__meta">${escapeHtml(meta)}</div>` : ""}
+            <div class="card__text">${escapeHtml(d)}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "references"))}</h1>
+        <p>${escapeHtml(intro)}</p>
+        <div class="grid">${itemsHtml}</div>
       </section>
     `;
   }
 
   function renderInstagramPreviewBlock(data, lang, igFeed) {
-    const info = data.businessInfo || {};
-    const ig = info.instagram || "";
-    if (!ig) return "";
+    const info = data?.businessInfo || {};
+    const igUrl = info?.instagramUrl || info?.instagram || "";
 
-    const maxItems = Number(data?.instagram?.maxItems || 24);
-    const items = (igFeed?.items || []).slice(0, maxItems);
+    if (!igFeed || !igFeed.items || !igFeed.items.length) return "";
 
-    if (!items.length) {
+    const items = igFeed.items.slice(0, 6);
+    const itemsHtml = items.map(i => {
+      const img = i.thumb || i.src || "";
+      const cap = i.caption || "";
+      const href = i.url || igUrl || "#";
       return `
-        <section class="section">
-          <div class="igpreview__head">
-            <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
-            <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
-          </div>
-          <a class="igcard" href="${escapeHtml(ig)}" target="_blank" rel="noopener">
-            <div class="igcard__title">📸 ${escapeHtml(ui(lang, "instagram"))}</div>
-            <div class="igcard__sub">${escapeHtml(lang === "ru" ? "Открыть профиль и смотреть фото" : "Avaa profiili ja katso kuvat")}</div>
-          </a>
-        </section>
+        <a class="ig__item" href="${escapeHtml(href)}" target="_blank" rel="noopener" title="${escapeHtml(cap)}">
+          <img src="${escapeHtml(img)}" alt="${escapeHtml(cap)}" loading="lazy"/>
+        </a>
       `;
-    }
-
-    const grid = items
-      .map(it => {
-        const url = escapeHtml(it.url || ig);
-        const img = escapeHtml(it.image || "");
-        const alt = escapeHtml(it.alt || "Instagram");
-        return `
-          <a class="igthumb" href="${url}" target="_blank" rel="noopener">
-            <img class="igthumb__img" src="${img}" alt="${alt}" loading="lazy">
-          </a>
-        `;
-      })
-      .join("");
+    }).join("");
 
     return `
-      <section class="section">
-        <div class="igpreview__head">
-          <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
-          <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+      <div class="ig">
+        <div class="ig__head">
+          <h2>${escapeHtml(ui(lang, "instagram"))}</h2>
+          ${igUrl ? `<a class="btn btn--ghost" href="${escapeHtml(igUrl)}" target="_blank" rel="noopener">Instagram</a>` : ""}
         </div>
-        <div class="iggrid">
-          ${grid}
+        <div class="ig__grid">
+          ${itemsHtml}
         </div>
-        <div class="section__more">
-          <a class="link" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
-        </div>
-      </section>
+      </div>
     `;
   }
 
   function renderGalleryPage(data, lang, igFeed, uploads) {
-    const el = $("#page-gallery");
-    if (!el) return;
+    const el = ensurePageContainer("gallery");
+    const intro = lang === "ru" ? (data.galleryIntro_ru || UI.ru.galleryIntro) : (data.galleryIntro_fi || UI.fi.galleryIntro);
 
-    const uploadItems = (uploads?.items || []).filter(x => x && x.image);
-    const hasUploads = uploadItems.length > 0;
+    const igItems = (igFeed?.items || []).map(i => ({
+      src: i.src || i.thumb,
+      thumb: i.thumb || i.src,
+      title: i.caption || "",
+      url: i.url || "",
+      origin: "instagram"
+    })).filter(x => x.src);
 
-    const uploadsHtml = uploadItems
-      .map(it => {
-        const img = escapeHtml(it.image);
-        const title = escapeHtml(it.title || "");
-        return `
-          <a class="igthumb" href="${img}" target="_blank" rel="noopener">
-            <img class="igthumb__img" src="${img}" alt="${title}" loading="lazy">
-          </a>
-        `;
-      })
-      .join("");
+    const upItems = (uploads?.items || []).map(u => ({
+      src: u.src,
+      thumb: u.thumb || u.src,
+      title: lang === "ru" ? (u.title_ru || u.title_fi || "") : (u.title_fi || ""),
+      url: u.url || "",
+      origin: "upload"
+    })).filter(x => x.src);
 
-    const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
+    const all = [...upItems, ...igItems];
+
+    const itemsHtml = all.slice(0, 60).map(i => `
+      <a class="gallery__item" href="${escapeHtml(i.url || i.src)}" target="_blank" rel="noopener">
+        <img src="${escapeHtml(i.thumb || i.src)}" alt="${escapeHtml(i.title || "Photo")}" loading="lazy"/>
+      </a>
+    `).join("");
 
     el.innerHTML = `
       <section class="section">
         <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
-      </section>
-      ${
-        hasUploads
-          ? `<section class="section">
-               <h2>${escapeHtml(lang === "ru" ? "Проекты" : "Projektit")}</h2>
-               <div class="iggrid">${uploadsHtml}</div>
-             </section>`
-          : ""
-      }
-      ${igBlock}
-    `;
-  }
-
-  function renderReferencesPage(data, lang) {
-    const el = $("#page-referenssit");
-    if (!el) return;
-
-    const info = data.businessInfo || {};
-    const ig = info.instagram || "";
-    const igCta = ig
-      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>`
-      : "";
-
-    el.innerHTML = `
-      <section class="section">
-        <h1>${escapeHtml(ui(lang, "references"))}</h1>
-        <p class="lead">${escapeHtml(ui(lang, "referencesLead"))}</p>
-        <div class="card card--pad">
-          <p style="margin:0;">${escapeHtml(ui(lang, "referencesLead"))}</p>
-          ${igCta}
-        </div>
+        <p>${escapeHtml(intro)}</p>
+        <div class="gallery__grid">${itemsHtml}</div>
       </section>
     `;
   }
 
   function renderDocumentsPage(data, lang) {
-    const el = $("#page-documents");
-    if (!el) return;
+    const el = ensurePageContainer("documents");
+    const intro = lang === "ru" ? (data.docsIntro_ru || UI.ru.docsIntro) : (data.docsIntro_fi || UI.fi.docsIntro);
 
     const docsHtml = (data.documents || [])
+      .filter(x => x && x.enabled !== false && x.url)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(d => `
+        <div class="card">
+          <div class="card__title">${escapeHtml(lang === "ru" ? (d.title_ru || d.title_fi || "") : (d.title_fi || ""))}</div>
+          <div class="card__text">${escapeHtml(lang === "ru" ? (d.desc_ru || d.desc_fi || "") : (d.desc_fi || ""))}</div>
+          <div class="section__actions">
+            <a class="btn btn--ghost" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">PDF</a>
+          </div>
+        </div>
+      `)
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "docs"))}</h1>
+        <p>${escapeHtml(intro)}</p>
+        <div class="grid">${docsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderTarjousPage(data, lang) {
+    const el = ensurePageContainer("tarjouspyynto");
+    const intro = lang === "ru" ? (data.tarjousIntro_ru || UI.ru.tarjousIntro) : (data.tarjousIntro_fi || UI.fi.tarjousIntro);
+
+    const tallyFi = data?.tally?.fi || data?.tally?.default || "";
+    const tallyRu = data?.tally?.ru || "";
+    const formId = (lang === "ru" && tallyRu) ? tallyRu : tallyFi;
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "pageTitleTarjous"))}</h1>
+        <p>${escapeHtml(intro)}</p>
+
+        ${formId ? `
+          <div class="embed">
+            <iframe
+              data-tally-src="https://tally.so/r/${escapeHtml(formId)}"
+              loading="lazy"
+              width="100%"
+              height="1000"
+              frameborder="0"
+              marginheight="0"
+              marginwidth="0"
+              title="Tally form"
+            ></iframe>
+          </div>
+        ` : `
+          <div class="card">
+            <div class="card__text">${escapeHtml(lang === "ru" ? "Форма временно недоступна." : "Lomake ei ole saatavilla.")}</div>
+          </div>
+        `}
+      </section>
+    `;
+
+    // Tally embed script (once)
+    if (formId) {
+      const id = "tally-embed";
+      if (!document.getElementById(id)) {
+        const s = document.createElement("script");
+        s.id = id;
+        s.src = "https://tally.so/widgets/embed.js";
+        s.async = true;
+        document.body.appendChild(s);
+      } else {
+        // if script already loaded, re-init
+        try { window.Tally && window.Tally.loadEmbeds && window.Tally.loadEmbeds(); } catch (e) {}
+      }
+    }
+  }
+
+  function renderHinnastoPage(data, lang) {
+    const el = ensurePageContainer("hinnasto");
+    const intro = lang === "ru" ? (data.pricingIntro_ru || UI.ru.pricingIntro) : (data.pricingIntro_fi || UI.fi.pricingIntro);
+
+    const effectiveFrom = data?.pricing?.effectiveFrom || "";
+    const rows = (data?.pricing?.items || [])
       .filter(x => x && x.enabled !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(d => {
-        const url = escapeHtml(d.url || "#");
+      .map(p => {
+        const name = lang === "ru" ? (p.name_ru || p.name_fi || "") : (p.name_fi || "");
+        const vat0 = p.vat0 ?? "";
+        const vat = p.vat ?? "";
         return `
-          <a class="doc" href="${url}" target="_blank" rel="noopener">
-            <div class="doc__title">${escapeHtml(t(d.title, lang))}</div>
-            <div class="doc__meta">${escapeHtml(t(d.category, lang) || "PDF")}</div>
-          </a>
+          <tr>
+            <td>${escapeHtml(name)}</td>
+            <td>${escapeHtml(vat0)}</td>
+            <td>${escapeHtml(vat)}</td>
+          </tr>
         `;
       })
       .join("");
 
     el.innerHTML = `
       <section class="section">
-        <h1>${escapeHtml(ui(lang, "documents"))}</h1>
-        <p class="lead">${escapeHtml(ui(lang, "docsLead"))}</p>
-        <div class="grid grid--docs">${docsHtml}</div>
-      </section>
-    `;
-  }
-
-  function renderTarjousPage(data, lang) {
-    const el = $("#page-tarjous");
-    if (!el) return;
-
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const formId = data.tallyFormId || "";
-    const iframeSrc = formId ? `https://tally.so/r/${encodeURIComponent(formId)}` : "";
-
-    el.innerHTML = `
-      <section class="section">
-        <h1>${escapeHtml(ui(lang, "quoteTitle"))}</h1>
-        <p class="lead">${escapeHtml(ui(lang, "quoteLead"))}</p>
-        <div class="card card--pad">
-          <div class="stack">
-            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
-            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
-          </div>
+        <h1>${escapeHtml(ui(lang, "pricing"))}</h1>
+        <p>${escapeHtml(intro)}</p>
+        ${effectiveFrom ? `<div class="muted">${escapeHtml(ui(lang, "tariffEffectiveFrom"))}: ${escapeHtml(effectiveFrom)}</div>` : ""}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>${escapeHtml(ui(lang, "pricingTableProduct"))}</th>
+                <th>${escapeHtml(ui(lang, "pricingTableVat0"))}</th>
+                <th>${escapeHtml(ui(lang, "pricingTableVat"))}</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
         </div>
-        ${
-          iframeSrc
-            ? `<div class="tally">
-                 <iframe
-                   title="${escapeHtml(ui(lang, "quoteTitle"))}"
-                   src="${iframeSrc}"
-                   loading="lazy"
-                   style="width:100%;height:900px;border:0;border-radius:16px;"
-                 ></iframe>
-               </div>`
-            : `<div class="card card--pad">Lisää tallyFormId data/site.json tiedostoon.</div>`
-        }
       </section>
-    `;
-  }
-
-  function renderHinnastoPage(data, lang) {
-    const el = $("#page-hinnasto");
-    if (!el) return;
-
-    const p = data.pricing || null;
-    if (!p) {
-      el.innerHTML = `<section class="section"><h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1><div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div></section>`;
-      return;
-    }
-
-    const effective = p.effectiveFrom || "";
-    const lead = t(p.lead, lang) || ui(lang, "pricingLead");
-
-    const introLines = Array.isArray(p.intro?.[lang]) ? p.intro[lang] : (Array.isArray(p.intro?.fi) ? p.intro.fi : []);
-    const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
-
-    const tables = Array.isArray(p.tables) ? p.tables : [];
-    const tablesHtml = tables.map(tbl => {
-      const title = escapeHtml(t(tbl.title, lang));
-      const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
-        ui(lang, "pricingTableProduct"),
-        ui(lang, "pricingTableVat0"),
-        ui(lang, "pricingTableVat")
-      ];
-      const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
-      const rowsHtml = rows.map(r => {
-        const name = escapeHtml(t(r.name, lang));
-        const p0 = escapeHtml(r.price0 || "");
-        const pv = escapeHtml(r.priceVat || "");
-        return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
-      }).join("");
-      return `
-        <section class="section">
-          <h2>${title}</h2>
-          <div class="card card--pad">
-            <div style="overflow-x:auto;">
-              <table style="width:100%;border-collapse:collapse;min-width:600px;">
-                <thead style="background:rgba(255,255,255,0.05);">
-                  <tr>
-                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
-                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
-                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${rowsHtml}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>`;
-    }).join("");
-
-    const notesLines = Array.isArray(p.notes?.[lang]) ? p.notes[lang] : (Array.isArray(p.notes?.fi) ? p.notes.fi : []);
-    const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
-
-    el.innerHTML = `
-      <section class="section">
-        <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
-        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
-        ${effective ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(effective)}</span></div>` : ""}
-        ${introHtml ? `<div class="card card--pad mt"><ul>${introHtml}</ul></div>` : ""}
-      </section>
-      ${tablesHtml}
-      ${notesHtml ? `<section class="section"><div class="card card--pad"><ul>${notesHtml}</ul></div></section>` : ""}
     `;
   }
 
   function renderContactPage(data, lang) {
-    const el = $("#page-contact");
-    if (!el) return;
+    const el = ensurePageContainer("contact");
+    const info = data?.businessInfo || {};
+    const phone = info.phone || data.phone || "";
+    const phoneRaw = phone.replaceAll(" ", "");
+    const email = info.email || "";
+    const address = info?.address ? [
+      info.address.street,
+      `${info.address.zip || ""} ${info.address.city || ""}`.trim(),
+      info.address.country || "Finland"
+    ].filter(Boolean).join(", ") : "";
 
-    const phoneRaw = (data.phone || "").replaceAll(" ", "");
-    const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
-    const info = data.businessInfo || {};
-    const addr = t(info.address, lang);
-    const y = info.yTunnus || "";
-    const bill = info.billing || {};
-    const iban = bill.iban || "";
-    const eaddr = bill.verkkolaskuosoite || "";
-    const op = bill.operaattori || "";
-    const mapQuery = encodeURIComponent(info.mapAddress || "Siltakatu 73, 04400 Järvenpää, Finland");
-    const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+    const socials = (info.socials || [])
+      .filter(s => s && s.enabled !== false && s.url)
+      .map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title || s.platform || "Link")}</a>`)
+      .join(" • ");
 
-    const mapBlock = `
-      <section class="section">
-        <h2>${escapeHtml(ui(lang, "mapTitle"))}</h2>
-        <div class="card card--pad">
-          <iframe
-            title="${escapeHtml(ui(lang, "mapTitle"))}"
-            src="${mapSrc}"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            style="width:100%;height:420px;border:0;border-radius:16px;"
-            allowfullscreen
-          ></iframe>
-        </div>
-      </section>
-    `;
-
-    const billingHtml = `
-      <div class="card card--pad">
-        <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
-        <div class="stack">
-          ${iban ? `
-            <div class="rowline">
-              <div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> <span class="mono">${escapeHtml(iban)}</span></div>
-              <button class="copybtn" type="button" data-copy="${escapeHtml(iban)}">${escapeHtml(ui(lang, "copyIban"))}</button>
-            </div>
-            <div class="copystatus" id="copy-status" aria-live="polite"></div>` : ""}
-          ${eaddr ? `<div><strong>${escapeHtml(ui(lang, "verkkolaskuLabel"))}:</strong> <span class="mono">${escapeHtml(eaddr)}</span></div>` : ""}
-          ${op ? `<div><strong>${escapeHtml(ui(lang, "operaattoriLabel"))}:</strong> ${escapeHtml(op)}</div>` : ""}
-        </div>
-      </div>
-    `;
+    const intro = lang === "ru" ? (data.contactIntro_ru || UI.ru.contactIntro) : (data.contactIntro_fi || UI.fi.contactIntro);
 
     el.innerHTML = `
       <section class="section">
-        <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
-        <div class="card card--pad">
-          <div class="stack">
-            <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
-            <div>${escapeHtml(regionCity)}</div>
-            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
-            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
-            ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
-            ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
-            <div class="mt">
-              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
+        <h1>${escapeHtml(ui(lang, "contact"))}</h1>
+        <p>${escapeHtml(intro)}</p>
+
+        <div class="grid">
+          ${phoneRaw ? `
+            <div class="card">
+              <div class="card__title">${escapeHtml(ui(lang, "call"))}</div>
+              <div class="card__text"><a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(phone)}</a></div>
+              <div class="section__actions">
+                <button class="btn btn--ghost" data-copy="${escapeHtml(phone)}">${escapeHtml(ui(lang, "copy"))}</button>
+              </div>
             </div>
-          </div>
+          ` : ""}
+
+          ${email ? `
+            <div class="card">
+              <div class="card__title">${escapeHtml(ui(lang, "email"))}</div>
+              <div class="card__text"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></div>
+              <div class="section__actions">
+                <button class="btn btn--ghost" data-copy="${escapeHtml(email)}">${escapeHtml(ui(lang, "copy"))}</button>
+              </div>
+            </div>
+          ` : ""}
+
+          ${address ? `
+            <div class="card">
+              <div class="card__title">${escapeHtml(lang === "ru" ? "Адрес" : "Osoite")}</div>
+              <div class="card__text">${escapeHtml(address)}</div>
+            </div>
+          ` : ""}
+
+          ${socials ? `
+            <div class="card">
+              <div class="card__title">${escapeHtml(ui(lang, "footerFollow"))}</div>
+              <div class="card__text">${socials}</div>
+            </div>
+          ` : ""}
         </div>
-        ${billingHtml}
+
+        <div id="copy-status" class="muted" aria-live="polite"></div>
       </section>
-      ${mapBlock}
     `;
   }
 
-  // BOOT
-  let data = null;
-  try {
-    const res = await fetch("/data/site.json", { cache: "no-cache" });
-    if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
-    data = await res.json();
-    console.log("site.json loaded successfully");
-  } catch (e) {
-    console.error("Failed to load /data/site.json:", e);
-    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
-    return;
-  }
+  // --- main ---
+  const data = await loadSiteData();
+  if (!data) return;
 
-  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
+  // Normalize legacy ?lang=ru to /ru/*
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
@@ -1019,10 +1008,24 @@
     }
   } catch (e) {}
 
-  const lang = getLang(data);
+  // NEW: if user has chosen RU (or FI) in storage, normalize URL to match it
+  try {
+    const available = data?.i18n?.available || ["fi"];
+    const stored = getLangFromStorage(available);
+    const pathLang = getLangFromPath(); // null or "ru"
+    if (stored === "ru" && pathLang !== "ru") {
+      // redirect FI URL -> RU URL
+      window.location.replace(setLangInUrl("ru"));
+      return;
+    }
+    if (stored === "fi" && pathLang === "ru") {
+      // redirect RU URL -> FI URL
+      window.location.replace(setLangInUrl("fi"));
+      return;
+    }
+  } catch (e) {}
 
-  // persist selection
-  try { localStorage.setItem("lang", lang); } catch (e) {}
+  const lang = getLang(data);
 
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
@@ -1038,7 +1041,7 @@
 
     const nextLang = btn.getAttribute("data-lang");
     if (data?.i18n?.available?.includes(nextLang)) {
-      try { localStorage.setItem("lang", nextLang); } catch (e) {}
+      setLangToStorage(nextLang);
       window.location.href = setLangInUrl(nextLang);
     }
   }, true);
@@ -1062,14 +1065,37 @@
 
   renderHeader(data, lang);
   renderFooter(data, lang);
-  renderHome(data, lang, igFeed);
-  renderServicesPage(data, lang);
-  renderGalleryPage(data, lang, igFeed, uploads);
-  renderReferencesPage(data, lang);
-  renderDocumentsPage(data, lang);
-  renderTarjousPage(data, lang);
-  renderHinnastoPage(data, lang);
-  renderContactPage(data, lang);
+
+  const pageKey = getPageKeyFromPath();
+
+  switch (pageKey) {
+    case "services":
+      renderServicesPage(data, lang);
+      break;
+    case "gallery":
+      renderGalleryPage(data, lang, igFeed, uploads);
+      break;
+    case "referenssit":
+      renderReferencesPage(data, lang);
+      break;
+    case "documents":
+      renderDocumentsPage(data, lang);
+      break;
+    case "tarjouspyynto":
+      renderTarjousPage(data, lang);
+      break;
+    case "hinnasto":
+      renderHinnastoPage(data, lang);
+      break;
+    case "contact":
+      renderContactPage(data, lang);
+      break;
+    case "home":
+    default:
+      renderHome(data, lang, igFeed);
+      break;
+  }
+
   renderStickyCall(data, lang);
 
   console.log("Site rendered successfully in language:", lang);
