@@ -114,7 +114,11 @@
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) browser (only if enabled)
+    // 3) saved
+    const saved = localStorage.getItem("lang");
+    if (available.includes(saved)) return saved;
+
+    // 4) browser
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -231,9 +235,6 @@
       instagramPreviewTitle: "Uusimmat kuvat Instagramissa",
       instagramPreviewLead: "Työnäytteet ja toteutukset — seuraa uusimmat kohteet.",
       requestQuote: "Pyydä tarjous",
-      errorTitle: "Virhe sivun lataamisessa",
-      errorMessage: "Sivuston tiedot eivät latautuneet. Tarkista /data/site.json",
-      errorContact: "Yritä päivittää sivu tai ota yhteyttä:",
       services: "Palvelut",
       works: "Työnäytteet",
       gallery: "Galleria",
@@ -279,9 +280,6 @@
       instagramPreviewTitle: "Свежие фото из Instagram",
       instagramPreviewLead: "Примеры работ и объекты — новые фото появляются там.",
       requestQuote: "Заявка",
-      errorTitle: "Ошибка загрузки страницы",
-      errorMessage: "Не удалось загрузить данные сайта. Проверьте /data/site.json",
-      errorContact: "Попробуйте обновить страницу или свяжитесь с нами:",
       services: "Услуги",
       works: "Примеры работ",
       gallery: "Галерея",
@@ -392,14 +390,6 @@
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     const b = data?.business || {};
     const info = data?.businessInfo || {};
-    
-    // Get current page path for breadcrumbs
-    let pathname = window.location.pathname.replace(/\/$/, "");
-    if (pathname === "" || pathname === "/index.html") pathname = "/";
-    let logicalPath = stripRuPrefix(pathname);
-    logicalPath = logicalPath.replace(/\/$/, "");
-    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
-
     const schema = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
@@ -433,57 +423,17 @@
         delete schema[k];
       }
     });
-    
-    // Add BreadcrumbList schema for better SEO
-    const breadcrumbs = getBreadcrumbsSchema(data, lang, logicalPath, baseUrl);
-    const schemas = breadcrumbs ? [schema, breadcrumbs] : [schema];
-    
     const el = document.getElementById("ld-json");
-    if (el) el.textContent = JSON.stringify(schemas.length === 1 ? schema : schemas, null, 2);
+    if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  function getBreadcrumbsSchema(data, lang, path, baseUrl) {
-    const menu = data?.menu || [];
-    const breadcrumbItems = [
-      { "@type": "ListItem", position: 1, name: lang === "ru" ? "Главная" : "Etusivu", item: absoluteUrl(baseUrl, lang === "ru" ? "/ru/" : "/") }
-    ];
-    
-    if (path !== "/") {
-      const pageItem = menu.find(m => {
-        const mPath = (m.href || "").replace(/\/$/, "") || "/";
-        return mPath === path;
-      });
-      if (pageItem) {
-        const pageName = t(pageItem.label, lang);
-        const pageUrl = absoluteUrl(baseUrl, withLang(path, lang));
-        breadcrumbItems.push({
-          "@type": "ListItem",
-          position: 2,
-          name: pageName,
-          item: pageUrl
-        });
-      }
-    }
-    
-    if (breadcrumbItems.length <= 1) return null;
-    
-    return {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: breadcrumbItems
-    };
-  }
-
-  function showError(message, lang = "fi") {
+  function showError(message) {
     const main = $("main.container") || document.body;
-    const title = ui(lang, "errorTitle");
-    const contactLabel = ui(lang, "errorContact");
-    const email = "rs.expert.oy@gmail.com";
     main.innerHTML = `
       <div class="card card--pad" style="margin:100px auto;max-width:600px;text-align:center;background:#1a1f2e;color:#fff;">
-        <h2>${escapeHtml(title)}</h2>
+        <h2>Virhe sivun lataamisessa</h2>
         <p>${escapeHtml(message)}</p>
-        <p>${escapeHtml(contactLabel)} <a href="mailto:${escapeHtml(email)}" style="color:#6ae4ff;">${escapeHtml(email)}</a></p>
+        <p>Yritä päivittää sivu tai ota yhteyttä: <a href="mailto:rs.expert.oy@gmail.com" style="color:#6ae4ff;">rs.expert.oy@gmail.com</a></p>
       </div>
     `;
   }
@@ -523,20 +473,20 @@
       <div class="topbar">
         <div class="topbar__left">${escapeHtml(topLeftText)}</div>
         <div class="topbar__right">
-          <div class="lang" role="group" aria-label="${escapeHtml(lang === "ru" ? "Выбор языка" : "Kielen valinta")}">
-            <button class="lang__btn${fiActive}" data-lang="fi" type="button" aria-label="${escapeHtml(lang === "ru" ? "Финский язык" : "Suomen kieli")}" aria-pressed="${lang === "fi" ? "true" : "false"}">FI</button>
-            <button class="lang__btn${ruActive}" data-lang="ru" type="button" aria-label="${escapeHtml(lang === "ru" ? "Русский язык" : "Venäjän kieli")}" aria-pressed="${lang === "ru" ? "true" : "false"}">RU</button>
+          <div class="lang">
+            <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
+            <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
           </div>
           ${igBtn}
-          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(ui(lang, "call"))}">${escapeHtml(ui(lang, "call"))}</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}" aria-label="${escapeHtml(ui(lang, "email"))}">${escapeHtml(ui(lang, "email"))}</a>
+          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
         </div>
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link" aria-label="${escapeHtml(lang === "ru" ? "На главную" : "Etusivu")}">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
+          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
         </div>
-        <nav class="nav__links" aria-label="${escapeHtml(lang === "ru" ? "Главная навигация" : "Päänavigaatio")}">${menuHtml}</nav>
+        <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
         </div>
@@ -1051,9 +1001,7 @@
     console.log("site.json loaded successfully");
   } catch (e) {
     console.error("Failed to load /data/site.json:", e);
-    const lang = document.documentElement.lang || "fi";
-    const errorMsg = ui(lang, "errorMessage") || "Sivuston tiedot eivät latautuneet. Tarkista /data/site.json";
-    showError(errorMsg, lang);
+    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
     return;
   }
 
@@ -1073,6 +1021,9 @@
 
   const lang = getLang(data);
 
+  // persist selection
+  try { localStorage.setItem("lang", lang); } catch (e) {}
+
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
@@ -1087,6 +1038,7 @@
 
     const nextLang = btn.getAttribute("data-lang");
     if (data?.i18n?.available?.includes(nextLang)) {
+      try { localStorage.setItem("lang", nextLang); } catch (e) {}
       window.location.href = setLangInUrl(nextLang);
     }
   }, true);
