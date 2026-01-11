@@ -7,14 +7,13 @@
 /index.html                  /                       301
 
 # Normalize /ru (no file)
-# Important: only redirect, NOT serve content
 /ru                           /ru/                    301
 
 # -------------------------
 # RU pages → serve FI HTML
+# (SPECIFIC rules FIRST!)
 # -------------------------
 
-/ru/                          /index.html             200
 /ru/index.html                /index.html             200
 
 /ru/services.html             /services.html          200
@@ -24,6 +23,11 @@
 /ru/tarjouspyynto.html        /tarjouspyynto.html     200
 /ru/contact.html              /contact.html           200
 /ru/hinnasto.html             /hinnasto.html          200
+
+# -------------------------
+# RU home LAST (catch only /ru/ ideally, but keep it last)
+# -------------------------
+/ru/                          /index.html             200
 
 # -------------------------
 # IMPORTANT:
