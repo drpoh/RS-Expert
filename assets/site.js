@@ -1,5 +1,11 @@
 // RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
-// + FIX: reliable FI/RU switching (Brave-safe), consistent /ru handling, no accidental stuck-on-/ru
+// + FIX: correct, consistent language logic across ALL pages
+//   - FI is ALWAYS non-/ru/*
+//   - RU is ALWAYS /ru/*
+//   - No browser-language guessing (prevents mixed-content on canonical URLs)
+//   - Brave-safe switching + consistent internal links
+//   - Canonical/OG/hreflang always use current origin (avoids www/non-www canonical variant issues)
+//   - BreadcrumbList matching is normalized
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -67,18 +73,11 @@
     return "";
   }
 
-  function getLangFromBrowser(available, def) {
-    const nav = (navigator.language || navigator.userLanguage || "").toLowerCase();
-    if (nav.startsWith("ru") && available.includes("ru")) return "ru";
-    if (nav.startsWith("fi") && available.includes("fi")) return "fi";
-    return def;
-  }
-
   // NEW: RU language selection is path-based: /ru/*
   // FIX: normalize "/ru" and "/ru/" and "/ru/index.html"
   function getLangFromPath() {
     const p = window.location.pathname || "/";
-    return (p === "/ru" || p === "/ru/" || p.startsWith("/ru/")) ? "ru" : null;
+    return (p === "/ru" || p === "/ru/" || p.startsWith("/ru/")) ? "ru" : "fi";
   }
 
   // FIX: strip RU prefix reliably
@@ -87,6 +86,13 @@
     if (p === "/ru" || p === "/ru/") return "/";
     if (p.startsWith("/ru/")) return p.slice(3) || "/"; // remove "/ru"
     return p;
+  }
+
+  function ensureLeadingSlash(path) {
+    const s = String(path || "");
+    if (!s) return "/";
+    if (s.startsWith("/")) return s;
+    return "/" + s;
   }
 
   function normalizeToNoTrailingSlash(path) {
@@ -102,27 +108,17 @@
     return path;
   }
 
+  // --------------------------
+  // LANGUAGE LOGIC (FINAL)
+  // --------------------------
+  // Rule:
+  // - If URL is /ru/* => lang = ru
+  // - Else => lang = fi
+  // No browser guessing, no localStorage choice affecting content.
   function getLang(data) {
     const available = data?.i18n?.available || ["fi"];
-    const def = data?.i18n?.default || "fi";
-
-    // 1) PATH override (for SEO-indexable RU pages)
-    const pathLang = getLangFromPath();
-    if (pathLang && available.includes(pathLang)) return pathLang;
-
-    // 2) legacy ?lang=ru (we will redirect to /ru/* in boot)
-    const urlLang = new URLSearchParams(window.location.search).get("lang");
-    if (available.includes(urlLang)) return urlLang;
-
-    // 3) saved
-    const saved = localStorage.getItem("lang");
-    if (available.includes(saved)) return saved;
-
-    // 4) browser
-    if (data?.i18n?.preferBrowserLanguage) {
-      return getLangFromBrowser(available, def);
-    }
-    return def;
+    const lang = getLangFromPath();
+    return available.includes(lang) ? lang : (available.includes("fi") ? "fi" : available[0] || "fi");
   }
 
   // NEW: canonical RU URLs are /ru/..., not ?lang=ru
@@ -132,6 +128,7 @@
 
     // Start from logical (FI) path
     let basePath = stripRuPrefix(url.pathname);
+    basePath = ensureLeadingSlash(basePath);
     basePath = normalizePathForPage(basePath);
 
     if (basePath === "" || basePath === "/") basePath = "/";
@@ -157,10 +154,13 @@
 
     // normalize home
     if (href === "/index.html") href = "/";
+    href = ensureLeadingSlash(href);
 
     if (lang !== "ru") {
       // FI: never include /ru and never include ?lang
-      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
+      const clean = stripRuPrefix(href);
+      // remove legacy lang=ru in query if ever present
+      return clean.replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
     }
 
     // RU:
@@ -172,6 +172,8 @@
       u.searchParams.delete("lang");
       path = u.pathname + (u.search || "") + (u.hash || "");
     } catch (e) {}
+
+    path = ensureLeadingSlash(path);
 
     const clean = stripRuPrefix(path);
     if (clean === "/" || clean === "") return "/ru/";
@@ -235,6 +237,9 @@
       instagramPreviewTitle: "Uusimmat kuvat Instagramissa",
       instagramPreviewLead: "Työnäytteet ja toteutukset — seuraa uusimmat kohteet.",
       requestQuote: "Pyydä tarjous",
+      errorTitle: "Virhe sivun lataamisessa",
+      errorMessage: "Sivuston tiedot eivät latautuneet. Tarkista /data/site.json",
+      errorContact: "Yritä päivittää sivu tai ota yhteyttä:",
       services: "Palvelut",
       works: "Työnäytteet",
       gallery: "Galleria",
@@ -280,6 +285,9 @@
       instagramPreviewTitle: "Свежие фото из Instagram",
       instagramPreviewLead: "Примеры работ и объекты — новые фото появляются там.",
       requestQuote: "Заявка",
+      errorTitle: "Ошибка загрузки страницы",
+      errorMessage: "Не удалось загрузить данные сайта. Проверьте /data/site.json",
+      errorContact: "Попробуйте обновить страницу или свяжитесь с нами:",
       services: "Услуги",
       works: "Примеры работ",
       gallery: "Галерея",
@@ -325,13 +333,15 @@
 
   // SEO + schema
   function applySeo(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
+    // IMPORTANT: use current origin to avoid www/non-www canonical variant issues
+    const baseUrl = window.location.origin;
 
     let pathname = window.location.pathname.replace(/\/$/, "");
     if (pathname === "" || pathname === "/index.html") pathname = "/";
 
     // map /ru/services.html -> /services.html for seo.pages lookup
     let logicalPath = stripRuPrefix(pathname);
+    logicalPath = ensureLeadingSlash(logicalPath);
     logicalPath = logicalPath.replace(/\/$/, "");
     if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
     if (logicalPath === "") logicalPath = "/";
@@ -387,9 +397,19 @@
   }
 
   function applyLocalBusinessSchema(data, lang) {
-    const baseUrl = data?.site?.baseUrl || window.location.origin;
+    const baseUrl = window.location.origin;
     const b = data?.business || {};
     const info = data?.businessInfo || {};
+
+    // Get current page path for breadcrumbs
+    let pathname = window.location.pathname.replace(/\/$/, "");
+    if (pathname === "" || pathname === "/index.html") pathname = "/";
+    let logicalPath = stripRuPrefix(pathname);
+    logicalPath = ensureLeadingSlash(logicalPath);
+    logicalPath = logicalPath.replace(/\/$/, "");
+    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
+    if (logicalPath === "") logicalPath = "/";
+
     const schema = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
@@ -423,17 +443,77 @@
         delete schema[k];
       }
     });
+
+    // Add BreadcrumbList schema for better SEO
+    const breadcrumbs = getBreadcrumbsSchema(data, lang, logicalPath, baseUrl);
+    const schemas = breadcrumbs ? [schema, breadcrumbs] : [schema];
+
     const el = document.getElementById("ld-json");
-    if (el) el.textContent = JSON.stringify(schema, null, 2);
+    if (el) el.textContent = JSON.stringify(schemas.length === 1 ? schema : schemas, null, 2);
   }
 
-  function showError(message) {
+  function normalizeMenuPath(href) {
+    let p = String(href || "").trim();
+    if (!p) return "/";
+    // strip domain/query/hash if present
+    try {
+      const u = new URL(p, window.location.origin);
+      p = u.pathname;
+    } catch (e) {}
+    p = ensureLeadingSlash(p);
+    p = stripRuPrefix(p);
+    p = ensureLeadingSlash(p);
+    p = p.replace(/\/$/, "");
+    if (p === "" || p === "/index.html") p = "/";
+    return p;
+  }
+
+  function getBreadcrumbsSchema(data, lang, path, baseUrl) {
+    const menu = data?.menu || [];
+    const p = normalizeMenuPath(path);
+
+    const breadcrumbItems = [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: lang === "ru" ? "Главная" : "Etusivu",
+        item: absoluteUrl(baseUrl, lang === "ru" ? "/ru/" : "/")
+      }
+    ];
+
+    if (p !== "/") {
+      const pageItem = menu.find(m => normalizeMenuPath(m?.href || "") === p);
+      if (pageItem) {
+        const pageName = t(pageItem.label, lang);
+        const pageUrl = absoluteUrl(baseUrl, withLang(p, lang));
+        breadcrumbItems.push({
+          "@type": "ListItem",
+          position: 2,
+          name: pageName,
+          item: pageUrl
+        });
+      }
+    }
+
+    if (breadcrumbItems.length <= 1) return null;
+
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems
+    };
+  }
+
+  function showError(message, lang = "fi") {
     const main = $("main.container") || document.body;
+    const title = ui(lang, "errorTitle");
+    const contactLabel = ui(lang, "errorContact");
+    const email = "rs.expert.oy@gmail.com";
     main.innerHTML = `
       <div class="card card--pad" style="margin:100px auto;max-width:600px;text-align:center;background:#1a1f2e;color:#fff;">
-        <h2>Virhe sivun lataamisessa</h2>
+        <h2>${escapeHtml(title)}</h2>
         <p>${escapeHtml(message)}</p>
-        <p>Yritä päivittää sivu tai ota yhteyttä: <a href="mailto:rs.expert.oy@gmail.com" style="color:#6ae4ff;">rs.expert.oy@gmail.com</a></p>
+        <p>${escapeHtml(contactLabel)} <a href="mailto:${escapeHtml(email)}" style="color:#6ae4ff;">${escapeHtml(email)}</a></p>
       </div>
     `;
   }
@@ -473,20 +553,20 @@
       <div class="topbar">
         <div class="topbar__left">${escapeHtml(topLeftText)}</div>
         <div class="topbar__right">
-          <div class="lang">
-            <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
-            <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
+          <div class="lang" role="group" aria-label="${escapeHtml(lang === "ru" ? "Выбор языка" : "Kielen valinta")}">
+            <button class="lang__btn${fiActive}" data-lang="fi" type="button" aria-label="${escapeHtml(lang === "ru" ? "Финский язык" : "Suomen kieli")}" aria-pressed="${lang === "fi" ? "true" : "false"}">FI</button>
+            <button class="lang__btn${ruActive}" data-lang="ru" type="button" aria-label="${escapeHtml(lang === "ru" ? "Русский язык" : "Venäjän kieli")}" aria-pressed="${lang === "ru" ? "true" : "false"}">RU</button>
           </div>
           ${igBtn}
-          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
+          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(ui(lang, "call"))}">${escapeHtml(ui(lang, "call"))}</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}" aria-label="${escapeHtml(ui(lang, "email"))}">${escapeHtml(ui(lang, "email"))}</a>
         </div>
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
+          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link" aria-label="${escapeHtml(lang === "ru" ? "На главную" : "Etusivu")}">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
         </div>
-        <nav class="nav__links">${menuHtml}</nav>
+        <nav class="nav__links" aria-label="${escapeHtml(lang === "ru" ? "Главная навигация" : "Päänavigaatio")}">${menuHtml}</nav>
         <div class="nav__cta">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
         </div>
@@ -1001,7 +1081,9 @@
     console.log("site.json loaded successfully");
   } catch (e) {
     console.error("Failed to load /data/site.json:", e);
-    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
+    const lang = document.documentElement.lang || "fi";
+    const errorMsg = ui(lang, "errorMessage") || "Sivuston tiedot eivät latautuneet. Tarkista /data/site.json";
+    showError(errorMsg, lang);
     return;
   }
 
@@ -1010,8 +1092,9 @@
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
     if (qLang === "ru") {
-      const basePath = stripRuPrefix(url.pathname);
-      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+      const basePath = ensureLeadingSlash(stripRuPrefix(url.pathname));
+      const logical = normalizePathForPage(basePath);
+      const targetPath = (logical === "/" ? "/ru/" : ("/ru" + normalizeToNoTrailingSlash(logical)));
       url.pathname = targetPath;
       url.searchParams.delete("lang");
       window.location.replace(url.toString());
@@ -1021,14 +1104,11 @@
 
   const lang = getLang(data);
 
-  // persist selection
-  try { localStorage.setItem("lang", lang); } catch (e) {}
-
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
   // Bind events
-  // FIX: Brave-safe click handling + capture + preventDefault (avoid stuck on /ru/)
+  // FIX: Brave-safe click handling + capture + preventDefault
   document.addEventListener("click", (e) => {
     const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
     if (!btn) return;
@@ -1038,7 +1118,6 @@
 
     const nextLang = btn.getAttribute("data-lang");
     if (data?.i18n?.available?.includes(nextLang)) {
-      try { localStorage.setItem("lang", nextLang); } catch (e) {}
       window.location.href = setLangInUrl(nextLang);
     }
   }, true);
