@@ -653,6 +653,32 @@ body::after {
   body::after { animation: starDrift 46s ease-in-out infinite; }
 }
 
+/* ========== skip link (accessibility) ========== */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  z-index: 100;
+  padding: 12px 18px;
+  background: var(--brand);
+  color: #07101a;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 0 0 12px 0;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ========== smooth scroll ========== */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* ========== reduced motion ========== */
 @media (prefers-reduced-motion: reduce) {
   .hover-lift,
@@ -661,4 +687,5 @@ body::after {
   .hero::before,
   body::after,
   * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
 }
