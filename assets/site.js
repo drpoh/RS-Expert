@@ -114,11 +114,7 @@
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 3) saved
-    const saved = localStorage.getItem("lang");
-    if (available.includes(saved)) return saved;
-
-    // 4) browser
+    // 3) browser (only if enabled)
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -1021,9 +1017,6 @@
 
   const lang = getLang(data);
 
-  // persist selection
-  try { localStorage.setItem("lang", lang); } catch (e) {}
-
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
@@ -1038,7 +1031,6 @@
 
     const nextLang = btn.getAttribute("data-lang");
     if (data?.i18n?.available?.includes(nextLang)) {
-      try { localStorage.setItem("lang", nextLang); } catch (e) {}
       window.location.href = setLangInUrl(nextLang);
     }
   }, true);
