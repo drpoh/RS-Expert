@@ -1026,14 +1026,20 @@
 
   // enforce stored preference across all pages/tabs
   try {
-    const stored = getStoredLang(); // "fi" | "ru" | null
-    if (stored) {
-      const current = getLangFromPath() ? "ru" : "fi";
-      if (stored !== current) {
-        window.location.replace(setLangInUrl(stored));
-        return;
-      }
+const stored = getStoredLang();
+if (stored) {
+  const current = getLangFromPath() ? "ru" : "fi";
+  if (stored !== current) {
+    const target = setLangInUrl(stored);
+
+    // anti-loop: если целевой URL уже тот же самый — не редиректим
+    if (target !== window.location.href) {
+      window.location.replace(target);
+      return;
     }
+  }
+}
+
   } catch (e) {}
 
   const lang = getLang(data);
@@ -1045,19 +1051,22 @@
   applyLocalBusinessSchema(data, lang);
 
   // Bind events
-  document.addEventListener("click", (e) => {
-    const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
-    if (!btn) return;
+ document.addEventListener("click", (e) => {
+  const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
+  if (!btn) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+  e.preventDefault();
+  e.stopPropagation();
 
-    const nextLang = btn.getAttribute("data-lang");
-    if (data?.i18n?.available?.includes(nextLang)) {
-      setStoredLang(nextLang);
-      window.location.href = setLangInUrl(nextLang);
-    }
-  }, true);
+  const nextLang = btn.getAttribute("data-lang");
+  if (!data?.i18n?.available?.includes(nextLang)) return;
+
+  setStoredLang(nextLang);
+
+  const target = setLangInUrl(nextLang);
+  // replace = без "назад" в историю и меньше шансов на залипание
+  window.location.replace(target);
+}, true);
 
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-copy]");
