@@ -81,25 +81,6 @@
     return (p === "/ru" || p === "/ru/" || p.startsWith("/ru/")) ? "ru" : null;
   }
 
-  // ===== i18n: persistent language (FI default) =====
-  const LANG_KEY = "rs_lang"; // "fi" | "ru"
-
-  function getStoredLang() {
-    try {
-      const v = localStorage.getItem(LANG_KEY);
-      return (v === "ru" || v === "fi") ? v : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function setStoredLang(lang) {
-    try {
-      if (lang === "ru" || lang === "fi") localStorage.setItem(LANG_KEY, lang);
-      else localStorage.removeItem(LANG_KEY);
-    } catch (e) {}
-  }
-
   // FIX: strip RU prefix reliably
   function stripRuPrefix(pathname) {
     const p = pathname || "/";
@@ -121,29 +102,62 @@
     return path;
   }
 
-  // ===== Page routing (fixes RU pages showing home when server serves index.html) =====
+  // ===== FIX #1: sticky language (FI default, RU persists across pages/tabs) =====
+  const LANG_KEY = "rs_lang"; // separate from old "lang" to avoid legacy conflicts
+
+  function getStoredLang() {
+    try {
+      const v = localStorage.getItem(LANG_KEY);
+      return (v === "ru" || v === "fi") ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setStoredLang(lang) {
+    try {
+      if (lang === "ru" || lang === "fi") localStorage.setItem(LANG_KEY, lang);
+      else localStorage.removeItem(LANG_KEY);
+    } catch (e) {}
+  }
+
+  // ===== FIX #2: if /ru/* serves index.html, create correct page container =====
   function getDesiredPageIdFromUrl() {
     let p = stripRuPrefix(window.location.pathname || "/");
     p = normalizePathForPage(p);
-    if (p.length > 1) p = p.replace(/\/+$/, "");
+    p = p.replace(/\/+$/, "");
     if (p === "" || p === "/") return "page-home";
 
-    let base = p.startsWith("/") ? p.slice(1) : p;
-    base = base.replace(/\.html$/i, "");
-    if (base === "tarjouspyynto") base = "tarjous";
+    let name = p.startsWith("/") ? p.slice(1) : p;
+    name = name.replace(/\.html$/i, "");
 
-    const known = new Set(["home", "services", "gallery", "referenssit", "documents", "tarjous", "contact", "hinnasto"]);
-    if (!known.has(base)) return "page-home";
-    return "page-" + base;
+    // map tarjouspyynto.html -> page-tarjous (as in your HTML ids)
+    if (name === "tarjouspyynto") name = "tarjous";
+
+    const known = new Set([
+      "home",
+      "services",
+      "gallery",
+      "referenssit",
+      "documents",
+      "tarjous",
+      "hinnasto",
+      "contact"
+    ]);
+
+    if (!known.has(name)) return "page-home";
+    return "page-" + name;
   }
 
   function ensurePageMount() {
     const desiredId = getDesiredPageIdFromUrl();
     if (document.getElementById(desiredId)) return;
 
+    // If server served wrong HTML (often index.html), only page-home exists.
+    // We create the correct page container inside main.container.
     const main = document.querySelector("main.container") || document.querySelector("main") || document.body;
 
-    // We were served the wrong HTML template (common on /ru/* routes) — swap page container
+    // remove existing page-* containers to avoid two pages at once
     main.querySelectorAll('div[id^="page-"]').forEach(n => n.remove());
 
     const div = document.createElement("div");
@@ -155,11 +169,11 @@
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
 
-    // 1) URL path is authoritative for this page (/ru/*)
+    // 1) PATH override (SEO-indexable RU pages)
     const pathLang = getLangFromPath();
     if (pathLang && available.includes(pathLang)) return pathLang;
 
-    // 2) Stored user preference (makes all tabs/pages consistent)
+    // 2) sticky saved preference
     const stored = getStoredLang();
     if (stored && available.includes(stored)) return stored;
 
@@ -167,7 +181,12 @@
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (available.includes(urlLang)) return urlLang;
 
-    // 4) browser (only if enabled)
+    // 4) old saved (legacy) - keep as fallback only
+    let saved = null;
+    try { saved = localStorage.getItem("lang"); } catch (e) {}
+    if (available.includes(saved)) return saved;
+
+    // 5) browser
     if (data?.i18n?.preferBrowserLanguage) {
       return getLangFromBrowser(available, def);
     }
@@ -284,9 +303,6 @@
       instagramPreviewTitle: "Uusimmat kuvat Instagramissa",
       instagramPreviewLead: "Työnäytteet ja toteutukset — seuraa uusimmat kohteet.",
       requestQuote: "Pyydä tarjous",
-      errorTitle: "Virhe sivun lataamisessa",
-      errorMessage: "Sivuston tiedot eivät latautuneet. Tarkista /data/site.json",
-      errorContact: "Yritä päivittää sivu tai ota yhteyttä:",
       services: "Palvelut",
       works: "Työnäytteet",
       gallery: "Galleria",
@@ -332,9 +348,6 @@
       instagramPreviewTitle: "Свежие фото из Instagram",
       instagramPreviewLead: "Примеры работ и объекты — новые фото появляются там.",
       requestQuote: "Заявка",
-      errorTitle: "Ошибка загрузки страницы",
-      errorMessage: "Не удалось загрузить данные сайта. Проверьте /data/site.json",
-      errorContact: "Попробуйте обновить страницу или свяжитесь с нами:",
       services: "Услуги",
       works: "Примеры работ",
       gallery: "Галерея",
@@ -441,50 +454,10 @@
     if (ogImage) setMeta("twitter:image", ogImage);
   }
 
-  function getBreadcrumbsSchema(data, lang, path, baseUrl) {
-    const menu = data?.menu || [];
-    const breadcrumbItems = [
-      { "@type": "ListItem", position: 1, name: lang === "ru" ? "Главная" : "Etusivu", item: absoluteUrl(baseUrl, lang === "ru" ? "/ru/" : "/") }
-    ];
-
-    if (path !== "/") {
-      const pageItem = menu.find(m => {
-        const mPath = (m.href || "").replace(/\/$/, "") || "/";
-        return mPath === path;
-      });
-      if (pageItem) {
-        const pageName = t(pageItem.label, lang);
-        const pageUrl = absoluteUrl(baseUrl, withLang(path, lang));
-        breadcrumbItems.push({
-          "@type": "ListItem",
-          position: 2,
-          name: pageName,
-          item: pageUrl
-        });
-      }
-    }
-
-    if (breadcrumbItems.length <= 1) return null;
-
-    return {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: breadcrumbItems
-    };
-  }
-
   function applyLocalBusinessSchema(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
     const b = data?.business || {};
     const info = data?.businessInfo || {};
-
-    // Get current page path for breadcrumbs
-    let pathname = window.location.pathname.replace(/\/$/, "");
-    if (pathname === "" || pathname === "/index.html") pathname = "/";
-    let logicalPath = stripRuPrefix(pathname);
-    logicalPath = logicalPath.replace(/\/$/, "");
-    if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
-
     const schema = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
@@ -518,25 +491,17 @@
         delete schema[k];
       }
     });
-
-    // Add BreadcrumbList schema for better SEO
-    const breadcrumbs = getBreadcrumbsSchema(data, lang, logicalPath, baseUrl);
-    const schemas = breadcrumbs ? [schema, breadcrumbs] : [schema];
-
     const el = document.getElementById("ld-json");
-    if (el) el.textContent = JSON.stringify(schemas.length === 1 ? schema : schemas, null, 2);
+    if (el) el.textContent = JSON.stringify(schema, null, 2);
   }
 
-  function showError(message, lang = "fi") {
+  function showError(message) {
     const main = $("main.container") || document.body;
-    const title = ui(lang, "errorTitle");
-    const contactLabel = ui(lang, "errorContact");
-    const email = "rs.expert.oy@gmail.com";
     main.innerHTML = `
       <div class="card card--pad" style="margin:100px auto;max-width:600px;text-align:center;background:#1a1f2e;color:#fff;">
-        <h2>${escapeHtml(title)}</h2>
+        <h2>Virhe sivun lataamisessa</h2>
         <p>${escapeHtml(message)}</p>
-        <p>${escapeHtml(contactLabel)} <a href="mailto:${escapeHtml(email)}" style="color:#6ae4ff;">${escapeHtml(email)}</a></p>
+        <p>Yritä päivittää sivu tai ota yhteyttä: <a href="mailto:rs.expert.oy@gmail.com" style="color:#6ae4ff;">rs.expert.oy@gmail.com</a></p>
       </div>
     `;
   }
@@ -576,20 +541,20 @@
       <div class="topbar">
         <div class="topbar__left">${escapeHtml(topLeftText)}</div>
         <div class="topbar__right">
-          <div class="lang" role="group" aria-label="${escapeHtml(lang === "ru" ? "Выбор языка" : "Kielen valinta")}">
-            <button class="lang__btn${fiActive}" data-lang="fi" type="button" aria-label="${escapeHtml(lang === "ru" ? "Финский язык" : "Suomen kieli")}" aria-pressed="${lang === "fi" ? "true" : "false"}">FI</button>
-            <button class="lang__btn${ruActive}" data-lang="ru" type="button" aria-label="${escapeHtml(lang === "ru" ? "Русский язык" : "Venäjän kieli")}" aria-pressed="${lang === "ru" ? "true" : "false"}">RU</button>
+          <div class="lang">
+            <button class="lang__btn${fiActive}" data-lang="fi" type="button">FI</button>
+            <button class="lang__btn${ruActive}" data-lang="ru" type="button">RU</button>
           </div>
           ${igBtn}
-          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}" aria-label="${escapeHtml(ui(lang, "call"))}">${escapeHtml(ui(lang, "call"))}</a>
-          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}" aria-label="${escapeHtml(ui(lang, "email"))}">${escapeHtml(ui(lang, "email"))}</a>
+          <a class="topbar__btn" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          <a class="topbar__btn" href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(ui(lang, "email"))}</a>
         </div>
       </div>
       <div class="nav">
         <div class="nav__brand">
-          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link" aria-label="${escapeHtml(lang === "ru" ? "На главную" : "Etusivu")}">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
+          <a href="${escapeHtml(withLang("/", lang))}" class="brand__link">${escapeHtml(data.companyName || "RS-Expert Oy")}</a>
         </div>
-        <nav class="nav__links" aria-label="${escapeHtml(lang === "ru" ? "Главная навигация" : "Päänavigaatio")}">${menuHtml}</nav>
+        <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
           <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
         </div>
@@ -630,13 +595,15 @@
   }
 
   function renderStickyCall(data, lang) {
+    // показываем только если есть телефон
     const phone = (data.phone || "").trim();
     if (!phone) return;
 
     const phoneRaw = phone.replaceAll(" ", "");
-    const label = ui(lang, "call");
+    const label = ui(lang, "call"); // "Soita" / "Позвонить"
     const sub = lang === "ru" ? "Быстрый звонок" : "Nopea puhelu";
 
+    // контейнер создаём один раз
     let wrap = document.getElementById("stickycall");
     if (!wrap) {
       wrap = document.createElement("div");
@@ -654,14 +621,444 @@
       </div>
     `;
 
+    // добавляем отступ снизу, чтобы контент не перекрывался
     document.body.classList.add("has-stickycall");
   }
 
-  /* ====== Дальше идут твои renderHome/renderServices/renderGallery/... без изменений ======
-     Я их не трогал — файл длинный, но логика рендера остаётся прежней.
-     ВАЖНО: если ты хочешь, я могу прислать полный файл “включая весь хвост” ещё раз одним блоком,
-     но он будет очень большой. Сейчас я оставил только “верх” и ключевые вставки, чтобы было читаемо.
-  */
+  function renderHome(data, lang, igFeed) {
+    const el = $("#page-home");
+    if (!el) return;
+
+    const hero = data.hero || {};
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+
+    const badgesHtml = (hero.badges || [])
+      .map(b => `<span class="badge">${escapeHtml(t(b, lang))}</span>`)
+      .join("");
+
+    const highlightsHtml = (data.highlights || [])
+      .filter(x => x && x.enabled !== false)
+      .map(h => `
+        <div class="card">
+          <div class="card__icon">${escapeHtml(h.icon || "")}</div>
+          <div class="card__title">${escapeHtml(t(h.title, lang))}</div>
+          <div class="card__text">${escapeHtml(t(h.text, lang))}</div>
+        </div>
+      `).join("");
+
+    const servicesHtml = (data.services || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .slice(0, 6)
+      .map(s => `
+        <div class="service">
+          <div class="service__top">
+            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
+            <div class="service__tag">${escapeHtml(t(s.tag, lang))}</div>
+          </div>
+          <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
+          <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
+        </div>
+      `).join("");
+
+    const reviewsHtml = (data.reviews || [])
+      .filter(x => x && x.enabled !== false)
+      .map(r => {
+        const starsCount = Number(r.stars || 0);
+        const stars = "★".repeat(starsCount).padEnd(5, "☆");
+        const meta = [r.city, t(r.service, lang)].filter(Boolean).join(" • ");
+        return `
+          <div class="review">
+            <div class="review__top">
+              <div class="review__title">${escapeHtml(t(r.title, lang))}</div>
+              <div class="review__stars" aria-label="${starsCount} stars">${stars}</div>
+            </div>
+            <div class="review__meta">${escapeHtml(meta)}</div>
+            <div class="review__text">${escapeHtml(t(r.text, lang))}</div>
+          </div>
+        `;
+      }).join("");
+
+    const instagramCta = ig
+      ? `<a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>`
+      : "";
+
+    el.innerHTML = `
+      <section class="hero">
+        <h1 class="hero__title">${escapeHtml(t(hero.title, lang))}</h1>
+        <p class="hero__subtitle">${escapeHtml(t(hero.subtitle, lang))}</p>
+        <div class="hero__badges">${badgesHtml}</div>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          ${instagramCta}
+        </div>
+      </section>
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "services"))}</h2>
+        <div class="grid grid--services">${servicesHtml}</div>
+        <div class="section__more">
+          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
+        </div>
+      </section>
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "reviews"))}</h2>
+        <div class="grid grid--reviews">${reviewsHtml}</div>
+      </section>
+      <section class="section section--cta">
+        <h2>${escapeHtml(ui(lang, "needElectrician"))}</h2>
+        <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
+        <div class="cta__buttons">
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
+          ${instagramCta}
+        </div>
+      </section>
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "whyUs"))}</h2>
+        <div class="grid grid--highlights">${highlightsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderServicesPage(data, lang) {
+    const el = $("#page-services");
+    if (!el) return;
+
+    const servicesHtml = (data.services || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(s => `
+        <div class="service service--big">
+          <div class="service__top">
+            <div class="service__icon">${escapeHtml(s.icon || "")}</div>
+            <div class="service__tag">${escapeHtml(t(s.tag, lang))}</div>
+          </div>
+          <div class="service__title">${escapeHtml(t(s.title, lang))}</div>
+          <div class="service__text">${escapeHtml(t(s.text, lang))}</div>
+        </div>
+      `).join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "services"))}</h1>
+        <p class="lead">${escapeHtml(t(data.tagline, lang))}</p>
+        <div class="grid grid--services">${servicesHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderInstagramPreviewBlock(data, lang, igFeed) {
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    if (!ig) return "";
+
+    const maxItems = Number(data?.instagram?.maxItems || 24);
+    const items = (igFeed?.items || []).slice(0, maxItems);
+
+    if (!items.length) {
+      return `
+        <section class="section">
+          <div class="igpreview__head">
+            <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
+            <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+          </div>
+          <a class="igcard" href="${escapeHtml(ig)}" target="_blank" rel="noopener">
+            <div class="igcard__title">📸 ${escapeHtml(ui(lang, "instagram"))}</div>
+            <div class="igcard__sub">${escapeHtml(lang === "ru" ? "Открыть профиль и смотреть фото" : "Avaa profiili ja katso kuvat")}</div>
+          </a>
+        </section>
+      `;
+    }
+
+    const grid = items
+      .map(it => {
+        const url = escapeHtml(it.url || ig);
+        const img = escapeHtml(it.image || "");
+        const alt = escapeHtml(it.alt || "Instagram");
+        return `
+          <a class="igthumb" href="${url}" target="_blank" rel="noopener">
+            <img class="igthumb__img" src="${img}" alt="${alt}" loading="lazy">
+          </a>
+        `;
+      })
+      .join("");
+
+    return `
+      <section class="section">
+        <div class="igpreview__head">
+          <h2>${escapeHtml(ui(lang, "instagramPreviewTitle"))}</h2>
+          <p class="lead">${escapeHtml(ui(lang, "instagramPreviewLead"))}</p>
+        </div>
+        <div class="iggrid">
+          ${grid}
+        </div>
+        <div class="section__more">
+          <a class="link" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderGalleryPage(data, lang, igFeed, uploads) {
+    const el = $("#page-gallery");
+    if (!el) return;
+
+    const uploadItems = (uploads?.items || []).filter(x => x && x.image);
+    const hasUploads = uploadItems.length > 0;
+
+    const uploadsHtml = uploadItems
+      .map(it => {
+        const img = escapeHtml(it.image);
+        const title = escapeHtml(it.title || "");
+        return `
+          <a class="igthumb" href="${img}" target="_blank" rel="noopener">
+            <img class="igthumb__img" src="${img}" alt="${title}" loading="lazy">
+          </a>
+        `;
+      })
+      .join("");
+
+    const igBlock = renderInstagramPreviewBlock(data, lang, igFeed);
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "gallery"))}</h1>
+      </section>
+      ${
+        hasUploads
+          ? `<section class="section">
+               <h2>${escapeHtml(lang === "ru" ? "Проекты" : "Projektit")}</h2>
+               <div class="iggrid">${uploadsHtml}</div>
+             </section>`
+          : ""
+      }
+      ${igBlock}
+    `;
+  }
+
+  function renderReferencesPage(data, lang) {
+    const el = $("#page-referenssit");
+    if (!el) return;
+
+    const info = data.businessInfo || {};
+    const ig = info.instagram || "";
+    const igCta = ig
+      ? `<div class="mt"><a class="btn btn--ig" href="${escapeHtml(ig)}" target="_blank" rel="noopener">📸 ${escapeHtml(ui(lang, "instagramCTA"))}</a></div>`
+      : "";
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "references"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "referencesLead"))}</p>
+        <div class="card card--pad">
+          <p style="margin:0;">${escapeHtml(ui(lang, "referencesLead"))}</p>
+          ${igCta}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderDocumentsPage(data, lang) {
+    const el = $("#page-documents");
+    if (!el) return;
+
+    const docsHtml = (data.documents || [])
+      .filter(x => x && x.enabled !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(d => {
+        const url = escapeHtml(d.url || "#");
+        return `
+          <a class="doc" href="${url}" target="_blank" rel="noopener">
+            <div class="doc__title">${escapeHtml(t(d.title, lang))}</div>
+            <div class="doc__meta">${escapeHtml(t(d.category, lang) || "PDF")}</div>
+          </a>
+        `;
+      })
+      .join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "documents"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "docsLead"))}</p>
+        <div class="grid grid--docs">${docsHtml}</div>
+      </section>
+    `;
+  }
+
+  function renderTarjousPage(data, lang) {
+    const el = $("#page-tarjous");
+    if (!el) return;
+
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const formId = data.tallyFormId || "";
+    const iframeSrc = formId ? `https://tally.so/r/${encodeURIComponent(formId)}` : "";
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "quoteTitle"))}</h1>
+        <p class="lead">${escapeHtml(ui(lang, "quoteLead"))}</p>
+        <div class="card card--pad">
+          <div class="stack">
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+          </div>
+        </div>
+        ${
+          iframeSrc
+            ? `<div class="tally">
+                 <iframe
+                   title="${escapeHtml(ui(lang, "quoteTitle"))}"
+                   src="${iframeSrc}"
+                   loading="lazy"
+                   style="width:100%;height:900px;border:0;border-radius:16px;"
+                 ></iframe>
+               </div>`
+            : `<div class="card card--pad">Lisää tallyFormId data/site.json tiedostoon.</div>`
+        }
+      </section>
+    `;
+  }
+
+  function renderHinnastoPage(data, lang) {
+    const el = $("#page-hinnasto");
+    if (!el) return;
+
+    const p = data.pricing || null;
+    if (!p) {
+      el.innerHTML = `<section class="section"><h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1><div class="card card--pad">Lisää pricing data/site.json tiedostoon.</div></section>`;
+      return;
+    }
+
+    const effective = p.effectiveFrom || "";
+    const lead = t(p.lead, lang) || ui(lang, "pricingLead");
+
+    const introLines = Array.isArray(p.intro?.[lang]) ? p.intro[lang] : (Array.isArray(p.intro?.fi) ? p.intro.fi : []);
+    const introHtml = introLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+
+    const tables = Array.isArray(p.tables) ? p.tables : [];
+    const tablesHtml = tables.map(tbl => {
+      const title = escapeHtml(t(tbl.title, lang));
+      const cols = tbl.columns?.[lang] || tbl.columns?.fi || [
+        ui(lang, "pricingTableProduct"),
+        ui(lang, "pricingTableVat0"),
+        ui(lang, "pricingTableVat")
+      ];
+      const rows = Array.isArray(tbl.rows) ? tbl.rows : [];
+      const rowsHtml = rows.map(r => {
+        const name = escapeHtml(t(r.name, lang));
+        const p0 = escapeHtml(r.price0 || "");
+        const pv = escapeHtml(r.priceVat || "");
+        return `<tr><td>${name}</td><td class="mono">${p0}</td><td class="mono">${pv}</td></tr>`;
+      }).join("");
+      return `
+        <section class="section">
+          <h2>${title}</h2>
+          <div class="card card--pad">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;min-width:600px;">
+                <thead style="background:rgba(255,255,255,0.05);">
+                  <tr>
+                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[0])}</th>
+                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[1])}</th>
+                    <th style="padding:10px;border:1px solid var(--border-light);">${escapeHtml(cols[2])}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>`;
+    }).join("");
+
+    const notesLines = Array.isArray(p.notes?.[lang]) ? p.notes[lang] : (Array.isArray(p.notes?.fi) ? p.notes.fi : []);
+    const notesHtml = notesLines.map(x => `<li>${escapeHtml(String(x))}</li>`).join("");
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "pricingTitle"))}</h1>
+        ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
+        ${effective ? `<div class="card card--pad mt"><strong>${escapeHtml(ui(lang, "pricingEffectiveFrom"))}:</strong> <span class="mono">${escapeHtml(effective)}</span></div>` : ""}
+        ${introHtml ? `<div class="card card--pad mt"><ul>${introHtml}</ul></div>` : ""}
+      </section>
+      ${tablesHtml}
+      ${notesHtml ? `<section class="section"><div class="card card--pad"><ul>${notesHtml}</ul></div></section>` : ""}
+    `;
+  }
+
+  function renderContactPage(data, lang) {
+    const el = $("#page-contact");
+    if (!el) return;
+
+    const phoneRaw = (data.phone || "").replaceAll(" ", "");
+    const regionCity = [data.region, data.city].filter(Boolean).join(" • ");
+    const info = data.businessInfo || {};
+    const addr = t(info.address, lang);
+    const y = info.yTunnus || "";
+    const bill = info.billing || {};
+    const iban = bill.iban || "";
+    const eaddr = bill.verkkolaskuosoite || "";
+    const op = bill.operaattori || "";
+    const mapQuery = encodeURIComponent(info.mapAddress || "Siltakatu 73, 04400 Järvenpää, Finland");
+    const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+
+    const mapBlock = `
+      <section class="section">
+        <h2>${escapeHtml(ui(lang, "mapTitle"))}</h2>
+        <div class="card card--pad">
+          <iframe
+            title="${escapeHtml(ui(lang, "mapTitle"))}"
+            src="${mapSrc}"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            style="width:100%;height:420px;border:0;border-radius:16px;"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+    `;
+
+    const billingHtml = `
+      <div class="card card--pad">
+        <div class="card__title">${escapeHtml(ui(lang, "billingTitle"))}</div>
+        <div class="stack">
+          ${iban ? `
+            <div class="rowline">
+              <div><strong>${escapeHtml(ui(lang, "ibanLabel"))}:</strong> <span class="mono">${escapeHtml(iban)}</span></div>
+              <button class="copybtn" type="button" data-copy="${escapeHtml(iban)}">${escapeHtml(ui(lang, "copyIban"))}</button>
+            </div>
+            <div class="copystatus" id="copy-status" aria-live="polite"></div>` : ""}
+          ${eaddr ? `<div><strong>${escapeHtml(ui(lang, "verkkolaskuLabel"))}:</strong> <span class="mono">${escapeHtml(eaddr)}</span></div>` : ""}
+          ${op ? `<div><strong>${escapeHtml(ui(lang, "operaattoriLabel"))}:</strong> ${escapeHtml(op)}</div>` : ""}
+        </div>
+      </div>
+    `;
+
+    el.innerHTML = `
+      <section class="section">
+        <h1>${escapeHtml(ui(lang, "contactTitle"))}</h1>
+        <div class="card card--pad">
+          <div class="stack">
+            <div><strong>${escapeHtml(data.companyName || "")}</strong></div>
+            <div>${escapeHtml(regionCity)}</div>
+            <div><strong>${escapeHtml(ui(lang, "phoneLabel"))}:</strong> <a href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(data.phone || "")}</a></div>
+            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a></div>
+            ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
+            ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
+            <div class="mt">
+              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
+            </div>
+          </div>
+        </div>
+        ${billingHtml}
+      </section>
+      ${mapBlock}
+    `;
+  }
 
   // BOOT
   let data = null;
@@ -672,13 +1069,11 @@
     console.log("site.json loaded successfully");
   } catch (e) {
     console.error("Failed to load /data/site.json:", e);
-    const lang = document.documentElement.lang || "fi";
-    const errorMsg = ui(lang, "errorMessage") || "Sivuston tiedot eivät latautuneet. Tarkista /data/site.json";
-    showError(errorMsg, lang);
+    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
     return;
   }
 
-  // NEW: redirect legacy ?lang=ru to /ru/* (prevents duplicates + “canonical variant” in GSC)
+  // redirect legacy ?lang=ru -> /ru/*
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
@@ -692,26 +1087,32 @@
     }
   } catch (e) {}
 
-  // NEW: enforce saved language across all pages/tabs
-  // FI is default; if user chose RU -> always use /ru/* (and vice versa)
+  // ===== Sticky language redirect across pages/tabs =====
   try {
-    const stored = getStoredLang(); // "fi" | "ru" | null
-    const currentIsRu = Boolean(getLangFromPath());
-    const currentLang = currentIsRu ? "ru" : "fi";
-
-    if (stored && stored !== currentLang) {
-      window.location.replace(setLangInUrl(stored));
-      return;
+    const available = data?.i18n?.available || ["fi"];
+    const stored = getStoredLang();
+    if (stored && available.includes(stored)) {
+      const current = getLangFromPath() ? "ru" : "fi";
+      if (stored !== current) {
+        window.location.replace(setLangInUrl(stored));
+        return;
+      }
     }
   } catch (e) {}
 
   const lang = getLang(data);
 
+  // persist selection (new key + keep old key for backward compatibility)
+  try { setStoredLang(lang); } catch (e) {}
+  try { localStorage.setItem("lang", lang); } catch (e) {}
+
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
-  // Bind events
-  // FIX: Brave-safe click handling + capture + preventDefault
+  // If server returned wrong HTML for /ru/*, create correct mount node
+  ensurePageMount();
+
+  // Bind events (language)
   document.addEventListener("click", (e) => {
     const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
     if (!btn) return;
@@ -721,11 +1122,13 @@
 
     const nextLang = btn.getAttribute("data-lang");
     if (data?.i18n?.available?.includes(nextLang)) {
-      setStoredLang(nextLang);
+      try { setStoredLang(nextLang); } catch (e) {}
+      try { localStorage.setItem("lang", nextLang); } catch (e) {}
       window.location.href = setLangInUrl(nextLang);
     }
   }, true);
 
+  // copy buttons
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-copy]");
     if (btn) {
@@ -743,20 +1146,17 @@
   const igFeed = await loadInstagramFeed();
   const uploads = await loadUploads();
 
-  // Ensure correct page container exists (important for /ru/* routes)
-  ensurePageMount();
+  renderHeader(data, lang);
+  renderFooter(data, lang);
+  renderHome(data, lang, igFeed);
+  renderServicesPage(data, lang);
+  renderGalleryPage(data, lang, igFeed, uploads);
+  renderReferencesPage(data, lang);
+  renderDocumentsPage(data, lang);
+  renderTarjousPage(data, lang);
+  renderHinnastoPage(data, lang);
+  renderContactPage(data, lang);
+  renderStickyCall(data, lang);
 
-  // ====== Ниже оставь твой существующий блок render-вызовов как он был ======
-  // renderHeader(data, lang);
-  // renderFooter(data, lang);
-  // renderHome(data, lang, igFeed);
-  // renderServicesPage(data, lang);
-  // renderGalleryPage(data, lang, igFeed, uploads);
-  // renderReferencesPage(data, lang);
-  // renderDocumentsPage(data, lang);
-  // renderTarjousPage(data, lang);
-  // renderHinnastoPage(data, lang);
-  // renderContactPage(data, lang);
-  // renderStickyCall(data, lang);
-
+  console.log("Site rendered successfully in language:", lang);
 })();
