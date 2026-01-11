@@ -367,14 +367,22 @@ p { margin: 0 0 12px; color: var(--muted); }
 .workcard,
 .doc,
 .review {
-  composes: card-base glass;
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  padding: 14px;
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
 }
 
 .service:hover,
 .doc:hover,
 .work:hover,
 .workcard:hover {
-  composes: hover-lift;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.065);
 }
 
