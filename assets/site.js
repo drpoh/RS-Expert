@@ -994,64 +994,66 @@
   }
 
   // BOOT
-  let data = null;
-  try {
-    const res = await fetch("/data/site.json", { cache: "no-cache" });
-    if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
-    data = await res.json();
-    console.log("site.json loaded successfully");
-  } catch (e) {
-    console.error("Failed to load /data/site.json:", e);
-    showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
-    return;
-  }
-
-  // cleanup legacy key to avoid conflicts with old versions
-  try { localStorage.removeItem("lang"); } catch (e) {}
-
-  // redirect legacy ?lang=ru to /ru/* and persist
-  try {
-    const url = new URL(window.location.href);
-    const qLang = url.searchParams.get("lang");
-    if (qLang === "ru") {
-      setStoredLang("ru");
-      const basePath = stripRuPrefix(url.pathname);
-      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
-      url.pathname = targetPath;
-      url.searchParams.delete("lang");
-      window.location.replace(url.toString());
-      return;
-    }
-  } catch (e) {}
-
-  // enforce stored preference across all pages/tabs
-  try {
-const stored = getStoredLang();
-if (stored) {
-  const current = getLangFromPath() ? "ru" : "fi";
-  if (stored !== current) {
-    const target = setLangInUrl(stored);
-
-    // anti-loop: если целевой URL уже тот же самый — не редиректим
-    if (target !== window.location.href) {
-      window.location.replace(target);
-      return;
-    }
-  }
+// BOOT
+let data = null;
+try {
+  const res = await fetch("/data/site.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`site.json not found: ${res.status} ${res.statusText}`);
+  data = await res.json();
+  console.log("site.json loaded successfully");
+} catch (e) {
+  console.error("Failed to load /data/site.json:", e);
+  showError("Sivuston tiedot eivät latautuneet. Tarkista /data/site.json");
+  return;
 }
 
-  } catch (e) {}
+// ---- CLEAN old key to avoid conflicts with older versions ----
+try { localStorage.removeItem("lang"); } catch (e) {}
 
-  const lang = getLang(data);
+// ---- redirect legacy ?lang=ru -> /ru/* and remember ----
+try {
+  const url = new URL(window.location.href);
+  const qLang = url.searchParams.get("lang");
+  if (qLang === "ru") {
+    try { setStoredLang("ru"); } catch (e) {}
+    // keep same logical path but move to /ru
+    const basePath = stripRuPrefix(url.pathname);
+    const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
+    url.pathname = targetPath;
+    url.searchParams.delete("lang");
+    window.location.replace(url.toString());
+    return;
+  }
+} catch (e) {}
 
-  // persist selection (single key)
-  setStoredLang(lang);
+// ---- language selection for this request ----
+const lang = getLang(data);
 
-  applySeo(data, lang);
-  applyLocalBusinessSchema(data, lang);
+// ---- persist selection (single key) ----
+try { setStoredLang(lang); } catch (e) {}
 
-  // Bind events
- document.addEventListener("click", (e) => {
+// ---- enforce stored preference across tabs/pages (anti-loop) ----
+try {
+  const stored = getStoredLang(); // "fi" | "ru" | null
+  if (stored) {
+    const current = getLangFromPath() ? "ru" : "fi";
+    if (stored !== current) {
+      const target = setLangInUrl(stored);
+      if (target !== window.location.href) {
+        window.location.replace(target);
+        return;
+      }
+    }
+  }
+} catch (e) {}
+
+// ---- SEO + schema ----
+applySeo(data, lang);
+applyLocalBusinessSchema(data, lang);
+
+// ---- Bind events (FI/RU buttons) ----
+// IMPORTANT: use replace() to avoid back/forward loops
+document.addEventListener("click", (e) => {
   const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
   if (!btn) return;
 
@@ -1061,41 +1063,45 @@ if (stored) {
   const nextLang = btn.getAttribute("data-lang");
   if (!data?.i18n?.available?.includes(nextLang)) return;
 
-  setStoredLang(nextLang);
+  try { setStoredLang(nextLang); } catch (e) {}
 
   const target = setLangInUrl(nextLang);
-  // replace = без "назад" в историю и меньше шансов на залипание
-  window.location.replace(target);
+  if (target !== window.location.href) {
+    window.location.replace(target);
+  }
 }, true);
 
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-copy]");
-    if (btn) {
-      const text = btn.getAttribute("data-copy") || "";
-      const ok = await copyToClipboard(text);
-      const status = $("#copy-status");
-      if (status) {
-        status.textContent = ok ? ui(lang, "copied") : (lang === "ru" ? "Не удалось скопировать" : "Kopiointi epäonnistui");
-        status.style.color = ok ? "var(--brand)" : "#ff6b6b";
-        if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
-      }
+// ---- copy buttons (IBAN etc.) ----
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-copy]");
+  if (btn) {
+    const text = btn.getAttribute("data-copy") || "";
+    const ok = await copyToClipboard(text);
+    const status = $("#copy-status");
+    if (status) {
+      status.textContent = ok ? ui(lang, "copied") : (lang === "ru" ? "Не удалось скопировать" : "Kopiointi epäonnistui");
+      status.style.color = ok ? "var(--brand)" : "#ff6b6b";
+      if (ok) setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
     }
-  });
+  }
+});
 
-  const igFeed = await loadInstagramFeed();
-  const uploads = await loadUploads();
+// ---- load feeds ----
+const igFeed = await loadInstagramFeed();
+const uploads = await loadUploads();
 
-  renderHeader(data, lang);
-  renderFooter(data, lang);
-  renderHome(data, lang, igFeed);
-  renderServicesPage(data, lang);
-  renderGalleryPage(data, lang, igFeed, uploads);
-  renderReferencesPage(data, lang);
-  renderDocumentsPage(data, lang);
-  renderTarjousPage(data, lang);
-  renderHinnastoPage(data, lang);
-  renderContactPage(data, lang);
-  renderStickyCall(data, lang);
+// ---- render ----
+renderHeader(data, lang);
+renderFooter(data, lang);
+renderHome(data, lang, igFeed);
+renderServicesPage(data, lang);
+renderGalleryPage(data, lang, igFeed, uploads);
+renderReferencesPage(data, lang);
+renderDocumentsPage(data, lang);
+renderTarjousPage(data, lang);
+renderHinnastoPage(data, lang);
+renderContactPage(data, lang);
+renderStickyCall(data, lang);
 
-  console.log("Site rendered successfully in language:", lang);
-})();
+console.log("Site rendered successfully in language:", lang);
+
