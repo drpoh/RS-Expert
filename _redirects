@@ -3,19 +3,15 @@
 # RU is path-based via /ru/ prefix. Same HTML files, language via site.js
 # =========================
 
-# Normalize old index
+# ---- Normalize ----
 /index.html                  /                       301
-
-# Normalize /ru (no file)
-/ru                           /ru/                    301
+/ru                          /ru/                    301
 
 # -------------------------
 # RU pages → serve FI HTML
 # (SPECIFIC rules FIRST!)
 # -------------------------
-
 /ru/index.html                /index.html             200
-
 /ru/services.html             /services.html          200
 /ru/gallery.html              /gallery.html           200
 /ru/referenssit.html          /referenssit.html       200
@@ -25,7 +21,7 @@
 /ru/hinnasto.html             /hinnasto.html          200
 
 # -------------------------
-# RU home LAST (catch only /ru/ ideally, but keep it last)
+# RU home LAST (do not move up!)
 # -------------------------
 /ru/                          /index.html             200
 
