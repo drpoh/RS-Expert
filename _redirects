@@ -14,9 +14,6 @@
 # RU pages → serve FI HTML
 # -------------------------
 
-/ru/                          /index.html             200
-/ru/index.html                /index.html             200
-
 /ru/services.html             /services.html          200
 /ru/gallery.html              /gallery.html           200
 /ru/referenssit.html          /referenssit.html       200
