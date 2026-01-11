@@ -4,7 +4,7 @@
     "default": "fi",
     "available": ["fi", "ru"],
     "ruNoIndex": false,
-    "preferBrowserLanguage": true
+    "preferBrowserLanguage": false
   },
   "tagline": {
     "fi": "Sähköasennukset • vianhaku • sähkökeskukset",
