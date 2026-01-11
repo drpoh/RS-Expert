@@ -35,8 +35,10 @@
   <link rel="icon" href="/assets/uploads/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/uploads/apple-touch-icon.png" />
 
-  <!-- Preload -->
+  <!-- Preload critical resources -->
+  <link rel="preload" href="/assets/styles.css" as="style" />
   <link rel="preload" href="/assets/site.js" as="script" />
+  <link rel="preload" href="/data/site.json" as="fetch" crossorigin="anonymous" />
 
   <!-- LocalBusiness JSON-LD (filled by site.js) -->
   <script id="ld-json" type="application/ld+json">{}</script>
@@ -57,11 +59,14 @@
 </head>
 
 <body>
+  <!-- Skip to main content (accessibility) -->
+  <a href="#main-content" class="skip-link">Siirry pääsisältöön</a>
+
   <!-- HEADER (rendered by site.js) -->
   <header id="site-header"></header>
 
   <!-- MAIN -->
-  <main class="container">
+  <main id="main-content" class="container" role="main">
     <div id="page-home"></div>
   </main>
 
