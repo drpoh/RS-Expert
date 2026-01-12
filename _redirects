@@ -1,53 +1,10 @@
-# =========================
-# RS-Expert redirects (Cloudflare Pages)
-# RU is path-based via /ru/ prefix. Same HTML files, language via site.js
-# =========================
-
-# Normalize old index
-/index.html                  /                       301
-
-# Normalize /ru (no file)
 /ru                           /ru/                    301
 
-# -------------------------
-# Pretty URLs (FI) -> serve *.html (REWRITE 200, not 301)
-# -------------------------
-/services                     /services.html          200
-/services/                    /services.html          200
-/gallery                      /gallery.html           200
-/gallery/                     /gallery.html           200
-/referenssit                  /referenssit.html       200
-/referenssit/                 /referenssit.html       200
-/documents                    /documents.html         200
-/documents/                   /documents.html         200
-/tarjouspyynto                /tarjouspyynto.html     200
-/tarjouspyynto/               /tarjouspyynto.html     200
-/contact                      /contact.html           200
-/contact/                     /contact.html           200
-/hinnasto                     /hinnasto.html          200
-/hinnasto/                    /hinnasto.html          200
-
-# -------------------------
-# RU Pretty URLs -> serve FI *.html (REWRITE 200)
-# (language is detected by /ru/ prefix in site.js)
-# -------------------------
-/ru/services                  /services.html          200
-/ru/services/                 /services.html          200
-/ru/gallery                   /gallery.html           200
-/ru/gallery/                  /gallery.html           200
-/ru/referenssit               /referenssit.html       200
-/ru/referenssit/              /referenssit.html       200
-/ru/documents                 /documents.html         200
-/ru/documents/                /documents.html         200
-/ru/tarjouspyynto             /tarjouspyynto.html     200
-/ru/tarjouspyynto/            /tarjouspyynto.html     200
-/ru/contact                   /contact.html           200
-/ru/contact/                  /contact.html           200
-/ru/hinnasto                  /hinnasto.html          200
-/ru/hinnasto/                 /hinnasto.html          200
-
-# RU home
-/ru/                          /index.html             200
-
-# IMPORTANT:
-# NO wildcard fallback for /ru/*
+/ru/                          /                       200
+/ru/services                  /services               200
+/ru/gallery                   /gallery                200
+/ru/referenssit               /referenssit            200
+/ru/documents                 /documents              200
+/ru/tarjouspyynto             /tarjouspyynto          200
+/ru/contact                   /contact                200
+/ru/hinnasto                  /hinnasto               200
