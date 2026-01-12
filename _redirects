@@ -1,5 +1,19 @@
+# =========================
+# RS-Expert redirects (Cloudflare Pages) - Variant 1
+# Pretty URLs ON (clean URLs are handled by Pages)
+# RU is path-based via /ru/ prefix. Same HTML, language via site.js
+# =========================
+
+# Normalize old index.html
+/index.html                  /                       301
+
+# Normalize /ru (no file)
 /ru                           /ru/                    301
 
+# -------------------------
+# RU pages -> serve FI CLEAN URLs (REWRITE 200)
+# IMPORTANT: Do NOT add /services -> /services.html rules here
+# -------------------------
 /ru/                          /                       200
 /ru/services                  /services               200
 /ru/gallery                   /gallery                200
@@ -8,3 +22,14 @@
 /ru/tarjouspyynto             /tarjouspyynto          200
 /ru/contact                   /contact                200
 /ru/hinnasto                  /hinnasto               200
+
+# Optional: allow trailing slash variants for RU
+/ru/services/                 /services               200
+/ru/gallery/                  /gallery                200
+/ru/referenssit/              /referenssit            200
+/ru/documents/                /documents              200
+/ru/tarjouspyynto/            /tarjouspyynto          200
+/ru/contact/                  /contact                200
+/ru/hinnasto/                 /hinnasto               200
+
+# IMPORTANT: NO wildcard fallback for /ru/*
