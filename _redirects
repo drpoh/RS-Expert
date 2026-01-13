@@ -1,41 +1,53 @@
 # =========================
 # RS-Expert redirects (Cloudflare Pages)
-# CANONICAL: no .html
-# Pretty URLs: ON
-# RU is path-based via /ru/ prefix. Same HTML, language via site.js
+# Variant 1: Pretty URLs ON (clean URLs, no .html)
+# RU is path-based via /ru/*
 # =========================
 
-# --- Normalize /ru (no file) ---
-/ru                          /ru/                       301
+# --- NEVER rewrite static data/assets ---
+/data/*                     /data/:splat              200
+/assets/*                   /assets/:splat            200
 
-# --- Canonicalize .html -> clean (FI) ---
-/index.html                   /                          301
-/services.html                /services                  301
-/gallery.html                 /gallery                   301
-/referenssit.html             /referenssit               301
-/documents.html               /documents                 301
-/tarjouspyynto.html           /tarjouspyynto             301
-/contact.html                 /contact                   301
-/hinnasto.html                /hinnasto                  301
+# Normalize old index
+/index.html                 /                         301
 
-# --- RU: serve FI CLEAN URLs (REWRITE 200) ---
-/ru/                         /                           200
-/ru/services                  /services                  200
-/ru/gallery                   /gallery                   200
-/ru/referenssit               /referenssit               200
-/ru/documents                 /documents                 200
-/ru/tarjouspyynto             /tarjouspyynto             200
-/ru/contact                   /contact                   200
-/ru/hinnasto                  /hinnasto                  200
+# Normalize /ru (no file)
+/ru                         /ru/                      301
 
-# --- Canonicalize .html -> clean (RU) ---
-/ru/index.html                /ru/                       301
-/ru/services.html             /ru/services               301
-/ru/gallery.html              /ru/gallery                301
-/ru/referenssit.html          /ru/referenssit            301
-/ru/documents.html            /ru/documents              301
-/ru/tarjouspyynto.html        /ru/tarjouspyynto          301
-/ru/contact.html              /ru/contact                301
-/ru/hinnasto.html             /ru/hinnasto               301
+# -------------------------
+# Clean URL redirects (kill .html аккуратно)
+# -------------------------
+/services.html              /services                  301
+/gallery.html               /gallery                   301
+/referenssit.html           /referenssit               301
+/documents.html             /documents                 301
+/tarjouspyynto.html         /tarjouspyynto             301
+/contact.html               /contact                   301
+/hinnasto.html              /hinnasto                  301
 
-# IMPORTANT: no wildcard fallback for /ru/*
+/ru/index.html              /ru/                       301
+/ru/services.html           /ru/services               301
+/ru/gallery.html            /ru/gallery                301
+/ru/referenssit.html        /ru/referenssit            301
+/ru/documents.html          /ru/documents              301
+/ru/tarjouspyynto.html      /ru/tarjouspyynto          301
+/ru/contact.html            /ru/contact                301
+/ru/hinnasto.html           /ru/hinnasto               301
+
+# -------------------------
+# RU pages → serve FI HTML (rewrite)
+# -------------------------
+/ru/                        /index.html               200
+/ru/services                /services.html            200
+/ru/gallery                 /gallery.html             200
+/ru/referenssit             /referenssit.html         200
+/ru/documents               /documents.html           200
+/ru/tarjouspyynto           /tarjouspyynto.html       200
+/ru/contact                 /contact.html             200
+/ru/hinnasto                /hinnasto.html            200
+
+# -------------------------
+# IMPORTANT:
+# NO wildcard fallback like /* /index.html 200
+# (иначе он ломает /data/site.json и любые JSON)
+# -------------------------
