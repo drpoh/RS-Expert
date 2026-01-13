@@ -1,10 +1,10 @@
 # =========================
 # RS-Expert — Cloudflare Pages (_redirects)
 # Variant 1: Pretty URLs ON, canonical without .html
-# RU routes served via /ru/*
+# RU is served via /ru/* (no physical /ru/*.html files)
 # =========================
 
-# --- Canonicalize FI .html -> clean (301) ---
+# --- FI: canonicalize .html -> clean (301) ---
 /index.html            /                 301
 /services.html         /services          301
 /gallery.html          /gallery           301
@@ -14,20 +14,10 @@
 /tarjouspyynto.html    /tarjouspyynto     301
 /contact.html          /contact           301
 
-# --- Canonicalize RU .html -> clean (301) ---
-/ru/index.html         /ru/              301
-/ru/services.html      /ru/services       301
-/ru/gallery.html       /ru/gallery        301
-/ru/hinnasto.html      /ru/hinnasto       301
-/ru/referenssit.html   /ru/referenssit    301
-/ru/documents.html     /ru/documents      301
-/ru/tarjouspyynto.html /ru/tarjouspyynto  301
-/ru/contact.html       /ru/contact        301
-
 # --- Normalize /ru -> /ru/ (301) ---
 /ru                   /ru/               301
 
-# --- Serve RU clean URLs (200) ---
+# --- RU: serve clean URLs (200) ---
 /ru/                  /index.html        200
 /ru/services          /services.html      200
 /ru/services/         /services.html      200
@@ -43,7 +33,3 @@
 /ru/tarjouspyynto/    /tarjouspyynto.html 200
 /ru/contact           /contact.html       200
 /ru/contact/          /contact.html       200
-
-# (опционально) если будут другие страницы — добавляй по аналогии
-
-# --- Fallback: not found (оставь как есть, Pages сам отдаст 404) ---
