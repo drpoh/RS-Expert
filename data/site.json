@@ -54,7 +54,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/services.html": {
+      "/services": {
         "title": {
           "fi": "Palvelut — RS-Expert Oy | Sähköasentaja Järvenpää",
           "ru": "Услуги — RS-Expert Oy | Электрик Järvenpää"
@@ -65,7 +65,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/gallery.html": {
+      "/gallery": {
         "title": {
           "fi": "Galleria — RS-Expert Oy | Työnäytteet",
           "ru": "Галерея — RS-Expert Oy | Примеры работ"
@@ -76,7 +76,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/referenssit.html": {
+      "/referenssit": {
         "title": {
           "fi": "Referenssit — RS-Expert Oy | Järvenpää",
           "ru": "Референсы — RS-Expert Oy | Järvenpää"
@@ -87,7 +87,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/documents.html": {
+      "/documents": {
         "title": {
           "fi": "Dokumentit — RS-Expert Oy",
           "ru": "Документы — RS-Expert Oy"
@@ -98,7 +98,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/tarjouspyynto.html": {
+      "/tarjouspyynto": {
         "title": {
           "fi": "Tarjouspyyntö — RS-Expert Oy | Sähköasentaja Järvenpää",
           "ru": "Заявка на расчёт — RS-Expert Oy | Электрик Järvenpää"
@@ -109,7 +109,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/contact.html": {
+      "/contact": {
         "title": {
           "fi": "Yhteystiedot — RS-Expert Oy | Sähköasentaja Järvenpää",
           "ru": "Контакты — RS-Expert Oy | Электрик Järvenpää"
@@ -120,7 +120,7 @@
         },
         "ogImage": "/assets/uploads/og-cover.svg"
       },
-      "/hinnasto.html": {
+      "/hinnasto": {
         "title": {
           "fi": "Hinnasto — RS-Expert Oy | Sähköasentaja Järvenpää",
           "ru": "Цены — RS-Expert Oy | Электрик Järvenpää"
@@ -210,8 +210,8 @@
   ],
   "hero": {
     "title": {
-      "fi": "RS-Expert Oy (RS Expert, RSEXPERT) — Sähköasentaja Järvenpäässä ja Uudellamaalla",
-      "ru": "RS-Expert Oy (RS Expert, RSEXPERT) — Электрик в Ярвенпяя и регионе Uusimaa"
+      "fi": "RS-Expert Oy — Sähköasentaja Järvenpäässä ja Uudellamaalla",
+      "ru": "RS-Expert Oy — Электрик в Ярвенпяя и регионе Uusimaa"
     },
     "subtitle": {
       "fi": "Luotettavat sähkötyöt koteihin ja yrityksille",
