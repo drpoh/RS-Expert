@@ -193,7 +193,7 @@
       "label": { "fi": "Dokumentit", "ru": "Документы" },
       "href": "/documents.html",
       "order": 6,
-      "enabled": true
+      "enabled": false
     },
     {
       "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" },
@@ -210,12 +210,12 @@
   ],
   "hero": {
     "title": {
-      "fi": "Sähkötyöt nopeasti ja siististi",
-      "ru": "Электромонтаж быстро и аккуратно"
+      "fi": "Sähköasentaja Järvenpäässä ja Uudellamaalla",
+      "ru": "Электрик в Ярвенпяя и регионе Uusimaa"
     },
     "subtitle": {
-      "fi": "Sähköasentaja Järvenpäässä ja Uudellamaalla: asennukset, vianhaku ja keskukset koteihin ja yrityksiin.",
-      "ru": "Электрик в Järvenpää и Uusimaa: монтаж, диагностика и электрощиты для дома и бизнеса."
+      "fi": "Luotettavat sähkötyöt koteihin ja yrityksille",
+      "ru": "Надёжные электромонтажные работы для дома и бизнеса"
     },
     "badges": [
       { "fi": "⚡ Sähkötyöt", "ru": "⚡ Электромонтаж" },
@@ -240,6 +240,12 @@
       "icon": "✨"
     }
   ],
+  "localText": 
+    {
+      "fi": "RS-Expert Oy tarjoaa sähköasennuksia, vikakorjauksia ja sähköremontteja Järvenpäässä sekä koko Uudenmaan alueella. Palvelemme nopeasti ja luotettavasti omakotitaloja, asunto-osakeyhtiöitä ja yrityksiä. Ja työt tehdään aina voimassa olevien standardien mukaisesti.",
+      "ru": "RS-Expert Oy выполняет электромонтажные работы, ремонт и обслуживание в Ярвенпяя и по всему региону Uusimaa. Мы работаем с частными домами, жилищными товариществами и компаниями, обеспечивая быстрый отклик и надёжное выполнение работ."
+    }
+
   "services": [
     {
       "title": { "fi": "Sähköasennukset", "ru": "Электромонтаж" },
