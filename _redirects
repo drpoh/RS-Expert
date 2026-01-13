@@ -1,10 +1,10 @@
 # =========================
 # RS-Expert — Cloudflare Pages (_redirects)
 # Variant 1: Pretty URLs ON, canonical without .html
-# RU is served via /ru/* (no physical /ru/*.html files)
+# RU routes served via /ru/* (same HTML, language via JS)
 # =========================
 
-# --- FI: canonicalize .html -> clean (301) ---
+# --- Canonicalize FI .html -> clean (301) ---
 /index.html            /                 301
 /services.html         /services          301
 /gallery.html          /gallery           301
@@ -14,22 +14,33 @@
 /tarjouspyynto.html    /tarjouspyynto     301
 /contact.html          /contact           301
 
+# --- Canonicalize RU .html -> clean (301) ---
+/ru/index.html         /ru/              301
+/ru/services.html      /ru/services       301
+/ru/gallery.html       /ru/gallery        301
+/ru/hinnasto.html      /ru/hinnasto       301
+/ru/referenssit.html   /ru/referenssit    301
+/ru/documents.html     /ru/documents      301
+/ru/tarjouspyynto.html /ru/tarjouspyynto  301
+/ru/contact.html       /ru/contact        301
+
 # --- Normalize /ru -> /ru/ (301) ---
 /ru                   /ru/               301
 
-# --- RU: serve clean URLs (200) ---
-/ru/                  /index.html        200
-/ru/services          /services.html      200
-/ru/services/         /services.html      200
-/ru/gallery           /gallery.html       200
-/ru/gallery/          /gallery.html       200
-/ru/hinnasto          /hinnasto.html      200
-/ru/hinnasto/         /hinnasto.html      200
-/ru/referenssit       /referenssit.html   200
-/ru/referenssit/      /referenssit.html   200
-/ru/documents         /documents.html     200
-/ru/documents/        /documents.html     200
-/ru/tarjouspyynto     /tarjouspyynto.html 200
-/ru/tarjouspyynto/    /tarjouspyynto.html 200
-/ru/contact           /contact.html       200
-/ru/contact/          /contact.html       200
+# --- Serve RU clean URLs (200) ---
+# IMPORTANT: rewrite to CLEAN paths (no .html) to avoid redirect loops
+/ru/                  /                  200
+/ru/services           /services          200
+/ru/services/          /services          200
+/ru/gallery            /gallery           200
+/ru/gallery/           /gallery           200
+/ru/hinnasto           /hinnasto          200
+/ru/hinnasto/          /hinnasto          200
+/ru/referenssit        /referenssit       200
+/ru/referenssit/       /referenssit       200
+/ru/documents          /documents         200
+/ru/documents/         /documents         200
+/ru/tarjouspyynto      /tarjouspyynto     200
+/ru/tarjouspyynto/     /tarjouspyynto     200
+/ru/contact            /contact           200
+/ru/contact/           /contact           200
