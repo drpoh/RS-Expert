@@ -167,43 +167,43 @@
     },
     {
       "label": { "fi": "Palvelut", "ru": "Услуги" },
-      "href": "/services.html",
+      "href": "/services",
       "order": 2,
       "enabled": true
     },
     {
       "label": { "fi": "Galleria", "ru": "Галерея" },
-      "href": "/gallery.html",
+      "href": "/gallery",
       "order": 3,
       "enabled": true
     },
     {
       "label": { "fi": "Hinnasto", "ru": "Цены" },
-      "href": "/hinnasto.html",
+      "href": "/hinnasto",
       "order": 4,
       "enabled": true
     },
     {
       "label": { "fi": "Referenssit", "ru": "Референсы" },
-      "href": "/referenssit.html",
+      "href": "/referenssit",
       "order": 5,
       "enabled": true
     },
     {
       "label": { "fi": "Dokumentit", "ru": "Документы" },
-      "href": "/documents.html",
+      "href": "/documents",
       "order": 6,
       "enabled": false
     },
     {
       "label": { "fi": "Tarjouspyyntö", "ru": "Заявка" },
-      "href": "/tarjouspyynto.html",
+      "href": "/tarjouspyynto",
       "order": 7,
       "enabled": true
     },
     {
       "label": { "fi": "Yhteystiedot", "ru": "Контакты" },
-      "href": "/contact.html",
+      "href": "/contact",
       "order": 8,
       "enabled": true
     }
@@ -245,7 +245,7 @@
     {
       "fi": "RS-Expert Oy tarjoaa sähköasennuksia, vikakorjauksia ja sähköremontteja Järvenpäässä sekä koko Uudenmaan alueella. Palvelemme nopeasti ja luotettavasti omakotitaloja, asunto-osakeyhtiöitä ja yrityksiä. Työt tehdään huolellisesti ja sovitussa aikataulussa.",
       "ru": "RS-Expert Oy выполняет электромонтажные работы, ремонт и обслуживание в Ярвенпяя и по всему региону Uusimaa. Мы работаем с частными домами, жилищными товариществами и компаниями, обеспечивая быстрый отклик и надёжное выполнение работ."
-    }
+    },
 
   "services": [
     {
