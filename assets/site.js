@@ -678,6 +678,14 @@
           <a class="link" href="${escapeHtml(withLang("/services", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
         </div>
       </section>
+      ${data.localText ? `
+      <section class="section section--text">
+        <div class="card card--pad">
+          <p>${escapeHtml(t(data.localText, lang))}</p>
+        </div>
+      </section>
+      ` : ""}
+      
       <section class="section">
         <h2>${escapeHtml(ui(lang, "reviews"))}</h2>
         <div class="grid grid--reviews">${reviewsHtml}</div>
