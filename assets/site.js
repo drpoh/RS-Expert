@@ -566,6 +566,10 @@
           <a href="mailto:${escapeHtml(data.email || "")}">${escapeHtml(data.email || "")}</a>
           ${igHtml}
         </div>
+        <div class="footer__meta footer__meta--small">
+          RS-Expert • RS Expert • RSEXPERT
+        </div>
+
         ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
         <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
       </div>
