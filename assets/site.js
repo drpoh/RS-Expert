@@ -1,6 +1,10 @@
-// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2025-12-26)
-// + CLEAN LANG: FI default, RU persists across tabs/pages via localStorage (rs_lang)
-// + RU INDEXING: always index,follow (no noindex for RU)
+// RS-Expert site.js — FULL VERSION with render + SEO + RU indexing via /ru/ (2026-01-13)
+// Variant 1 (Cloudflare Pages Pretty URLs ON):
+// - FI default
+// - RU persists via localStorage (rs_lang)
+// - RU is path-based via /ru/*
+// - Clean URLs (no .html in internal links)
+// - RU should be indexed (index,follow)
 
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -75,7 +79,7 @@
     return def;
   }
 
-  // RU language selection is path-based: /ru/*
+  // RU is path-based via /ru/*
   function getLangFromPath() {
     const p = window.location.pathname || "/";
     return (p === "/ru" || p === "/ru/" || p.startsWith("/ru/")) ? "ru" : null;
@@ -89,17 +93,17 @@
     return p;
   }
 
-  function normalizeToNoTrailingSlash(path) {
-    if (!path) return "/";
-    if (path === "/") return "/";
-    return path.replace(/\/+$/, "");
-  }
-
-  // normalize "index.html" → "/"
+  // normalize /index.html -> /
   function normalizePathForPage(path) {
     if (!path) return "/";
     if (path === "/index.html") return "/";
     return path;
+  }
+
+  function normalizeToNoTrailingSlash(path) {
+    if (!path) return "/";
+    if (path === "/") return "/";
+    return path.replace(/\/+$/, "");
   }
 
   // ===== CLEAN LANG STORAGE =====
@@ -125,7 +129,7 @@
     const available = data?.i18n?.available || ["fi"];
     const def = data?.i18n?.default || "fi";
 
-    // 1) Path wins (SEO pages /ru/*)
+    // 1) Path wins (/ru/*)
     const pathLang = getLangFromPath();
     if (pathLang && available.includes(pathLang)) return pathLang;
 
@@ -144,45 +148,79 @@
     return def;
   }
 
-  // canonical RU URLs are /ru/..., not ?lang=ru
-  // FI always remove "/ru", RU always add "/ru"
+  // Variant 1: Clean URLs (no .html) in path and canonicals.
+  // RU adds /ru prefix, FI removes /ru.
   function setLangInUrl(lang) {
     const url = new URL(window.location.href);
 
+    // base logical FI path (no /ru)
     let basePath = stripRuPrefix(url.pathname);
     basePath = normalizePathForPage(basePath);
 
-    if (basePath === "" || basePath === "/") basePath = "/";
+    // Clean: drop trailing slash except root (Pages handles pretty URLs)
+    // Keep "/" or "/some"
+    basePath = (basePath === "/" ? "/" : normalizeToNoTrailingSlash(basePath));
 
+    // remove legacy query
     url.searchParams.delete("lang");
 
     if (lang === "ru") {
-      url.pathname = (basePath === "/") ? "/ru/" : ("/ru" + normalizeToNoTrailingSlash(basePath));
+      url.pathname = (basePath === "/") ? "/ru/" : ("/ru" + basePath);
       return url.toString();
     }
 
-    url.pathname = (basePath === "/") ? "/" : normalizeToNoTrailingSlash(basePath);
+    // fi
+    url.pathname = (basePath === "/") ? "/" : basePath;
     return url.toString();
   }
 
-  // keep links consistent: if RU -> prefix /ru to internal paths
+  // convert internal hrefs to current language + clean urls
+  function toCleanPath(href) {
+    if (!href) return "/";
+    // Keep absolute
+    if (href.startsWith("http://") || href.startsWith("https://")) return href;
+
+    // normalize home
+    if (href === "/index.html") return "/";
+
+    // if someone still has .html in JSON/menu, convert to clean
+    // /services.html -> /services ; /contact.html -> /contact
+    if (/\/[^/]+\.html($|[?#])/.test(href)) {
+      try {
+        const u = new URL(href, window.location.origin);
+        u.pathname = u.pathname.replace(/\.html$/, "");
+        // / -> /
+        if (u.pathname === "") u.pathname = "/";
+        return u.pathname + (u.search || "") + (u.hash || "");
+      } catch (e) {
+        return href.replace(/\.html$/, "");
+      }
+    }
+
+    return href;
+  }
+
   function withLang(href, lang) {
     if (!href) return "#";
     if (href.startsWith("http://") || href.startsWith("https://")) return href;
 
-    if (href === "/index.html") href = "/";
+    // clean it first (remove .html)
+    let path = toCleanPath(href);
 
-    if (lang !== "ru") {
-      return stripRuPrefix(href).replace(/\?lang=ru\b/g, "").replace(/[?&]lang=ru\b/g, "");
-    }
-
-    let path = href;
+    // strip legacy ?lang
     try {
-      const u = new URL(href, window.location.origin);
+      const u = new URL(path, window.location.origin);
       u.searchParams.delete("lang");
       path = u.pathname + (u.search || "") + (u.hash || "");
     } catch (e) {}
 
+    if (lang !== "ru") {
+      // FI: never include /ru
+      const clean = stripRuPrefix(path);
+      return clean || "/";
+    }
+
+    // RU: ensure /ru prefix
     const clean = stripRuPrefix(path);
     if (clean === "/" || clean === "") return "/ru/";
     if (clean.startsWith("/")) return "/ru" + clean;
@@ -315,7 +353,7 @@
       ibanLabel: "IBAN",
       copyIban: "Копировать IBAN",
       copied: "Скопировано!",
-      verkkolaskuLabel: "Verkkолaskuosoite",
+      verkkolaskuLabel: "Verkkolaskuosoite",
       operaattoriLabel: "Оператор",
       serviceAreaTitleFallback: "Зона обслуживания",
       serviceAreaNoteFallback: "Можно договориться и о других городах Uusimaa.",
@@ -333,18 +371,22 @@
     return (UI[lang]?.[key]) || (UI.fi?.[key]) || key;
   }
 
-  // SEO + schema
+  // ===== SEO + schema =====
   function applySeo(data, lang) {
     const baseUrl = data?.site?.baseUrl || window.location.origin;
 
     let pathname = window.location.pathname.replace(/\/$/, "");
     if (pathname === "" || pathname === "/index.html") pathname = "/";
 
-    // map /ru/services.html -> /services.html for seo.pages lookup
+    // map /ru/services -> /services for seo.pages lookup
     let logicalPath = stripRuPrefix(pathname);
     logicalPath = logicalPath.replace(/\/$/, "");
     if (logicalPath === "" || logicalPath === "/index.html") logicalPath = "/";
     if (logicalPath === "") logicalPath = "/";
+
+    // Clean (no .html)
+    logicalPath = normalizePathForPage(logicalPath);
+    logicalPath = (logicalPath === "/" ? "/" : normalizeToNoTrailingSlash(logicalPath));
 
     const pageSeo = data?.seo?.pages?.[logicalPath] || data?.seo?.pages?.["/"] || {};
 
@@ -442,7 +484,7 @@
     `;
   }
 
-  // RENDER FUNCTIONS
+  // ===== RENDER FUNCTIONS =====
   function renderHeader(data, lang) {
     const header = $("#site-header");
     if (!header) return;
@@ -492,7 +534,7 @@
         </div>
         <nav class="nav__links">${menuHtml}</nav>
         <div class="nav__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
         </div>
       </div>
     `;
@@ -624,7 +666,7 @@
         <p class="hero__subtitle">${escapeHtml(t(hero.subtitle, lang))}</p>
         <div class="hero__badges">${badgesHtml}</div>
         <div class="hero__cta">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
@@ -633,7 +675,7 @@
         <h2>${escapeHtml(ui(lang, "services"))}</h2>
         <div class="grid grid--services">${servicesHtml}</div>
         <div class="section__more">
-          <a class="link" href="${escapeHtml(withLang("/services.html", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
+          <a class="link" href="${escapeHtml(withLang("/services", lang))}">${escapeHtml(ui(lang, "showAll"))}</a>
         </div>
       </section>
       <section class="section">
@@ -644,7 +686,7 @@
         <h2>${escapeHtml(ui(lang, "needElectrician"))}</h2>
         <p>${escapeHtml(ui(lang, "sendRequest"))}</p>
         <div class="cta__buttons">
-          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
+          <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto", lang))}">${escapeHtml(ui(lang, "requestQuote"))}</a>
           <a class="btn btn--ghost" href="tel:${escapeHtml(phoneRaw)}">${escapeHtml(ui(lang, "call"))}</a>
           ${instagramCta}
         </div>
@@ -983,7 +1025,7 @@
             ${addr ? `<div><strong>${escapeHtml(ui(lang, "addressLabel"))}:</strong> ${escapeHtml(addr)}</div>` : ""}
             ${y ? `<div><strong>${escapeHtml(ui(lang, "yLabel"))}:</strong> ${escapeHtml(y)}</div>` : ""}
             <div class="mt">
-              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto.html", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
+              <a class="btn btn--primary" href="${escapeHtml(withLang("/tarjouspyynto", lang))}">${escapeHtml(ui(lang, "contactCTA"))}</a>
             </div>
           </div>
         </div>
@@ -993,7 +1035,7 @@
     `;
   }
 
-  // BOOT
+  // ===== BOOT =====
   let data = null;
   try {
     const res = await fetch("/data/site.json", { cache: "no-cache" });
@@ -1009,53 +1051,66 @@
   // cleanup legacy key to avoid conflicts with old versions
   try { localStorage.removeItem("lang"); } catch (e) {}
 
-  // redirect legacy ?lang=ru to /ru/* and persist
+  // redirect legacy ?lang=ru -> /ru/* and persist (keeps clean path)
   try {
     const url = new URL(window.location.href);
     const qLang = url.searchParams.get("lang");
     if (qLang === "ru") {
       setStoredLang("ru");
-      const basePath = stripRuPrefix(url.pathname);
-      const targetPath = basePath === "/" ? "/ru/" : `/ru${normalizeToNoTrailingSlash(basePath)}`;
-      url.pathname = targetPath;
       url.searchParams.delete("lang");
-      window.location.replace(url.toString());
-      return;
-    }
-  } catch (e) {}
-
-  // enforce stored preference across all pages/tabs
-  try {
-    const stored = getStoredLang(); // "fi" | "ru" | null
-    if (stored) {
-      const current = getLangFromPath() ? "ru" : "fi";
-      if (stored !== current) {
-        window.location.replace(setLangInUrl(stored));
+      const target = setLangInUrl("ru");
+      if (target !== window.location.href) {
+        window.location.replace(target);
         return;
       }
     }
   } catch (e) {}
 
+  // determine lang for this request
   const lang = getLang(data);
 
   // persist selection (single key)
   setStoredLang(lang);
 
+  // enforce stored preference across all pages/tabs (anti-loop)
+  try {
+    const stored = getStoredLang(); // "fi" | "ru" | null
+    if (stored) {
+      const current = getLangFromPath() ? "ru" : "fi";
+      if (stored !== current) {
+        const target = setLangInUrl(stored);
+        if (target !== window.location.href) {
+          window.location.replace(target);
+          return;
+        }
+      }
+    }
+  } catch (e) {}
+
   applySeo(data, lang);
   applyLocalBusinessSchema(data, lang);
 
-  // Bind events
+  // ---- Bind events (FI/RU buttons) ----
+  // IMPORTANT: use replace() to avoid back/forward loops
   document.addEventListener("click", (e) => {
     const btn = e.target && e.target.closest ? e.target.closest("[data-lang]") : null;
     if (!btn) return;
 
     e.preventDefault();
     e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
 
     const nextLang = btn.getAttribute("data-lang");
-    if (data?.i18n?.available?.includes(nextLang)) {
-      setStoredLang(nextLang);
-      window.location.href = setLangInUrl(nextLang);
+    if (!data?.i18n?.available?.includes(nextLang)) return;
+
+    const current = getLangFromPath() ? "ru" : "fi";
+    if (nextLang === current) return;
+
+    setStoredLang(nextLang);
+
+    const target = setLangInUrl(nextLang);
+    if (target !== window.location.href) {
+      window.location.replace(target);
     }
   }, true);
 
