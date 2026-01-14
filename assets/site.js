@@ -543,7 +543,9 @@
   function renderFooter(data, lang) {
     const footer = $("#site-footer");
     if (!footer) return;
-
+    
+    const p = window.location.pathname;
+const isHome = (p === "/" || p === "/ru/" || p === "/ru");
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
@@ -572,6 +574,12 @@
 
         ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
         <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
+        ${isHome ? `
+  <div class="footer__meta footer__meta--small"
+       style="opacity:.6;font-size:12px;text-align:center;">
+    <span id="visit-count">–</span>
+  </div>
+` : ""}
       </div>
     `;
   }
@@ -1145,6 +1153,20 @@
 
   renderHeader(data, lang);
   renderFooter(data, lang);
+  // ===== Simple visit counter (GoatCounter) — ONLY HOME =====
+{
+  const p = window.location.pathname;
+  const isHome = (p === "/" || p === "/ru/" || p === "/ru");
+  if (isHome) {
+    fetch("https://rs-expert.goatcounter.com/counter/TOTAL.json")
+      .then(r => r.json())
+      .then(d => {
+        const el = document.getElementById("visit-count");
+        if (el && typeof d.count === "number") el.textContent = d.count;
+      })
+      .catch(() => {});
+  }
+}
   renderHome(data, lang, igFeed);
   renderServicesPage(data, lang);
   renderGalleryPage(data, lang, igFeed, uploads);
