@@ -1153,16 +1153,16 @@
 
   renderHeader(data, lang);
   renderFooter(data, lang);
-  // ===== Simple visit counter (GoatCounter) — ONLY HOME =====
+  // ===== Simple visit counter (GoatCounter) — ONLY HOME (FI + RU) =====
 {
   const p = window.location.pathname;
   const isHome = (p === "/" || p === "/ru/" || p === "/ru");
   if (isHome) {
-    fetch("https://rs-expert.goatcounter.com/counter/TOTAL.json")
+    fetch("https://rs-expert.goatcounter.com/counter/TOTAL.json", { cache: "no-cache" })
       .then(r => r.json())
       .then(d => {
         const el = document.getElementById("visit-count");
-        if (el && typeof d.count === "number") el.textContent = d.count;
+        if (el && d && d.count != null) el.textContent = String(d.count);
       })
       .catch(() => {});
   }
