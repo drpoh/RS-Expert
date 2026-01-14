@@ -545,7 +545,7 @@
     if (!footer) return;
     
     const p = window.location.pathname;
-const isHome = (p === "/" || p === "/ru/" || p === "/ru");
+    const isHome = (p === "/" || p === "/ru/" || p === "/ru");
     const phoneRaw = (data.phone || "").replaceAll(" ", "");
     const info = data.businessInfo || {};
     const ig = info.instagram || "";
@@ -572,7 +572,7 @@ const isHome = (p === "/" || p === "/ru/" || p === "/ru");
           RS-Expert • RS Expert • RSEXPERT
         </div>
 
-        ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
+         ${line2Parts.length ? `<div class="footer__meta footer__meta--small">${line2Parts.join(' <span class="dot">•</span> ')}</div>` : ""}
         <div class="footer__copy">© ${escapeHtml(data.companyName || "RS-Expert Oy")}</div>
         ${isHome ? `
   <div class="footer__meta footer__meta--small"
