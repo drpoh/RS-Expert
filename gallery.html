@@ -1,44 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- SEO (будет переопределено site.js из /data/site.json) -->
-  <title>Galleria — RS-Expert Oy</title>
-  <meta name="description" content="Työnäytteet ja toteutukset." />
-  <meta name="robots" content="index,follow" />
-
-  <!-- Canonical (FI) — будет переопределён site.js -->
-  <link rel="canonical" href="https://www.rs-expert.fi/gallery.html" />
-
-  <!-- Open Graph (будет переопределено site.js) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="RS-Expert Oy" />
-  <meta property="og:title" content="Galleria — RS-Expert Oy" />
-  <meta property="og:description" content="Työnäytteet ja toteutukset." />
-  <meta property="og:image" content="https://www.rs-expert.fi/assets/uploads/og-cover.svg" />
-  <meta property="og:url" content="https://www.rs-expert.fi/gallery.html" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-
-  <link rel="icon" href="/assets/uploads/favicon.png" />
-  <link rel="apple-touch-icon" href="/assets/uploads/apple-touch-icon.png" />
-
-  <!-- LocalBusiness JSON-LD (filled by site.js) -->
-  <script id="ld-json" type="application/ld+json">{}</script>
-
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galleria | RS-Expert Oy</title>
+  <meta name="description" content="Galleria tehdyistä töistä - RS-Expert Oy">
+  
+  <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-  <header id="site-header"></header>
+
+  <!-- Навигация (скопируй из index.html или сделай отдельный header) -->
+  <header>
+    <!-- вставь сюда свою шапку -->
+  </header>
 
   <main class="container">
-    <div id="page-gallery"></div>
+    <h1>Galleria</h1>
+    <p class="text-center mb-8">Viimeisimmät työt Instagramista (@rs.expert)</p>
+
+    <div id="instagram-gallery" class="gallery-grid">
+      <!-- Фото будут загружаться через JavaScript -->
+      <p class="loading text-center">Ladataan kuvia...</p>
+    </div>
   </main>
 
-  <footer id="site-footer"></footer>
+  <footer>
+    <!-- твой футер -->
+  </footer>
 
-  <script src="/assets/site.js" defer></script>
+  <script>
+    async function loadInstagramGallery() {
+      const container = document.getElementById('instagram-gallery');
+      
+      try {
+        const response = await fetch('data/instagram.json');
+        if (!response.ok) throw new Error('JSON not found');
+        
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+          container.innerHTML = `<p class="text-center">Kuvia ei löytynyt. Yritä myöhemmin uudelleen.</p>`;
+          return;
+        }
+
+        let html = '';
+        data.items.forEach(item => {
+          html += `
+            <div class="gallery-item">
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer">
+                <img src="${item.image}" alt="${item.alt}" loading="lazy">
+              </a>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+      } catch (error) {
+        console.error(error);
+        container.innerHTML = `
+          <p class="text-center text-red-600">
+            Virhe kuvien lataamisessa. Sivusto päivittää gallerian automaattisesti joka päivä.
+          </p>`;
+      }
+    }
+
+    // Запускаем при загрузке страницы
+    window.onload = loadInstagramGallery;
+  </script>
+
 </body>
 </html>
