@@ -3,7 +3,7 @@ name: Update Instagram previews
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 3 * * *" # daily 03:17 UTC
+    - cron: "17 3 * * *"   # каждый день в 03:17 UTC
 
 concurrency:
   group: instagram-previews
@@ -19,8 +19,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -32,15 +30,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install instaloader
 
-      - name: Download latest posts (public profile)
+      - name: Download latest posts from Instagram
         env:
           IG_PROFILE: rs.expert
         run: |
-          set -e
           mkdir -p assets/ig
-
-          # Instaloader downloads posts into assets/ig/<profile>/
-          # --count limits how many posts to fetch
           instaloader \
             --no-metadata-json \
             --no-compress-json \
@@ -48,33 +42,28 @@ jobs:
             --filename-pattern "{date_utc}_UTC_{shortcode}" \
             --quiet \
             --fast-update \
-            --count 18 \
+            --count 20 \
             profile "${IG_PROFILE}" || true
 
       - name: Build data/instagram.json
         env:
           IG_PROFILE: rs.expert
-          MAX_ITEMS: "20"
+          MAX_ITEMS: "12"
         run: |
           python scripts/build_instagram.py
 
-      - name: Commit & push
+      - name: Commit & push changes
         run: |
-          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
+          
           git add data/instagram.json assets/ig || true
-
-          # Nothing to commit
+          
           if git diff --cached --quiet; then
-            echo "No changes."
+            echo "No changes to commit."
             exit 0
           fi
-
+          
           git commit -m "chore: update instagram previews"
-
-          # Rebase on latest main to avoid push rejection
           git pull --rebase origin main
-
           git push origin main
