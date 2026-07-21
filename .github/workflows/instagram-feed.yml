@@ -32,6 +32,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install instaloader
 
+      - name: Remove old Instagram images
+        run: |
+          rm -rf assets/ig
+          mkdir -p assets/ig
+
       - name: Download latest Instagram posts
         env:
           IG_PROFILE: rs.expert
@@ -41,7 +46,7 @@ jobs:
           instaloader \
             --dirname-pattern "assets/ig/${IG_PROFILE}" \
             --filename-pattern "{date_utc}_UTC_{shortcode}" \
-            --count 20 \
+            --count 30 \
             --fast-update \
             --quiet \
             --no-metadata-json \
