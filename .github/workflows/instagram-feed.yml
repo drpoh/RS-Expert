@@ -18,21 +18,20 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Instaloader
         run: |
           python -m pip install --upgrade pip
           pip install instaloader
 
-      - name: Remove old Instagram images
+      # Полностью удаляем старые изображения
+      - name: Clean old Instagram cache
         run: |
           rm -rf assets/ig
           mkdir -p assets/ig
@@ -41,17 +40,14 @@ jobs:
         env:
           IG_PROFILE: rs.expert
         run: |
-          mkdir -p assets/ig
-
           instaloader \
             --dirname-pattern "assets/ig/${IG_PROFILE}" \
             --filename-pattern "{date_utc}_UTC_{shortcode}" \
-            --count 30 \
-            --fast-update \
-            --quiet \
             --no-metadata-json \
             --no-compress-json \
-            profile "${IG_PROFILE}" || true
+            --fast-update \
+            --count 40 \
+            profile "${IG_PROFILE}"
 
       - name: Build instagram.json
         env:
@@ -63,16 +59,16 @@ jobs:
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add assets/ig data/instagram.json
 
           if git diff --cached --quiet; then
-            echo "No changes."
+            echo "Nothing changed"
             exit 0
           fi
 
-          git commit -m "chore: update Instagram previews"
+          git commit -m "Update Instagram previews"
 
       - name: Push changes
         run: |
