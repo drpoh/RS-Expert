@@ -30,8 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install instaloader
 
-      # Полностью удаляем старые изображения
-      - name: Clean old Instagram cache
+      - name: Remove old Instagram cache
         run: |
           rm -rf assets/ig
           mkdir -p assets/ig
@@ -41,13 +40,13 @@ jobs:
           IG_PROFILE: rs.expert
         run: |
           instaloader \
-            --dirname-pattern "assets/ig/${IG_PROFILE}" \
-            --filename-pattern "{date_utc}_UTC_{shortcode}" \
             --no-metadata-json \
             --no-compress-json \
-            --fast-update \
+            --dirname-pattern "assets/ig/${IG_PROFILE}" \
+            --filename-pattern "{date_utc}_UTC_{shortcode}" \
+            --quiet \
             --count 40 \
-            profile "${IG_PROFILE}"
+            profile "${IG_PROFILE}" || true
 
       - name: Build instagram.json
         env:
@@ -61,16 +60,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add assets/ig data/instagram.json
+          git add assets/ig
+          git add data/instagram.json
 
           if git diff --cached --quiet; then
-            echo "Nothing changed"
+            echo "No changes."
             exit 0
           fi
 
           git commit -m "Update Instagram previews"
 
-      - name: Push changes
+      - name: Pull latest changes
         run: |
           git pull --rebase origin main
+
+      - name: Push changes
+        run: |
           git push origin main
