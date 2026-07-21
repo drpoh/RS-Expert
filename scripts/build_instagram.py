@@ -4,7 +4,7 @@ import glob
 from datetime import datetime
 
 PROFILE = os.environ.get("IG_PROFILE", "rs.expert")
-MAX_ITEMS = int(os.environ.get("MAX_ITEMS", "12"))   # увеличил до 12 по умолчанию
+MAX_ITEMS = int(os.environ.get("MAX_ITEMS", "30"))   # увеличил до 12 по умолчанию
 
 ROOT = f"assets/ig/{PROFILE}"
 OUT = "data/instagram.json"
