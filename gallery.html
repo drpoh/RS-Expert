@@ -4,29 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galleria | RS-Expert Oy</title>
-  <meta name="description" content="Galleria tehdyistä töistä - RS-Expert Oy">
+  <meta name="description" content="Galleria tehdyistä töistä — RS-Expert Oy">
   
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
 
-  <!-- Навигация (скопируй из index.html или сделай отдельный header) -->
-  <header>
-    <!-- вставь сюда свою шапку -->
+  <!-- Header (скопируй из index.html) -->
+  <header id="site-header">
+    <!-- вставь сюда свой header -->
   </header>
 
   <main class="container">
-    <h1>Galleria</h1>
-    <p class="text-center mb-8">Viimeisimmät työt Instagramista (@rs.expert)</p>
-
-    <div id="instagram-gallery" class="gallery-grid">
-      <!-- Фото будут загружаться через JavaScript -->
-      <p class="loading text-center">Ladataan kuvia...</p>
+    <div class="section">
+      <h1>Galleria</h1>
+      <p class="lead">Viimeisimmät työt ja referenssit Instagramista (@rs.expert)</p>
+      
+      <div id="instagram-gallery" class="iggrid">
+        <!-- Галерея загружается через JS -->
+        <div class="loading text-center" style="grid-column: 1 / -1; padding: 40px 0;">
+          Ladataan kuvia Instagramista...
+        </div>
+      </div>
     </div>
   </main>
 
-  <footer>
-    <!-- твой футер -->
+  <footer id="site-footer">
+    <!-- твой footer -->
   </footer>
 
   <script>
@@ -35,23 +39,21 @@
       
       try {
         const response = await fetch('data/instagram.json');
-        if (!response.ok) throw new Error('JSON not found');
+        if (!response.ok) throw new Error('Failed to load instagram.json');
         
         const data = await response.json();
         
         if (!data.items || data.items.length === 0) {
-          container.innerHTML = `<p class="text-center">Kuvia ei löytynyt. Yritä myöhemmin uudelleen.</p>`;
+          container.innerHTML = `<p class="text-center" style="grid-column: 1 / -1;">Kuvia ei ole vielä saatavilla.</p>`;
           return;
         }
 
         let html = '';
         data.items.forEach(item => {
           html += `
-            <div class="gallery-item">
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer">
-                <img src="${item.image}" alt="${item.alt}" loading="lazy">
-              </a>
-            </div>
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="igthumb hover-lift">
+              <img src="${item.image}" alt="${item.alt}" class="igthumb__img" loading="lazy">
+            </a>
           `;
         });
 
@@ -60,15 +62,15 @@
       } catch (error) {
         console.error(error);
         container.innerHTML = `
-          <p class="text-center text-red-600">
-            Virhe kuvien lataamisessa. Sivusto päivittää gallerian automaattisesti joka päivä.
+          <p class="text-center" style="grid-column: 1 / -1; color: var(--muted);">
+            Virhe gallerian lataamisessa.<br>
+            Sivusto päivittää kuvat automaattisesti joka päivä.
           </p>`;
       }
     }
 
-    // Запускаем при загрузке страницы
-    window.onload = loadInstagramGallery;
+    // Запуск после загрузки страницы
+    window.addEventListener('load', loadInstagramGallery);
   </script>
-
 </body>
 </html>
