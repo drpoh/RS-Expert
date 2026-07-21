@@ -3,7 +3,7 @@ name: Update Instagram previews
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 3 * * *"   # каждый день в 03:17 UTC
+    - cron: "17 3 * * *"
 
 concurrency:
   group: instagram-previews
@@ -17,53 +17,59 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install tools
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install instaloader
 
-      - name: Download latest posts from Instagram
+      - name: Download latest Instagram posts
         env:
           IG_PROFILE: rs.expert
         run: |
           mkdir -p assets/ig
+
           instaloader \
-            --no-metadata-json \
-            --no-compress-json \
             --dirname-pattern "assets/ig/${IG_PROFILE}" \
             --filename-pattern "{date_utc}_UTC_{shortcode}" \
-            --quiet \
-            --fast-update \
             --count 20 \
+            --fast-update \
+            --quiet \
+            --no-metadata-json \
+            --no-compress-json \
             profile "${IG_PROFILE}" || true
 
-      - name: Build data/instagram.json
+      - name: Build instagram.json
         env:
           IG_PROFILE: rs.expert
           MAX_ITEMS: "12"
         run: |
           python scripts/build_instagram.py
 
-      - name: Commit & push changes
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add data/instagram.json assets/ig || true
-          
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assets/ig data/instagram.json
+
           if git diff --cached --quiet; then
-            echo "No changes to commit."
+            echo "No changes."
             exit 0
           fi
-          
-          git commit -m "chore: update instagram previews"
+
+          git commit -m "chore: update Instagram previews"
+
+      - name: Push changes
+        run: |
           git pull --rebase origin main
           git push origin main
